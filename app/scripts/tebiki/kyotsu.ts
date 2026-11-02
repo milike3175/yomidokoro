@@ -102,11 +102,29 @@ export function 出典に書く(dir: string, doc: Document, 項目: Partial<出�
   fs.writeFileSync(path.join(dir, "_出典.yaml"), doc.toString({ lineWidth: 0 }));
 }
 
+/** URL の最後の部分をファイル名にする。長崎県の .../fs/5/0/5/4/_/____.pdf のように日本語が _ に化けて
+ *  _ で始まる名前は、手元の控え（_出典.yaml など）と見分けが付かないので、道の数字を前に付ける（5054.pdf） */
+export function URLの名前(url: string) {
+  const u = new URL(url);
+  const n = NFC(decodeURIComponent(path.basename(u.pathname)));
+  if (!n.startsWith("_")) return n;
+  const 数字 = u.pathname.split("/").filter((x) => /^\d+$/.test(x)).join("");
+  const 拡張子 = path.extname(n);
+  const 幹 = n.slice(0, n.length - 拡張子.length);
+  return /^_+$/.test(幹) ? `${数字 || "doc"}${拡張子}` : `${数字 || "doc"}${幹}${拡張子}`;
+}
+
 /** 文書の名前（_出典.yaml の 文書:）とファイル名を突き合わせて、役割・版を引く */
 export function 文書を引く(data: 出典, ファイル名: string) {
   const base = NFC(ファイル名);
   const hit = (data.文書 ?? []).find((d) => base.startsWith(NFC(d.名前)) || base.includes(NFC(d.名前)));
-  const t = (data.取り寄せ ?? []).find((d) => d.url && NFC(decodeURIComponent(path.basename(new URL(d.url).pathname))) === base);
+  // 拡張子の無い URL は、取得のときに形式を足して置く（.../xxx-pdf は xxx.pdf）。拡張子を外して比べる
+  const 外す = (s: string) => s.replace(/[-_.](pdf|docx?|xlsx?|rtf|zip)$/i, "");
+  const t = (data.取り寄せ ?? []).find((d) => {
+    if (!d.url) return false;
+    const n = URLの名前(d.url);
+    return n === base || 外す(n) === 外す(base);
+  });
   return { 名前: t?.名前 ?? hit?.名前, 役割: t?.役割 ?? hit?.役割, 版: t?.版 ?? hit?.版 };
 }
 
@@ -149,19 +167,27 @@ export function 正規化(s: string) {
 }
 
 /** 料金の目安（1M トークンあたりのドル。2026-11 時点の公開価格を基にした目安） */
-export const 単価: Record<string, { 入力: number; 出力: number; 書込: number; 読込: number }> = {
-  "claude-fable-5-1": { 入力: 10, 出力: 50, 書込: 12.5, 読込: 0.25 },
-  "claude-opus-5-5": { 入力: 4, 出力: 20, 書込: 5, 読込: 0.4 },
-  "claude-haiku-5-5": { 入力: 0.1, 出力: 0.5, 書込: 0.125, 読込: 0.01 },
+// 書込は5分の記憶、書込1hは1時間の記憶（入力の2倍）
+export const 単価: Record<string, { 入力: number; 出力: number; 書込: number; 書込1h: number; 読込: number }> = {
+  "claude-fable-5-1": { 入力: 10, 出力: 50, 書込: 12.5, 書込1h: 20, 読込: 0.25 },
+  "claude-opus-5-5": { 入力: 4, 出力: 20, 書込: 5, 書込1h: 8, 読込: 0.4 },
+  "claude-haiku-5-5": { 入力: 0.1, 出力: 0.5, 書込: 0.125, 書込1h: 0.2, 読込: 0.01 },
 };
-export type 使用量 = { input_tokens: number; output_tokens: number; cache_creation_input_tokens?: number | null; cache_read_input_tokens?: number | null };
+export type 使用量 = {
+  input_tokens: number;
+  output_tokens: number;
+  cache_creation_input_tokens?: number | null;
+  cache_read_input_tokens?: number | null;
+  cache_creation?: { ephemeral_5m_input_tokens?: number | null; ephemeral_1h_input_tokens?: number | null } | null;
+};
 export function ドル(model: string, u: 使用量, まとめて = false) {
   const p = 単価[model];
   if (!p) return 0;
   const usd =
     (u.input_tokens * p.入力 +
       u.output_tokens * p.出力 +
-      (u.cache_creation_input_tokens ?? 0) * p.書込 +
+      ((u.cache_creation_input_tokens ?? 0) - (u.cache_creation?.ephemeral_1h_input_tokens ?? 0)) * p.書込 +
+      (u.cache_creation?.ephemeral_1h_input_tokens ?? 0) * p.書込1h +
       (u.cache_read_input_tokens ?? 0) * p.読込) /
     1_000_000;
   return まとめて ? usd / 2 : usd;

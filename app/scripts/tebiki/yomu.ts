@@ -114,7 +114,7 @@ async function main() {
   // 料金の見込み（日本語はおおむね1文字1トークン弱。多めに見る）
   const 見込み入力 = 本文.length + system.length;
   const 見込み =
-    (見込み入力 * 12.5 + 見込み入力 * (群順.length - 1) * 0.25 + 群順.length * 6000 * 50) / 1_000_000 / (まとめて ? 2 : 1);
+    (見込み入力 * (まとめて ? 20 : 12.5) + 見込み入力 * (群順.length - 1) * 0.25 + 群順.length * 6000 * 50) / 1_000_000 / (まとめて ? 2 : 1);
   出す(`${県.名前}：${読む文書.length}文書・${本文.length.toLocaleString()}字を、観点の群 ${群順.length}つに分けて読む（${モデル}${まとめて ? "、まとめて送る＝半額" : ""}）`);
   出す(`  料金の見込み：約${見込み.toFixed(2)}ドル`);
   if (見込み > 上限ドル && !args.includes("--かまわない")) 止める(`  見込みが${上限ドル}ドルを超えるので止めた。--かまわない を付けると進む。`);
@@ -133,7 +133,12 @@ async function main() {
     max_tokens: 16000,
     system: [
       { type: "text" as const, text: system },
-      { type: "text" as const, text: `## 手引きの本文\n\n${本文}`, cache_control: { type: "ephemeral" as const } },
+      // まとめて送るときは記憶の寿命を1時間にする（Batch は5分を超えることがあるため。公式の勧め）
+      {
+        type: "text" as const,
+        text: `## 手引きの本文\n\n${本文}`,
+        cache_control: まとめて ? { type: "ephemeral" as const, ttl: "1h" as const } : { type: "ephemeral" as const },
+      },
     ],
     messages: [{ role: "user" as const, content: 群の問い(群) }],
   });
@@ -154,37 +159,45 @@ async function main() {
       出す(`  群「${群}」：記載あり ${あり}／${msg.parsed_output!.結果.length}観点（${Math.round((Date.now() - t0) / 1000)}秒、約${d.toFixed(3)}ドル、記憶から読んだ ${msg.usage.cache_read_input_tokens ?? 0}トークン）`);
     }
   } else {
-    const batch = await client.messages.batches.create({
-      requests: 群順.map((群, i) => ({
-        custom_id: `g${i + 1}`,
-        params: { ...params(群), output_config: { format: { type: "json_schema" as const, schema: format.schema } } },
-      })),
-    });
-    出す(`  まとめて送った（受付番号 ${batch.id}）。結果を待つ…`);
-    let b = batch;
-    while (b.processing_status !== "ended") {
-      await new Promise((r) => setTimeout(r, 20000));
-      b = await client.messages.batches.retrieve(batch.id);
-      出す(`  待っている：済み ${b.request_counts.succeeded}・処理中 ${b.request_counts.processing}・失敗 ${b.request_counts.errored}`);
-    }
-    for await (const r of await client.messages.batches.results(batch.id)) {
-      const 群 = 群順[Number(r.custom_id.slice(1)) - 1];
-      if (r.result.type !== "succeeded") {
-        出す(`  群「${群}」：失敗（${r.result.type}）`);
-        continue;
+    // Batch の中は同時に処理されるので、そのままでは記憶（キャッシュ）がほとんど当たらない。
+    // 先に1群だけ送って本文を記憶させ、それが終わってから残りの群を送る（残りは記憶から読む）。
+    const 送る = async (群たち: string[], 名札: string) => {
+      const batch = await client.messages.batches.create({
+        requests: 群たち.map((群) => ({
+          custom_id: `g${群順.indexOf(群) + 1}`,
+          params: { ...params(群), output_config: { format: { type: "json_schema" as const, schema: format.schema } } },
+        })),
+      });
+      出す(`  ${名札}を送った（${群たち.length}群、受付番号 ${batch.id}）。結果を待つ…`);
+      let b = batch;
+      while (b.processing_status !== "ended") {
+        await new Promise((r) => setTimeout(r, 20000));
+        b = await client.messages.batches.retrieve(batch.id);
+        出す(`  待っている：済み ${b.request_counts.succeeded}・処理中 ${b.request_counts.processing}・失敗 ${b.request_counts.errored}`);
       }
-      const msg = r.result.message;
-      const text = msg.content.map((c) => (c.type === "text" ? c.text : "")).join("");
-      const parsed = 返事の形.safeParse(JSON.parse(text));
-      if (!parsed.success) {
-        出す(`  群「${群}」：返事の形が違った`);
-        continue;
+      for await (const r of await client.messages.batches.results(batch.id)) {
+        const 群 = 群順[Number(r.custom_id.slice(1)) - 1];
+        if (r.result.type !== "succeeded") {
+          出す(`  群「${群}」：失敗（${r.result.type}）`);
+          continue;
+        }
+        const msg = r.result.message;
+        const text = msg.content.map((c) => (c.type === "text" ? c.text : "")).join("");
+        const parsed = 返事の形.safeParse(JSON.parse(text));
+        if (!parsed.success) {
+          出す(`  群「${群}」：返事の形が違った`);
+          continue;
+        }
+        const d = ドル(モデル, msg.usage, true);
+        合計ドル += d;
+        返事たち.push({ 群, 返事: parsed.data, 使用量: msg.usage });
+        出す(
+          `  群「${群}」：記載あり ${parsed.data.結果.filter((x) => x.記載 === "あり").length}／${parsed.data.結果.length}観点（約${d.toFixed(3)}ドル、記憶に書いた ${msg.usage.cache_creation_input_tokens ?? 0}・記憶から読んだ ${msg.usage.cache_read_input_tokens ?? 0}トークン）`,
+        );
       }
-      const d = ドル(モデル, msg.usage, true);
-      合計ドル += d;
-      返事たち.push({ 群, 返事: parsed.data, 使用量: msg.usage });
-      出す(`  群「${群}」：記載あり ${parsed.data.結果.filter((x) => x.記載 === "あり").length}／${parsed.data.結果.length}観点（約${d.toFixed(3)}ドル）`);
-    }
+    };
+    await 送る(群順.slice(0, 1), "先の1群（本文を記憶させる）");
+    if (群順.length > 1) await 送る(群順.slice(1), "残りの群");
   }
 
   // ---- 手引き.yaml の形にする ----
