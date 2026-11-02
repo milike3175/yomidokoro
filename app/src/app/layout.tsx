@@ -41,7 +41,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <a href="/" className="site-title">
               許認可ローカルルールの地図
             </a>
-            <span className="site-sub">産業廃棄物収集運搬業の許可</span>
+            <span className="site-sub">一本目は産業廃棄物収集運搬業の許可。はじめての許認可にも</span>
           </div>
         </header>
         <main>{children}</main>
