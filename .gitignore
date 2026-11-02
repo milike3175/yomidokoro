@@ -1,0 +1,23 @@
+.env
+.env.*
+_鍵/
+.DS_Store
+node_modules/
+.next/
+out/
+*.pdf
+*.wav
+手引き/*/txt/
+app/logs/電話*
+構成/_相談記録/
+_申請/
+
+# 自分専用の手帳（電話の記録・受理実績）。GitHub に上げない
+手帳/
+
+# 手引き・様式の本体（県の著作物）は上げない。置くのは _出典.yaml だけ
+手引き/*/*
+!手引き/*/_出典.yaml
+!手引き/*/_差分.yaml
+*.tsbuildinfo
+app/data/**/*.前
