@@ -1,6 +1,6 @@
 // npm run build の最後に動く見張り。
 // 公開用の書き出し（out/）に、手帳（みゆき専用の電話記録）の中身が混ざっていないかを調べる。
-// 手帳の各ファイルの id・窓口・答えの文が out/ のどこかに出てきたら、書き出しを失敗にする。
+// 手帳の各ファイル（電話・補正）の id・答え・指摘・直し方の文が out/ のどこかに出てきたら、書き出しを失敗にする。
 import fs from "node:fs";
 import path from "node:path";
 import { parse } from "yaml";
@@ -21,8 +21,11 @@ const 見張る語 = new Set<string>();
 for (const f of ファイルたち(TECHO, /\.ya?ml$/)) {
   const d = parse(fs.readFileSync(f, "utf8")) ?? {};
   if (typeof d.id === "string") 見張る語.add(d.id);
-  for (const a of Array.isArray(d.回答) ? d.回答 : []) {
-    if (typeof a?.答え === "string" && a.答え.length >= 8) 見張る語.add(a.答え.slice(0, 20));
+  // 電話の答え・補正の指摘と直し方の、それぞれ先頭20字を見張る
+  for (const a of [...(Array.isArray(d.回答) ? d.回答 : []), ...(Array.isArray(d.指摘) ? d.指摘 : [])]) {
+    for (const t of [a?.答え, a?.指摘, a?.直し方]) {
+      if (typeof t === "string" && t.length >= 8) 見張る語.add(t.slice(0, 20));
+    }
   }
 }
 const 見張る文 = [...見張る語].map((s) => s.normalize("NFC"));

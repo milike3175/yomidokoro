@@ -10,6 +10,7 @@ import {
   手引きファイル,
   受理実績ファイル,
   電話ファイル,
+  補正ファイル,
   type 観点,
   type 県,
 } from "../../schema/record.ts";
@@ -23,16 +24,23 @@ const TECHO_DIR = path.join(APP, "..", "手帳");
 /** 手帳（みゆき専用の電話記録）を読むか。TECHO=1 のときだけ。公開用の書き出しには入れない */
 export const 手帳を読む = process.env.TECHO === "1";
 
-export type 種別 = "手引き" | "受理実績" | "電話" | "同業者" | "記載なし";
+export type 種別 = "手引き" | "受理実績" | "電話" | "同業者" | "補正" | "記載なし";
+export const 件数の種別 = ["手引き", "受理実績", "電話", "同業者", "補正"] as const;
+export type 件数の種別 = (typeof 件数の種別)[number];
 
 export type カード = {
   観点: string;
   種別: 種別;
   本文: string;
   問い?: string;
-  /** 確認日（YYYY-MM / YYYY-MM-DD）。受理実績は年だけなので null */
+  /** 観点が 未分類 のときの候補 */
+  候補観点?: string;
+  /** 補正：どう直して通ったか */
+  直し方?: string;
+  /** 確認日（YYYY-MM / YYYY-MM-DD）。受理実績・補正は年だけなので null */
   確認日: string | null;
   受理年?: number;
+  年?: number;
   窓口?: string;
   対象: string[];
   品目?: string[];
@@ -44,7 +52,7 @@ export type カード = {
 export type 県データ = {
   県: 県;
   カード: カード[];
-  件数: Record<"手引き" | "受理実績" | "電話" | "同業者", number>;
+  件数: Record<件数の種別, number>;
 };
 
 function NFC(s: string) {
@@ -130,6 +138,7 @@ function 全部読む() {
               窓口: d.窓口,
               対象: a.対象,
               品目: 配列に(a.品目),
+              候補観点: a.候補観点,
               手引きへの参照: a.手引きへの参照
                 ? { ...a.手引きへの参照, url: 手引きurl ? `${手引きurl}#page=${a.手引きへの参照.ページ}` : undefined }
                 : undefined,
@@ -137,12 +146,32 @@ function 全部読む() {
           }
         }
       }
+      const 補正dir = 手帳側 ? path.join(手帳側, "補正") : null;
+      if (補正dir && fs.existsSync(補正dir)) {
+        for (const f of fs.readdirSync(補正dir).filter((n) => n.endsWith(".yaml")).sort()) {
+          const d = 読む(path.join(補正dir, f), 補正ファイル);
+          for (const a of d.指摘) {
+            カード.push({
+              観点: a.観点,
+              種別: "補正",
+              本文: a.指摘,
+              直し方: a.直し方,
+              確認日: null,
+              年: d.年,
+              窓口: d.窓口,
+              対象: a.対象,
+              品目: 配列に(a.品目),
+              候補観点: a.候補観点,
+            });
+          }
+        }
+      }
     }
 
     for (const c of カード) {
-      if (!観点ids.has(c.観点)) throw new Error(`${県.名前} の記録に、観点.yaml に無い観点「${c.観点}」があります`);
+      if (c.観点 !== "未分類" && !観点ids.has(c.観点)) throw new Error(`${県.名前} の記録に、観点.yaml に無い観点「${c.観点}」があります`);
     }
-    const 件数 = { 手引き: 0, 受理実績: 0, 電話: 0, 同業者: 0 };
+    const 件数 = { 手引き: 0, 受理実績: 0, 電話: 0, 同業者: 0, 補正: 0 };
     for (const c of カード) if (c.種別 !== "記載なし") 件数[c.種別]++;
     県ごと[県.コード] = { 県, カード, 件数 };
   }

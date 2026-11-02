@@ -97,6 +97,15 @@ export default function KenView({ 県名, 手引きの状態, 観点一覧, 品�
     })
     .filter((x) => x !== null);
 
+  // 補正：手続き・品目に当てはまるものを上に、当てはまらないものは薄く下に
+  const 当てはまる = (c: カード) => 手続きが合う(c) && 品目で見る(c, 観点map.get(c.観点)) !== "合わない";
+  const 補正 = 全カード.filter((c) => c.種別 === "補正");
+  const 補正の並び = [...補正.filter(当てはまる), ...補正.filter((c) => !当てはまる(c))];
+  const 手引きに明記 = new Set(
+    全カード.filter((c) => c.種別 === "手引き" && c.出典?.照合.startsWith("一致")).map((c) => c.観点),
+  );
+  const 未分類 = 全カード.filter((c) => c.観点 === "未分類");
+
   const 群順: string[] = [];
   for (const k of 観点一覧) if (!群順.includes(k.群)) 群順.push(k.群);
   const 群id = (群: string) => `g${群順.indexOf(群) + 1}`;
@@ -114,6 +123,7 @@ export default function KenView({ 県名, 手引きの状態, 観点一覧, 品�
 
       <nav className="toc-mobile" aria-label="目次">
         <a href="#checklist">電話で聞くこと</a>
+        <a href="#hosei">補正になったこと</a>
         {群順.map((g) => (
           <a key={g} href={`#${群id(g)}`}>
             {g}
@@ -169,6 +179,11 @@ export default function KenView({ 県名, 手引きの状態, 観点一覧, 品�
                   電話で聞くこと<span className="num">{チェック.length}</span>
                 </a>
               </li>
+              <li>
+                <a href="#hosei">
+                  補正になったこと<span className="num">{補正.filter(当てはまる).length}</span>
+                </a>
+              </li>
               {群順.map((g) => (
                 <li key={g}>
                   <a href={`#${群id(g)}`}>
@@ -218,11 +233,52 @@ export default function KenView({ 県名, 手引きの状態, 観点一覧, 品�
             })}
           </section>
 
+          <section className="hosei" id="hosei">
+            <h2>
+              この県で補正になったこと<span className="cnt">{補正.filter(当てはまる).length}件</span>
+            </h2>
+            <div className="lead" style={{ margin: 0 }}>
+              出す前に見直すこと。審査で直すよう言われた点と、どう直して通ったか。{手続き}
+              {品目 ? `・${品目}` : ""}に当てはまらないものは薄くして下に置いた。
+            </div>
+            {補正の並び.length === 0 ? (
+              <p className="empty-all">まだ補正の記録がない。</p>
+            ) : (
+              <div className="cards">
+                {補正の並び.map((c, i) => {
+                  const k = 観点map.get(c.観点);
+                  return (
+                    <div key={i}>
+                      <div className="kanten-name">
+                        {k ? (
+                          <a href={`#${k.番号}`}>
+                            {k.番号} {k.表示名}
+                          </a>
+                        ) : (
+                          <>未分類（候補：{c.候補観点}）</>
+                        )}
+                      </div>
+                      <Card
+                        c={c}
+                        今日={今日}
+                        手続きが合う={手続きが合う(c)}
+                        品目={品目で見る(c, k)}
+                        選んだ品目={品目}
+                        分かりにくい={手引きに明記.has(c.観点)}
+                      />
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </section>
+
           <div className="legend" style={{ marginTop: 18 }}>
             <span className="label 手引き">手引き</span>
             <span className="label 受理実績">受理実績</span>
             <span className="label 電話">電話</span>
             <span className="label 同業者">同業者</span>
+            <span className="label 補正">補正</span>
             <span className="label 記載なし">記載なし</span>
             <span className="label 再確認">再確認</span>
             <span>確認から1年を超えた記録</span>
@@ -253,6 +309,7 @@ export default function KenView({ 県名, 手引きの状態, 観点一覧, 品�
                               手続きが合う={手続きが合う(c)}
                               品目={品目で見る(c, 観点map.get(c.観点))}
                               選んだ品目={品目}
+                              分かりにくい={c.種別 === "補正" && 手引きに明記.has(c.観点)}
                             />
                           ))}
                         </div>
@@ -262,6 +319,23 @@ export default function KenView({ 県名, 手引きの状態, 観点一覧, 品�
                 })}
             </section>
           ))}
+
+          {未分類.length > 0 && (
+            <section className="group" id="mibunrui">
+              <h2>観点に無い話（未分類）</h2>
+              <p className="lead">観点の一覧に当てはまらなかった記録。よく出るものは観点に足す。</p>
+              <div className="cards">
+                {未分類.map((c, i) => (
+                  <div key={i}>
+                    <div className="kanten-name" style={{ fontSize: 12, color: "var(--sub)" }}>
+                      候補：{c.候補観点}
+                    </div>
+                    <Card c={c} 今日={今日} 手続きが合う={手続きが合う(c)} 品目="関係なし" 選んだ品目={品目} 分かりにくい={false} />
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
         </div>
       </div>
     </>
@@ -290,12 +364,14 @@ function Card({
   手続きが合う,
   品目,
   選んだ品目,
+  分かりにくい,
 }: {
   c: カード;
   今日: Date;
   手続きが合う: boolean;
   品目: 品目判定;
   選んだ品目: string;
+  分かりにくい: boolean;
 }) {
   const 古い = 再確認か(c.確認日, 今日);
   const 薄く = !手続きが合う || 品目 === "合わない";
@@ -310,11 +386,18 @@ function Card({
         <div className="card-top">
           <span className={`label ${c.種別}`}>{c.種別}</span>
           {古い && <span className="label 再確認">再確認</span>}
+          {分かりにくい && <span className="label 分かりにくい">手引きが分かりにくい所</span>}
           {品目 === "合う" && !薄く && <span className="label 当てはまる">{選んだ品目}に当てはまる</span>}
           {添え書き.length > 0 && <span className="note">{添え書き.join("。")}</span>}
         </div>
 
         <p className="a">{c.本文}</p>
+        {c.直し方 && (
+          <div className="fix">
+            <b>直し方</b>
+            {c.直し方}
+          </div>
+        )}
 
         {c.出典 && (
           <>
@@ -343,6 +426,12 @@ function Card({
             <span>
               <b>確認日</b>
               {表示日(c.確認日)}
+            </span>
+          )}
+          {c.年 && (
+            <span>
+              <b>年</b>
+              {c.年}年
             </span>
           )}
           {c.受理年 && (
@@ -388,6 +477,9 @@ function Card({
 
       {c.種別 === "電話" && c.確認日 && (
         <div className="band">{年月(c.確認日)}に電話で確認した内容。公式見解ではない。申請前に再確認すること</div>
+      )}
+      {c.種別 === "補正" && c.年 && (
+        <div className="band">{c.年}年に審査で指摘された内容。運用は変わりうる。申請前に再確認すること</div>
       )}
       {c.種別 === "同業者" && <div className="band">同業者から聞いた参考情報。公式見解ではない。申請前に再確認すること</div>}
     </article>

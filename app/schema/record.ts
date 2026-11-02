@@ -138,6 +138,18 @@ export const 受理実績ファイル = z.array(
 
 // ---- 層2：電話・同業者 ----
 
+/** 取込元：議事録 / メモ / superwhisper。元の文字はリポジトリにも手帳にも残さない */
+export const 取込元 = z.enum(["議事録", "メモ", "superwhisper"], {
+  error: "取込元は 議事録・メモ・superwhisper のどれかです",
+});
+
+/** 観点に当てはまらない話は 観点: 未分類 にして、候補観点 を添える */
+const 未分類の決まり = (v: { 観点: string; 候補観点?: string }, ctx: z.RefinementCtx) => {
+  if (v.観点 === "未分類" && !v.候補観点) {
+    ctx.addIssue({ code: "custom", path: ["候補観点"], message: "観点が 未分類 のときは 候補観点 を書いてください" });
+  }
+};
+
 export const 電話ファイル = z.object({
   id: z.string().min(1),
   許可権者,
@@ -146,21 +158,52 @@ export const 電話ファイル = z.object({
   窓口: z.string().min(1, { error: "窓口は課名まで書いてください（個人名は書かない）" }),
   種別: z.enum(["電話", "同業者"], { error: "種別は 電話 か 同業者 です" }),
   記録者: z.enum(["本人", "同業者"]),
-  取込元: z.string().optional(),
+  取込元: 取込元.optional(),
   回答: z
     .array(
-      z.object({
-        観点: 観点id,
-        問い: z.string().min(1),
-        答え: z.string().min(1),
-        対象,
-        品目: 品目.optional(),
-        手引きへの参照: z
-          .object({ ページ: z.number().int().positive(), 内容: z.string().optional() })
-          .optional(),
-      }),
+      z
+        .object({
+          観点: 観点id,
+          候補観点: z.string().min(1).optional(),
+          問い: z.string().min(1),
+          答え: z.string().min(1),
+          対象,
+          品目: 品目.optional(),
+          手引きへの参照: z
+            .object({ ページ: z.number().int().positive(), 内容: z.string().optional() })
+            .optional(),
+        })
+        .superRefine(未分類の決まり),
     )
     .min(1, { error: "回答を1つ以上書いてください" }),
+  個人名削除: z.number().int().min(0),
+});
+
+// ---- 補正：審査で直すよう言われたこと。日付は年だけ（案件を逆にたどれないように） ----
+
+export const 補正ファイル = z.object({
+  id: z.string().min(1),
+  許可権者,
+  許認可: z.string().min(1),
+  年: z.number({ error: "年は西暦4桁の数で書いてください（例 2026）" }).int().min(2000).max(2100),
+  窓口: z.string().min(1, { error: "窓口は課名まで書いてください（個人名は書かない）" }),
+  種別: z.literal("補正", { error: "種別は 補正 です" }),
+  記録者: z.enum(["本人", "同業者"]),
+  取込元: 取込元.optional(),
+  指摘: z
+    .array(
+      z
+        .object({
+          観点: 観点id,
+          候補観点: z.string().min(1).optional(),
+          指摘: z.string().min(1),
+          直し方: z.string().min(1),
+          対象,
+          品目: 品目.optional(),
+        })
+        .superRefine(未分類の決まり),
+    )
+    .min(1, { error: "指摘を1つ以上書いてください" }),
   個人名削除: z.number().int().min(0),
 });
 
@@ -169,3 +212,4 @@ export type 県 = z.infer<typeof 県ファイル>["県"][number];
 export type 手引きデータ = z.infer<typeof 手引きファイル>;
 export type 受理実績データ = z.infer<typeof 受理実績ファイル>;
 export type 電話データ = z.infer<typeof 電話ファイル>;
+export type 補正データ = z.infer<typeof 補正ファイル>;

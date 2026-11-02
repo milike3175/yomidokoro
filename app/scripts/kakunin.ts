@@ -11,6 +11,7 @@ import {
   手引きファイル,
   受理実績ファイル,
   電話ファイル,
+  補正ファイル,
 } from "../schema/record.ts";
 
 const APP = path.resolve(import.meta.dirname, "..");
@@ -96,7 +97,7 @@ if (県) {
 }
 
 function 観点を確かめる(file: string, 観点名: string) {
-  if (!観点ids.has(観点名)) 誤り(file, null, `観点「${観点名}」は 観点.yaml にありません`);
+  if (観点名 !== "未分類" && !観点ids.has(観点名)) 誤り(file, null, `観点「${観点名}」は 観点.yaml にありません`);
 }
 function 品目を確かめる(file: string, v: string | string[] | undefined) {
   for (const x of v === undefined ? [] : Array.isArray(v) ? v : [v]) {
@@ -147,7 +148,7 @@ for (const { dir, コード } of 県フォルダたち(path.join(DATA, 許認可
   }
 }
 
-// ---- 手帳側：電話（自分のパソコンにだけある。中身は出さない） ----
+// ---- 手帳側：電話・補正（自分のパソコンにだけある。中身は出さない） ----
 const TECHO = path.join(ROOT, "手帳", 許認可);
 const 電話id = new Set<string>();
 for (const { dir, コード } of 県フォルダたち(TECHO)) {
@@ -161,6 +162,20 @@ for (const { dir, コード } of 県フォルダたち(TECHO)) {
     if (電話id.has(d.id)) 誤り(file, null, `電話の id「${d.id}」が他のファイルと重なっています`);
     電話id.add(d.id);
     for (const a of d.回答) {
+      観点を確かめる(file, a.観点);
+      品目を確かめる(file, a.品目);
+    }
+  }
+  const 補正dir = path.join(dir, "補正");
+  if (!fs.existsSync(補正dir)) continue;
+  for (const f of fs.readdirSync(補正dir).filter((n) => n.endsWith(".yaml"))) {
+    const file = path.join(補正dir, f);
+    const d = 検証(file, 補正ファイル);
+    if (!d) continue;
+    if (d.許可権者.コード !== コード) 誤り(file, null, `許可権者のコード ${d.許可権者.コード} がフォルダ（${コード}）と違います`);
+    if (電話id.has(d.id)) 誤り(file, null, `id「${d.id}」が他のファイルと重なっています`);
+    電話id.add(d.id);
+    for (const a of d.指摘) {
       観点を確かめる(file, a.観点);
       品目を確かめる(file, a.品目);
     }

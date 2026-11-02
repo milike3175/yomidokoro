@@ -1,7 +1,7 @@
 import { データ } from "@/lib/data";
 import { 配置, 列数, 行数 } from "@/lib/tilemap";
 
-const 種別順 = ["手引き", "受理実績", "電話", "同業者"] as const;
+const 種別順 = ["手引き", "受理実績", "電話", "同業者", "補正"] as const;
 
 const 状態の説明: Record<string, string> = {
   検品済み: "検品済み",
@@ -123,6 +123,7 @@ export default function Home() {
         <span className="label 受理実績">受理実績</span>この形で受理された
         <span className="label 電話">電話</span>窓口に電話で確認
         <span className="label 同業者">同業者</span>同業者から聞いた
+        <span className="label 補正">補正</span>審査で直すよう言われた
       </div>
 
       {地方順.map((地方) => (
