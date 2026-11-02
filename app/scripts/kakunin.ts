@@ -13,6 +13,8 @@ import {
   電話ファイル,
   補正ファイル,
 } from "../schema/record.ts";
+import { 共通観点ファイル, はじめてファイル } from "../schema/hajimete.ts";
+import { 公的なURLか } from "./hajimete/kyotsu.ts";
 
 const APP = path.resolve(import.meta.dirname, "..");
 const ROOT = path.resolve(APP, "..");
@@ -214,6 +216,30 @@ for (const { dir, コード } of 県フォルダたち(path.join(DATA, "見本",
       品目を確かめる(file, a.品目);
     }
   }
+}
+
+// ---- はじめての許認可：共通観点と、許認可×自治体ごとの結果（app/data/はじめて/<id>/手引き.yaml） ----
+const 共通観点 = 検証(path.join(DATA, "共通観点.yaml"), 共通観点ファイル);
+const 共通観点ids = new Set(共通観点?.観点.map((k) => k.id) ?? []);
+if (共通観点 && 共通観点ids.size !== 共通観点.観点.length) 誤り(path.join(DATA, "共通観点.yaml"), null, "観点の id が重なっています");
+const はじめて = path.join(DATA, "はじめて");
+for (const n of fs.existsSync(はじめて) ? fs.readdirSync(はじめて).filter((n) => !n.startsWith(".")) : []) {
+  const t = path.join(はじめて, n, "手引き.yaml");
+  if (!fs.existsSync(t)) continue;
+  const d = 検証(t, はじめてファイル);
+  if (!d) continue;
+  if (NFC(d.id) !== NFC(n)) 誤り(t, null, `id「${d.id}」がフォルダ名（${NFC(n)}）と違います`);
+  const 文書 = new Set(d.資料.map((x) => x.文書));
+  const ids = new Set<string>();
+  for (const r of d.記録) {
+    if (!共通観点ids.has(r.観点)) 誤り(t, null, `観点「${r.観点}」は 共通観点.yaml にありません`);
+    if (!文書.has(r.出典.文書)) 誤り(t, null, `記録 ${r.id} の出典の文書が 資料: の一覧にありません`);
+    if (ids.has(r.id)) 誤り(t, null, `記録の id「${r.id}」が重なっています`);
+    ids.add(r.id);
+  }
+  for (const c of d.独自の観点) if (!文書.has(c.出典.文書)) 誤り(t, null, `独自の観点「${c.名前}」の出典の文書が 資料: の一覧にありません`);
+  for (const x of d.記載なし) if (!共通観点ids.has(x.観点)) 誤り(t, null, `観点「${x.観点}」は 共通観点.yaml にありません`);
+  for (const x of d.資料) if (x.url && !公的なURLか(x.url)) 誤り(t, null, `資料「${x.文書}」の URL が公的なドメインではありません`);
 }
 
 console.log("");

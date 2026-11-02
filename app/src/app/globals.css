@@ -1044,3 +1044,19 @@ a.tile:hover {
     margin: 4px 0 0;
   }
 }
+
+/* ---- はじめての許認可（/hajimete/） ---- */
+.hj-grid { grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); }
+.hj-card .counts + .counts { margin-top: 4px; }
+.hj-card .count.hj-bad { color: var(--shu); }
+.hj-time { margin-top: 10px; font-size: 13px; color: var(--sub); }
+.hj-time b { color: var(--ink); font-size: 15px; }
+.hj-place { margin-left: 12px; font-size: 0.6em; color: var(--sub); font-weight: 500; }
+.hj-summary { border-left: 3px solid var(--ai); }
+.hj-docs { list-style: none; padding: 0; margin: 0 0 16px; display: grid; gap: 6px; }
+.hj-docs li { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 8px 12px; background: var(--paper); border: 1px solid var(--line); border-radius: 6px; font-size: 14px; }
+.hj-docs a { color: var(--accent); }
+.hj-fmt { font-size: 11px; color: var(--sub); border: 1px solid var(--line); border-radius: 3px; padding: 1px 5px; }
+.hj-ng { margin: 0 0 20px; padding: 10px 14px; border: 1px dashed var(--shu); border-radius: 6px; font-size: 13.5px; background: var(--paper); }
+.hj-ng b { color: var(--shu); }
+.hj-ng ul { margin: 6px 0 0; padding-left: 1.2em; word-break: break-all; }

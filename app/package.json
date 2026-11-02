@@ -12,6 +12,8 @@
     "読む": "node scripts/tebiki/yomu.ts",
     "照合": "node scripts/tebiki/shogo.ts",
     "鮮度": "node scripts/tebiki/sendo.ts",
+    "探す": "node scripts/hajimete/sagasu.ts",
+    "はじめて読む": "node scripts/hajimete/yomu.ts",
     "見張り": "node scripts/kokai-mihari.ts",
     "見張りを入れる": "cp scripts/hooks/pre-push ../.git/hooks/pre-push && chmod +x ../.git/hooks/pre-push && echo pre-push に見張りを入れた"
   },
