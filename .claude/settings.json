@@ -1,0 +1,25 @@
+{
+  "permissions": {
+    "deny": [
+      "Read(./.env)",
+      "Read(./.env.*)",
+      "Read(./_鍵/**)",
+      "Bash(cat ./.env*)",
+      "Bash(cat ./_鍵/*)"
+    ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "cd \"$CLAUDE_PROJECT_DIR/app\" && node scripts/kokai-mihari.ts --claude-hook",
+            "timeout": 60
+          }
+        ]
+      }
+    ]
+  }
+}

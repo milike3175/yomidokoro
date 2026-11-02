@@ -1,0 +1,5 @@
+#!/bin/sh
+# git の pre-push フック：push の直前に公開前の見張り（app/scripts/kokai-mihari.ts）を走らせ、問題があれば止める。
+# 入れ方：app で `npm run 見張りを入れる`（.git/hooks/pre-push にこのファイルを写す）
+cd "$(git rev-parse --show-toplevel)/app" || exit 1
+exec node scripts/kokai-mihari.ts --pre-push

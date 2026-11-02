@@ -11,7 +11,9 @@
     "取得": "node scripts/tebiki/shutoku.ts",
     "読む": "node scripts/tebiki/yomu.ts",
     "照合": "node scripts/tebiki/shogo.ts",
-    "鮮度": "node scripts/tebiki/sendo.ts"
+    "鮮度": "node scripts/tebiki/sendo.ts",
+    "見張り": "node scripts/kokai-mihari.ts",
+    "見張りを入れる": "cp scripts/hooks/pre-push ../.git/hooks/pre-push && chmod +x ../.git/hooks/pre-push && echo pre-push に見張りを入れた"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^1.3.0",
