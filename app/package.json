@@ -1,0 +1,24 @@
+{
+  "name": "kyoninka-local-rules",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "TECHO=${TECHO:-1} next dev -H 127.0.0.1",
+    "build": "TECHO=${TECHO:-0} next build && node scripts/build-check.ts",
+    "確認": "node scripts/kakunin.ts"
+  },
+  "dependencies": {
+    "next": "16.4.3",
+    "react": "19.3.1",
+    "react-dom": "19.3.1",
+    "yaml": "2.9.1",
+    "zod": "4.6.7"
+  },
+  "devDependencies": {
+    "@types/node": "^24",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "typescript": "^5"
+  }
+}

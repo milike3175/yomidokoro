@@ -1,0 +1,367 @@
+:root {
+  --bg: #f7f6f3;
+  --paper: #ffffff;
+  --ink: #2b2b2b;
+  --sub: #6b6b6b;
+  --line: #dcd9d2;
+  --accent: #34506b;
+
+  /* 出典種別の色（構成/02） */
+  --c-tebiki: #2f6db5;
+  --c-tebiki-bg: #e9f1fa;
+  --c-juri: #2e7d4f;
+  --c-juri-bg: #e8f4ec;
+  --c-denwa: #c46a1b;
+  --c-denwa-bg: #fcf0e4;
+  --c-dogyo: #6f6f6f;
+  --c-dogyo-bg: #efefef;
+  --c-nashi: #b5b1a8;
+
+  --c-recheck: #a33a3a;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Noto Sans JP", "Yu Gothic", sans-serif;
+  font-size: 15px;
+  line-height: 1.7;
+}
+
+a {
+  color: var(--accent);
+}
+
+main {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 16px 16px 40px;
+}
+
+.techo-banner {
+  background: #f3ead7;
+  color: #6a5320;
+  font-size: 13px;
+  padding: 6px 16px;
+  text-align: center;
+  border-bottom: 1px solid #e2d5b6;
+}
+
+.site-header {
+  background: var(--paper);
+  border-bottom: 1px solid var(--line);
+  padding: 12px 16px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  align-items: baseline;
+  justify-content: center;
+}
+
+.site-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.site-sub {
+  color: var(--sub);
+  font-size: 13px;
+}
+
+.site-footer {
+  border-top: 1px solid var(--line);
+  color: var(--sub);
+  font-size: 12px;
+  padding: 16px;
+  text-align: center;
+}
+
+h1 {
+  font-size: 22px;
+  margin: 8px 0 4px;
+}
+
+h2 {
+  font-size: 17px;
+  margin: 28px 0 10px;
+  padding-bottom: 4px;
+  border-bottom: 2px solid var(--line);
+}
+
+.lead {
+  color: var(--sub);
+  margin: 0 0 12px;
+  font-size: 14px;
+}
+
+/* 凡例・種別ラベル */
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 12px;
+  font-size: 13px;
+  color: var(--sub);
+  margin: 8px 0 4px;
+  align-items: center;
+}
+
+.label {
+  display: inline-block;
+  font-size: 12px;
+  line-height: 1;
+  padding: 4px 7px;
+  border-radius: 3px;
+  border: 1px solid transparent;
+  white-space: nowrap;
+  font-weight: 600;
+}
+.label.手引き { background: var(--c-tebiki); color: #fff; }
+.label.受理実績 { background: var(--c-juri); color: #fff; }
+.label.電話 { background: var(--c-denwa); color: #fff; }
+.label.同業者 { background: var(--c-dogyo); color: #fff; }
+.label.記載なし { background: #fff; color: var(--sub); border-color: var(--c-nashi); }
+.label.再確認 { background: #fff; color: var(--c-recheck); border: 1px dashed var(--c-recheck); }
+
+/* 全国一覧 */
+.summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 12px 0;
+}
+.summary div {
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  padding: 8px 14px;
+  font-size: 13px;
+  color: var(--sub);
+}
+.summary b {
+  display: block;
+  font-size: 20px;
+  color: var(--ink);
+}
+
+.region {
+  margin-top: 18px;
+}
+.region h2 {
+  margin-top: 0;
+}
+.pref-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 8px;
+}
+.pref {
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  padding: 8px 10px;
+  color: var(--sub);
+  text-decoration: none;
+  display: block;
+}
+.pref .name {
+  font-weight: 600;
+  font-size: 15px;
+}
+.pref.has {
+  color: var(--ink);
+  border-color: #b9c4cf;
+}
+.pref.has:hover {
+  border-color: var(--accent);
+  background: #fbfcfd;
+}
+.pref.has .name {
+  color: var(--accent);
+}
+.counts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px 8px;
+  font-size: 12px;
+  margin-top: 4px;
+}
+.count {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+.count .dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+  display: inline-block;
+}
+.count.zero {
+  color: #b0ada6;
+}
+.dot.手引き { background: var(--c-tebiki); }
+.dot.受理実績 { background: var(--c-juri); }
+.dot.電話 { background: var(--c-denwa); }
+.dot.同業者 { background: var(--c-dogyo); }
+.count.zero .dot { background: #ddd9d0; }
+.pref .none {
+  font-size: 12px;
+  color: #b0ada6;
+}
+
+/* 県ページ */
+.back {
+  font-size: 13px;
+}
+
+.checklist {
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-left: 4px solid var(--c-denwa);
+  border-radius: 4px;
+  padding: 12px 16px;
+  margin: 16px 0;
+}
+.checklist h2 {
+  margin: 0 0 4px;
+  border: none;
+  padding: 0;
+}
+.checklist ol {
+  margin: 8px 0 0;
+  padding-left: 1.6em;
+}
+.checklist li {
+  margin: 4px 0;
+}
+.checklist .ask {
+  font-weight: 600;
+}
+.checklist .why {
+  color: var(--sub);
+  font-size: 12px;
+  margin-left: 6px;
+}
+
+.kanten {
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  margin: 8px 0;
+  padding: 10px 14px;
+  scroll-margin-top: 12px;
+}
+.kanten.empty {
+  background: transparent;
+  padding: 6px 14px;
+}
+.kanten-head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 10px;
+  align-items: baseline;
+}
+.kanten-head .no {
+  color: var(--sub);
+  font-size: 12px;
+  font-family: ui-monospace, Menlo, monospace;
+}
+.kanten-head .title {
+  font-weight: 700;
+}
+.kanten.empty .title {
+  font-weight: 400;
+  color: var(--sub);
+}
+.kanten-head .nothing {
+  font-size: 12px;
+  color: #b0ada6;
+}
+
+.cards {
+  display: grid;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.card {
+  border: 1px solid var(--line);
+  border-left-width: 4px;
+  border-radius: 4px;
+  padding: 8px 12px;
+  background: #fff;
+}
+.card.手引き { border-left-color: var(--c-tebiki); background: var(--c-tebiki-bg); }
+.card.受理実績 { border-left-color: var(--c-juri); background: var(--c-juri-bg); }
+.card.電話 { border-left-color: var(--c-denwa); background: var(--c-denwa-bg); }
+.card.同業者 { border-left-color: var(--c-dogyo); background: var(--c-dogyo-bg); }
+.card.記載なし { border-left-color: var(--c-nashi); background: #fff; }
+.card.recheck { border-style: dashed; border-left-style: solid; }
+
+.card-top {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+  margin-bottom: 4px;
+}
+.card .q {
+  color: var(--sub);
+  font-size: 13px;
+}
+.card .a {
+  margin: 2px 0 4px;
+}
+.card .meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 14px;
+  font-size: 12px;
+  color: var(--sub);
+}
+.card .disclaimer {
+  margin-top: 6px;
+  font-size: 12px;
+  color: #7a4a17;
+  border-top: 1px solid #ecd6bd;
+  padding-top: 4px;
+}
+.card .ref {
+  font-size: 13px;
+  margin-top: 4px;
+}
+.card blockquote {
+  margin: 4px 0;
+  padding: 2px 10px;
+  border-left: 3px solid #bcd0e8;
+  color: #3d4a57;
+  font-size: 13px;
+}
+
+@media (max-width: 600px) {
+  body {
+    font-size: 14px;
+  }
+  main {
+    padding: 12px 10px 32px;
+  }
+  .pref-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .checklist,
+  .kanten {
+    padding: 10px 10px;
+  }
+}
