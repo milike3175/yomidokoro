@@ -17,8 +17,16 @@ export async function generateMetadata({ params }: { params: Promise<{ code: str
 
 export default async function KenPage({ params }: { params: Promise<{ code: string }> }) {
   const { code } = await params;
-  const { 県ごと, 観点一覧 } = データ();
+  const { 県ごと, 観点一覧, 品目 } = データ();
   const d = 県ごと[code];
   if (!d) notFound();
-  return <KenView 県名={d.県.名前} 観点一覧={観点一覧} カード={d.カード} 書き出し日={今日の文字()} />;
+  return <KenView
+      県名={d.県.名前}
+      手引きの状態={d.県.手引きの状態}
+      観点一覧={観点一覧}
+      品目一覧={品目.品目}
+      付加区分={品目.付加区分.map((x) => x.id)}
+      カード={d.カード}
+      書き出し日={今日の文字()}
+    />;
 }

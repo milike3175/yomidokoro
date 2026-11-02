@@ -63,6 +63,11 @@ export const 県ファイル = z.object({
         短い名: z.string().min(1),
         地方: z.string().min(1),
         言い回し: z.array(z.string()).optional(),
+        手引きの状態: z
+          .enum(["検品済み", "未検品", "未確認", "未読"], {
+            error: "手引きの状態は 検品済み・未検品・未確認・未読 のどれかです",
+          })
+          .default("未読"),
       }),
     )
     .length(47, { error: "都道府県は47件のはずです" }),
