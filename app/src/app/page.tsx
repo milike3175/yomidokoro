@@ -40,6 +40,10 @@ export default function Home() {
       <p className="lead">
         色の濃さが記録の件数、枠の線が手引きの読み込み状況。記録のある県を押すと、観点{観点一覧.length}項目ごとの中身が見られる。
       </p>
+      <p className="hk-entry">
+        <a href="/hikaku/?観点=排出事業者&手続き=新規">府県くらべ</a>
+        <span className="hint">観点を一つ選ぶと、府県ごとの答えが並ぶ（排出事業者の書き方など）</span>
+      </p>
 
       <div className="summary">
         <div>

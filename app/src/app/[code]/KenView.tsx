@@ -5,10 +5,7 @@ import { useEffect, useState } from "react";
 import type { カード } from "@/lib/data";
 import type { 観点 } from "../../../schema/record.ts";
 import { 再確認か, 経過日数, 年月, 表示日, 日付に } from "@/lib/hizuke";
-
-const 手続き一覧 = ["新規", "更新", "変更許可"] as const;
-type 手続き = (typeof 手続き一覧)[number];
-const 既定の手続き: 手続き = "新規";
+import { 手続き一覧, 既定の手続き, 品目で見る as 品目の判定, 手続きが合う as 手続きの判定, type 手続き, type 品目判定 } from "@/lib/hantei";
 
 type Props = {
   県名: string;
@@ -26,8 +23,6 @@ type Props = {
   政令市: { コード: string; 名前: string; カード: カード[] }[];
   書き出し日: string;
 };
-
-type 品目判定 = "合う" | "合わない" | "関係なし";
 
 const 状態の説明: Record<string, string> = {
   検品済み: "手引きは読み込み済みで、引用はすべて出典と照合できた",
@@ -84,14 +79,9 @@ export default function KenView({
 
   const 選んだ品目 = 品目一覧.find((x) => x.id === 品目);
 
-  const 品目で見る = (c: カード, k: 観点 | undefined): 品目判定 => {
-    if (!品目 || !k?.品目で変わる || !c.品目 || c.品目.length === 0) return "関係なし";
-    if (c.品目.includes(品目)) return "合う";
-    if (選んだ品目 && c.品目.includes("建設系")) return 選んだ品目.建設系 ? "合う" : "合わない";
-    if (選んだ品目 && c.品目.includes("建設系以外")) return 選んだ品目.建設系 ? "合わない" : "合う";
-    return "合わない";
-  };
-  const 手続きが合う = (c: カード) => c.対象.length === 0 || c.対象.includes(手続き);
+  // 判定は府県くらべと同じもの（@/lib/hantei）を使う
+  const 品目で見る = (c: カード, k: 観点 | undefined): 品目判定 => 品目の判定(c, k, 品目, 品目一覧);
+  const 手続きが合う = (c: カード) => 手続きの判定(c, 手続き);
 
   const 観点の記録 = (id: string) => 全カード.filter((c) => c.観点 === id);
   const 観点map = new Map(観点一覧.map((k) => [k.id, k]));
@@ -138,6 +128,10 @@ export default function KenView({
         <a href="/">全国の地図にもどる</a>
       </p>
       <h1>{県名}</h1>
+      <p className="hk-entry">
+        <a href={`/hikaku/?${new URLSearchParams({ 観点: "排出事業者", ...(品目 ? { 品目 } : {}), 手続き }).toString()}`}>府県くらべ</a>
+        <span className="hint">同じ観点を、ほかの府県と並べて見る</span>
+      </p>
       {改訂 && (
         <div className="kaitei-band" role="alert">
           <div className="kaitei-title">
