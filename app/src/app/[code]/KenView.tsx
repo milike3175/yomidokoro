@@ -22,6 +22,8 @@ type Props = {
   品目一覧: { id: string; 建設系: boolean }[];
   付加区分: string[];
   カード: カード[];
+  /** この県の中の政令市の記録。許可権者が違うので、県の記録・チェックリスト・揺れとは混ぜない */
+  政令市: { コード: string; 名前: string; カード: カード[] }[];
   書き出し日: string;
 };
 
@@ -46,6 +48,7 @@ export default function KenView({
   品目一覧,
   付加区分,
   カード: 全カード,
+  政令市,
   書き出し日,
 }: Props) {
   // 最初は書き出した日と既定値で描き、ブラウザで開いた時点の日付と URL の指定に置き換える
@@ -158,6 +161,8 @@ export default function KenView({
               .join("、")}）`
           : ""}
         。観点{観点一覧.length}項目ごとに、手引き・受理実績・電話で聞いた答えを分けて並べている。道具は判断しない。判断は行政書士がする。
+        {政令市.length > 0 &&
+          `${政令市.map((s) => s.名前).join("・")}（政令市）の窓口で聞いた記録は、許可権者が違うので${県名}の記録とは分けて、下の${政令市.map((s) => `「${s.名前}（政令市）の窓口」`).join("・")}に置いた。`}
       </p>
 
       <nav className="toc-mobile" aria-label="目次">
@@ -166,6 +171,11 @@ export default function KenView({
         {群順.map((g) => (
           <a key={g} href={`#${群id(g)}`}>
             {g}
+          </a>
+        ))}
+        {政令市.map((s) => (
+          <a key={s.コード} href={`#c${s.コード}`}>
+            {s.名前}（政令市）
           </a>
         ))}
       </nav>
@@ -228,6 +238,14 @@ export default function KenView({
                   <a href={`#${群id(g)}`}>
                     {g}
                     <span className="num">{群の記録数(g)}</span>
+                  </a>
+                </li>
+              ))}
+              {政令市.map((s) => (
+                <li key={s.コード}>
+                  <a href={`#c${s.コード}`}>
+                    {s.名前}（政令市）の窓口
+                    <span className="num">{s.カード.length}</span>
                   </a>
                 </li>
               ))}
@@ -358,6 +376,58 @@ export default function KenView({
                 })}
             </section>
           ))}
+
+          {政令市.map((s) => {
+            // 観点の並びは県と同じにするが、県の記録とは比べない（許可権者が違うので揺れとして数えない）
+            const 並び = [
+              ...観点一覧.map((k) => ({ k, cs: s.カード.filter((c) => c.観点 === k.id) })),
+              { k: undefined, cs: s.カード.filter((c) => c.観点 === "未分類") },
+            ].filter((x) => x.cs.length > 0);
+            return (
+              <section key={s.コード} className="group seireishi" id={`c${s.コード}`}>
+                <h2>
+                  {s.名前}（政令市）の窓口<span className="cnt">{s.カード.length}件</span>
+                </h2>
+                <p className="lead">
+                  {s.名前}の窓口で聞いた記録。許可権者が{県名}とは別なので、{県名}の記録と並べても食い違い（揺れ）としては数えない。上のチェックリストにも入れていない。
+                </p>
+                {並び.map(({ k, cs }) => (
+                  <div key={k?.id ?? "未分類"} className="kanten">
+                    <div className="kanten-head">
+                      {k ? (
+                        <>
+                          <span className="no">{k.番号}</span>
+                          <span className="title">{k.表示名}</span>
+                          {k.品目で変わる && <span className="tag">品目で変わる</span>}
+                        </>
+                      ) : (
+                        <span className="title">観点に無い話（未分類）</span>
+                      )}
+                    </div>
+                    <div className="cards">
+                      {cs.map((c, i) => (
+                        <div key={i}>
+                          {!k && (
+                            <div className="kanten-name" style={{ fontSize: 12, color: "var(--sub)" }}>
+                              候補：{c.候補観点}
+                            </div>
+                          )}
+                          <Card
+                            c={c}
+                            今日={今日}
+                            手続きが合う={手続きが合う(c)}
+                            品目={k ? 品目で見る(c, k) : "関係なし"}
+                            選んだ品目={品目}
+                            分かりにくい={false}
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </section>
+            );
+          })}
 
           {観点候補.length > 0 && (
             <section className="group" id="kouho">

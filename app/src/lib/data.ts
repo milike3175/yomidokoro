@@ -13,13 +13,15 @@ import {
   補正ファイル,
   type 観点,
   type 県,
+  type 政令市,
 } from "../../schema/record.ts";
 
 export const 許認可 = "産廃収集運搬";
 
 const APP = process.cwd();
 const DATA = path.join(APP, "data");
-const TECHO_DIR = path.join(APP, "..", "手帳");
+/** 手帳の置き場。試しのときだけ TECHO_ROOT で差し替える（本物の手帳に試しのファイルを置かないため） */
+const TECHO_DIR = process.env.TECHO_ROOT ? path.resolve(process.env.TECHO_ROOT) : path.join(APP, "..", "手帳");
 /** 手引きの置き場（_出典.yaml だけがリポジトリに入る）。試しのときだけ TEBIKI_ROOT で差し替える */
 const TEBIKI_DIR = process.env.TEBIKI_ROOT ? path.resolve(process.env.TEBIKI_ROOT) : path.join(APP, "..", "手引き");
 
@@ -67,7 +69,12 @@ export type 県データ = {
   読んだ日: string | null;
   観点候補: { 名前: string; 主張?: string; 文書?: string; 物理ページ?: number; 引用: string; url?: string }[];
   照合の内訳: Record<string, number>;
+  /** この県の中の政令市（記録が1件以上あるものだけ）。許可権者が違うので、県の記録とは混ぜない */
+  政令市: 政令市データ[];
 };
+
+export type 許可権者の記録 = Omit<県データ, "県" | "政令市">;
+export type 政令市データ = 許可権者の記録 & { 市: 政令市 };
 
 function NFC(s: string) {
   return s.normalize("NFC");
@@ -102,11 +109,13 @@ let cache: ReturnType<typeof 全部読む> | null = null;
 function 全部読む() {
   const 観点一覧: 観点[] = 読む(path.join(DATA, "観点.yaml"), 観点ファイル).観点;
   const 品目 = 読む(path.join(DATA, "品目.yaml"), 品目ファイル);
-  const 県一覧 = 読む(path.join(DATA, "県.yaml"), 県ファイル).県;
   const 観点ids = new Set(観点一覧.map((k) => k.id));
 
-  const 県ごと: Record<string, 県データ> = {};
-  for (const 県 of 県一覧) {
+  const 県ファイルの中身 = 読む(path.join(DATA, "県.yaml"), 県ファイル);
+  const 政令市一覧 = 県ファイルの中身.政令市;
+
+  /** 許可権者（県か政令市）1つ分の記録を集める。フォルダはコード（2桁か5桁）で探す */
+  function 一つ読む(県: { コード: string; 名前: string; 手引きの状態: 手引きの状態 }): 許可権者の記録 {
     const カード: カード[] = [];
     const 公開側 = 県フォルダ(path.join(DATA, 許認可), 県.コード);
     let 手引きurl: string | undefined;
@@ -224,8 +233,8 @@ function 全部読む() {
     const 件数 = { 手引き: 0, 受理実績: 0, 電話: 0, 同業者: 0, 補正: 0 };
     for (const c of カード) if (c.種別 !== "記載なし") 件数[c.種別]++;
     const 最新 = 検知.length ? 検知[検知.length - 1] : null;
-    県ごと[県.コード] = {
-      県,
+    void 手引きあり;
+    return {
       カード,
       件数,
       手引きの状態: 状態,
@@ -234,7 +243,16 @@ function 全部読む() {
       観点候補,
       照合の内訳,
     };
-    void 手引きあり;
+  }
+
+  const 県一覧 = 県ファイルの中身.県;
+  const 県ごと: Record<string, 県データ> = {};
+  for (const 県 of 県一覧) {
+    const 市たち = 政令市一覧
+      .filter((s) => s.親 === 県.コード)
+      .map((市) => ({ 市, ...一つ読む(市) }))
+      .filter((d) => d.カード.length > 0);
+    県ごと[県.コード] = { 県, ...一つ読む(県), 政令市: 市たち };
   }
   return { 観点一覧, 品目, 県一覧, 県ごと };
 }

@@ -32,6 +32,7 @@ export default async function KenPage({ params }: { params: Promise<{ code: stri
       品目一覧={品目.品目}
       付加区分={品目.付加区分.map((x) => x.id)}
       カード={d.カード}
+      政令市={d.政令市.map((s) => ({ コード: s.市.コード, 名前: s.市.名前, カード: s.カード }))}
       書き出し日={今日の文字()}
     />;
 }

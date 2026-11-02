@@ -25,8 +25,12 @@ export default function Home() {
   const 地方順: string[] = [];
   for (const k of 県一覧) if (!地方順.includes(k.地方)) 地方順.push(k.地方);
 
-  const 計 = (code: string) => 種別順.reduce((s, t) => s + 県ごと[code].件数[t], 0);
-  const 合計 = (t: (typeof 種別順)[number]) => Object.values(県ごと).reduce((s, d) => s + d.件数[t], 0);
+  // 件数は、その県の中の政令市の記録も含めて数える（地図はその土地の記録の量を見せる）。県のページでは分けて出す
+  const 市の件数 = (code: string, t: (typeof 種別順)[number]) => 県ごと[code].政令市.reduce((s, c) => s + c.件数[t], 0);
+  const 市の計 = (code: string) => 種別順.reduce((s, t) => s + 市の件数(code, t), 0);
+  const 計 = (code: string) => 種別順.reduce((s, t) => s + 県ごと[code].件数[t], 0) + 市の計(code);
+  const 合計 = (t: (typeof 種別順)[number]) =>
+    Object.values(県ごと).reduce((s, d) => s + d.件数[t] + d.政令市.reduce((a, c) => a + c.件数[t], 0), 0);
   const 記録のある県 = 県一覧.filter((k) => 計(k.コード) > 0).length;
   const 全件 = 種別順.reduce((s, t) => s + 合計(t), 0);
 
@@ -71,11 +75,18 @@ export default function Home() {
               gridColumn: `${p.列 + 1} / span ${p.幅 ?? 1}`,
               gridRow: `${p.行 + 1} / span ${p.高さ ?? 1}`,
             };
-            const title = `${k.名前}：記録 ${n}件、${状態の説明[d.手引きの状態]}${d.改訂 ? `、手引きの改訂を検知（${d.改訂.日付}）` : ""}`;
+            const 市 = 市の計(k.コード);
+            const 市名 = d.政令市.map((s) => s.市.名前).join("・");
+            const title = `${k.名前}：記録 ${n}件${市 ? `（うち${市名}（政令市）${市}件）` : ""}、${状態の説明[d.手引きの状態]}${d.改訂 ? `、手引きの改訂を検知（${d.改訂.日付}）` : ""}`;
             const 中身 = (
               <>
                 <span className="n">{k.短い名}</span>
                 {n > 0 && <span className="c">{n}</span>}
+                {市 > 0 && (
+                  <span className="shi" aria-hidden="true">
+                    市
+                  </span>
+                )}
               </>
             );
             return n > 0 ? (
@@ -105,6 +116,12 @@ export default function Home() {
                 {t}
               </span>
             ))}
+          </div>
+          <div className="legend">
+            <span className="legend-item">
+              <span className="swatch shi-mark">市</span>
+              政令市の窓口の記録もある（件数に含む）
+            </span>
           </div>
           <div className="legend">
             <span>手引き</span>
@@ -155,6 +172,19 @@ export default function Home() {
                     ) : (
                       <div className="none">まだ記録がない</div>
                     )}
+                    {d.政令市.map((s) => (
+                      <div key={s.市.コード} className="counts shi-counts">
+                        <span className="count">{s.市.名前}（政令市）</span>
+                        {種別順
+                          .filter((t) => s.件数[t] > 0)
+                          .map((t) => (
+                            <span key={t} className="count">
+                              <span className={`dot ${t}`} />
+                              {t} {s.件数[t]}
+                            </span>
+                          ))}
+                      </div>
+                    ))}
                   </>
                 );
                 return ある ? (

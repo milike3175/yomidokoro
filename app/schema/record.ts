@@ -71,6 +71,23 @@ export const 県ファイル = z.object({
       }),
     )
     .length(47, { error: "都道府県は47件のはずです" }),
+  /** 政令市（5桁）。記録が入った時点で足す。画面では親の県のページに区切って出す（タイル地図には出さない） */
+  政令市: z
+    .array(
+      z.object({
+        コード: z.string().regex(/^\d{5}$/, { error: "政令市のコードは5桁の文字で書いてください（例 \"26100\"）" }),
+        団体コード: z.string().regex(/^\d{6}$/),
+        名前: z.string().min(1),
+        親: z.string().regex(/^\d{2}$/, { error: "親は県コード2桁の文字で書いてください（例 \"26\"）" }),
+        言い回し: z.array(z.string()).optional(),
+        手引きの状態: z
+          .enum(["検品済み", "未検品", "未確認", "未読"], {
+            error: "手引きの状態は 検品済み・未検品・未確認・未読 のどれかです",
+          })
+          .default("未読"),
+      }),
+    )
+    .default([]),
 });
 
 // ---- 層1：手引き ----
@@ -226,6 +243,7 @@ export const 補正ファイル = z.object({
 
 export type 観点 = z.infer<typeof 観点ファイル>["観点"][number];
 export type 県 = z.infer<typeof 県ファイル>["県"][number];
+export type 政令市 = z.infer<typeof 県ファイル>["政令市"][number];
 export type 手引きデータ = z.infer<typeof 手引きファイル>;
 export type 受理実績データ = z.infer<typeof 受理実績ファイル>;
 export type 電話データ = z.infer<typeof 電話ファイル>;

@@ -147,7 +147,26 @@ if (!["議事録", "メモ", "superwhisper"].includes(取込元)) 止める("--�
 // ---------------- 語彙と既存の記録 ----------------
 const 観点 = 観点ファイル.parse(parse(fs.readFileSync(path.join(DATA, "観点.yaml"), "utf8"))).観点;
 const 品目 = 品目ファイル.parse(parse(fs.readFileSync(path.join(DATA, "品目.yaml"), "utf8")));
-const 県一覧 = 県ファイル.parse(parse(fs.readFileSync(path.join(DATA, "県.yaml"), "utf8"))).県;
+const 県の中身 = 県ファイル.parse(parse(fs.readFileSync(path.join(DATA, "県.yaml"), "utf8")));
+const 県一覧 = 県の中身.県;
+/** 許可権者の候補：47都道府県＋県.yaml に足した政令市。政令市の窓口の答えは政令市のコード（5桁）で保存する */
+const 許可権者一覧: { コード: string; 名前: string; 言葉: string[]; 説明: string }[] = [
+  ...県一覧.map((k) => ({
+    コード: k.コード,
+    名前: k.名前,
+    言葉: [k.名前, k.短い名, ...(k.言い回し ?? [])],
+    説明: `${k.名前}／${k.短い名}${k.言い回し?.length ? "／" + k.言い回し.join("・") : ""}`,
+  })),
+  ...県の中身.政令市.map((s) => {
+    const 親 = 県一覧.find((k) => k.コード === s.親);
+    return {
+      コード: s.コード,
+      名前: s.名前,
+      言葉: [s.名前, ...(s.言い回し ?? [])],
+      説明: `${s.名前}（政令市。${親?.名前 ?? s.親}の中）${s.言い回し?.length ? "／" + s.言い回し.join("・") : ""}`,
+    };
+  }),
+];
 const 観点ids = new Set(観点.map((k) => k.id));
 const 品目ids = new Set([...品目.品目.map((h) => h.id), ...品目.付加区分.map((h) => h.id), "建設系", "建設系以外"]);
 
@@ -157,13 +176,15 @@ function 県フォルダ(root: string, コード: string): string | null {
   return hit ? path.join(root, hit) : null;
 }
 
-/** 文字の中から県を探す（Claude に渡す既存の記録を選ぶためだけ。決めるのは Claude） */
+/** 文字の中から許可権者を探す（Claude に渡す既存の記録を選ぶためだけ。決めるのは Claude）。
+ *  同じ位置で当たったら長い語を取る（「京都市」と「京都」なら京都市） */
 function 県の見当(text: string) {
-  let best: { コード: string; at: number } | null = null;
-  for (const k of 県一覧) {
-    for (const w of [k.名前, k.短い名, ...(k.言い回し ?? [])]) {
+  let best: { コード: string; at: number; 長さ: number } | null = null;
+  for (const k of 許可権者一覧) {
+    for (const w of k.言葉) {
       const at = text.indexOf(w);
-      if (at >= 0 && (!best || at < best.at)) best = { コード: k.コード, at };
+      if (at < 0) continue;
+      if (!best || at < best.at || (at === best.at && w.length > best.長さ)) best = { コード: k.コード, at, 長さ: w.length };
     }
   }
   return best?.コード ?? null;
@@ -252,7 +273,7 @@ const system = 指示文("mio.md", {
   許認可,
   今日: 今日の文字,
   録音日: 録音日 ?? `${今日の文字}（録音ではないので今日）`,
-  県: 県一覧.map((k) => `${k.コード}：${k.名前}／${k.短い名}${k.言い回し?.length ? "／" + k.言い回し.join("・") : ""}`).join("\n"),
+  県: 許可権者一覧.map((k) => `${k.コード}：${k.説明}`).join("\n"),
   観点: 観点.map((k) => `${k.id}：${k.表示名}／${k.群}／${k.品目で変わる ? "品目で変わる" : "-"}`).join("\n"),
   品目: [...品目.品目.map((h) => `${h.id}${h.建設系 ? "（建設系もある）" : ""}`), ...品目.付加区分.map((h) => `${h.id}（付加区分）`)].join("、"),
   既存の記録: 既存たち.length
@@ -369,7 +390,7 @@ async function main() {
     r = await 整える(`\n\n<聞き返しと答え>\n問い：${r.聞き返し}\n答え：${a}\n</聞き返しと答え>\nこれ以上は聞き返さず、聞き返しは空文字にしてください。`);
   }
 
-  const 県 = 県一覧.find((k) => k.コード === r.許可権者コード);
+  const 県 = 許可権者一覧.find((k) => k.コード === r.許可権者コード);
   if (!県) 止める(`許可権者が決まらなかった（${r.許可権者コード || "空"}）。保存していない。\n${料金の行()}`);
   if (r.項目.length === 0) 止める(`答えが一つも取れなかった。保存していない。\n${料金の行()}`);
 
@@ -475,8 +496,14 @@ async function main() {
   出す();
   出す(`個人名・依頼者情報の削除：${r.個人名削除 + r.依頼者情報削除}件（個人名 ${r.個人名削除}・依頼者情報 ${r.依頼者情報削除}）`);
 
-  // 揺れの候補（判定はしない）
-  const 候補 = r.項目.filter((it) => it.既存との関係 === "食い違いの候補");
+  // 揺れの候補（判定はしない）。比べてよいのは同じ許可権者の記録だけ（京都府と京都市は別）。
+  // 見当で選んだ既存の記録が、決まった許可権者と違うときは比べない
+  const 同じ許可権者 = 見当 === 県!.コード;
+  if (見当 && !同じ許可権者 && r.項目.some((it) => it.既存との関係 === "食い違いの候補")) {
+    出す();
+    出す(`揺れの候補は出さない：見比べた既存の記録が ${許可権者一覧.find((k) => k.コード === 見当)?.名前 ?? "なし"} のもので、${県!.名前} とは許可権者が違うため。`);
+  }
+  const 候補 = 同じ許可権者 ? r.項目.filter((it) => it.既存との関係 === "食い違いの候補") : [];
   for (const it of 候補) {
     const e = 既存たち.find((x) => x.番号 === it.関係する既存);
     if (!e) continue;

@@ -87,6 +87,7 @@ if (観点) {
 }
 const 品目ids = new Set([...(品目?.品目.map((h) => h.id) ?? []), ...(品目?.付加区分.map((h) => h.id) ?? []), "建設系", "建設系以外"]);
 const 県コード = new Set(県?.県.map((k) => k.コード) ?? []);
+const 政令市コード = new Set<string>();
 if (県) {
   for (const k of 県.県) {
     const want = `${k.コード}000${検査数字(k.コード + "000")}`;
@@ -94,6 +95,14 @@ if (県) {
   }
   const want = Array.from({ length: 47 }, (_, n) => String(n + 1).padStart(2, "0"));
   if (want.some((c) => !県コード.has(c))) 誤り(path.join(DATA, "県.yaml"), null, "01〜47 のコードがそろっていません");
+  for (const s of 県.政令市) {
+    const want = `${s.コード}${検査数字(s.コード)}`;
+    if (s.団体コード !== want) 誤り(path.join(DATA, "県.yaml"), null, `${s.名前} の団体コードが ${s.団体コード} ですが、計算では ${want} です`);
+    if (!県コード.has(s.親)) 誤り(path.join(DATA, "県.yaml"), null, `${s.名前} の親「${s.親}」が県の一覧にありません`);
+    if (!s.コード.startsWith(s.親)) 誤り(path.join(DATA, "県.yaml"), null, `${s.名前} のコード ${s.コード} が親の県コード ${s.親} で始まっていません`);
+    if (政令市コード.has(s.コード)) 誤り(path.join(DATA, "県.yaml"), null, `政令市のコード ${s.コード} が重なっています`);
+    政令市コード.add(s.コード);
+  }
 }
 
 function 観点を確かめる(file: string, 観点名: string) {
@@ -118,9 +127,15 @@ function 県フォルダたち(root: string): { dir: string; コード: string }
     .filter((x) => x.コード);
 }
 
+function コードを確かめる(dir: string, コード: string) {
+  if (!県) return;
+  if (コード.length === 2 && !県コード.has(コード)) 誤り(dir, null, `県コード ${コード} は 県.yaml にありません`);
+  if (コード.length === 5 && !政令市コード.has(コード)) 誤り(dir, null, `政令市のコード ${コード} は 県.yaml の 政令市: にありません（先に足してください）`);
+}
+
 // ---- 公開側：手引き・受理実績 ----
 for (const { dir, コード } of 県フォルダたち(path.join(DATA, 許認可))) {
-  if (コード.length === 2 && !県コード.has(コード)) 誤り(dir, null, `県コード ${コード} は 県.yaml にありません`);
+  コードを確かめる(dir, コード);
   const t = path.join(dir, "手引き.yaml");
   if (fs.existsSync(t)) {
     const d = 検証(t, 手引きファイル);
@@ -152,6 +167,7 @@ for (const { dir, コード } of 県フォルダたち(path.join(DATA, 許認可
 const TECHO = path.join(ROOT, "手帳", 許認可);
 const 電話id = new Set<string>();
 for (const { dir, コード } of 県フォルダたち(TECHO)) {
+  コードを確かめる(dir, コード);
   const 電話dir = path.join(dir, "電話");
   if (!fs.existsSync(電話dir)) continue;
   for (const f of fs.readdirSync(電話dir).filter((n) => n.endsWith(".yaml"))) {
