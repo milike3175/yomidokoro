@@ -533,6 +533,7 @@ function Card({
       <div className="card-body">
         <div className="card-top">
           <span className={`label ${c.種別}`}>{c.種別}</span>
+          {c.見本 && <span className="label 見本">見本</span>}
           {古い && <span className="label 再確認">再確認</span>}
           {照合の札 && <span className={`label ${照合の札.cls}`}>{照合の札.文}</span>}
           {c.改訂 && <span className="note">手引きの改訂を検知。読み直すまで再確認</span>}

@@ -193,6 +193,8 @@ export const 電話ファイル = z.object({
   種別: z.enum(["電話", "同業者"], { error: "種別は 電話 か 同業者 です" }),
   記録者: z.enum(["本人", "同業者"]),
   取込元: 取込元.optional(),
+  /** 公開版に載せる見本（app/data/見本/ に置く）。手帳の記録には付けない */
+  見本: z.boolean().optional(),
   回答: z
     .array(
       z

@@ -20,6 +20,8 @@ export const 許認可 = "産廃収集運搬";
 
 const APP = process.cwd();
 const DATA = path.join(APP, "data");
+/** 公開版に載せる見本の電話記録。手帳を読むとき（TECHO=1）は読まない（手帳の元の記録と二重になるため） */
+const MIHON_DIR = path.join(DATA, "見本");
 /** 手帳の置き場。試しのときだけ TECHO_ROOT で差し替える（本物の手帳に試しのファイルを置かないため） */
 const TECHO_DIR = process.env.TECHO_ROOT ? path.resolve(process.env.TECHO_ROOT) : path.join(APP, "..", "手帳");
 /** 手引きの置き場（_出典.yaml だけがリポジトリに入る）。試しのときだけ TEBIKI_ROOT で差し替える */
@@ -53,6 +55,8 @@ export type カード = {
   手引きへの参照?: { ページ: number; 物理ページ?: number; 内容?: string; url?: string };
   /** 手引きの改訂を検知したあと、まだ読み直していない文書から取った記録 */
   改訂?: boolean;
+  /** 公開版に載せる見本の電話記録（app/data/見本/ から読んだもの） */
+  見本?: boolean;
   探した語?: string[];
 };
 
@@ -177,9 +181,11 @@ function 全部読む() {
       }
     }
 
-    if (手帳を読む) {
-      const 手帳側 = 県フォルダ(path.join(TECHO_DIR, 許認可), 県.コード);
-      const 電話dir = 手帳側 ? path.join(手帳側, "電話") : null;
+    {
+      // 電話の記録：TECHO=1 なら手帳から、公開版（TECHO=0）なら見本/ から読む
+      const 電話の置き場 = 手帳を読む ? TECHO_DIR : MIHON_DIR;
+      const 電話側 = 県フォルダ(path.join(電話の置き場, 許認可), 県.コード);
+      const 電話dir = 電話側 ? path.join(電話側, "電話") : null;
       if (電話dir && fs.existsSync(電話dir)) {
         for (const f of fs.readdirSync(電話dir).filter((n) => n.endsWith(".yaml")).sort()) {
           const d = 読む(path.join(電話dir, f), 電話ファイル);
@@ -191,6 +197,7 @@ function 全部読む() {
               問い: a.問い,
               確認日: d.確認日,
               窓口: d.窓口,
+              見本: 手帳を読む ? undefined : true, // 見本/ から読んだものには必ず「見本」の札を付ける
               対象: a.対象,
               品目: 配列に(a.品目),
               候補観点: a.候補観点,
@@ -205,6 +212,9 @@ function 全部読む() {
           }
         }
       }
+    }
+    if (手帳を読む) {
+      const 手帳側 = 県フォルダ(path.join(TECHO_DIR, 許認可), 県.コード);
       const 補正dir = 手帳側 ? path.join(手帳側, "補正") : null;
       if (補正dir && fs.existsSync(補正dir)) {
         for (const f of fs.readdirSync(補正dir).filter((n) => n.endsWith(".yaml")).sort()) {

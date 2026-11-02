@@ -187,6 +187,7 @@ h2 {
 .label.未分類 { background: transparent; color: var(--sub); border: 1px solid var(--line); }
 .label.分かりにくい { background: transparent; color: var(--enji); border: 1px dashed var(--enji); }
 .label.記載なし { background: transparent; color: var(--sub); border: 1px dashed var(--nashi); }
+.label.見本 { background: transparent; color: var(--kaki); border: 1px dashed var(--kaki); font-size: 10.5px; padding: 4px 7px; }
 .label.再確認 { background: transparent; color: var(--shu); border: 1px solid var(--shu); }
 .label.当てはまる { background: var(--hi-bg); color: var(--ink); border: 1px solid var(--hi); }
 

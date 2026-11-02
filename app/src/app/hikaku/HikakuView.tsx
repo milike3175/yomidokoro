@@ -108,9 +108,9 @@ export default function HikakuView({ 行たち, 観点一覧, 品目一覧, 付�
       右: 並べる(cs.filter((c) => 右の種別.has(c.種別)).map(見る)),
     };
   });
-  // 公開用（手帳なし）で右側に出すもの（受理実績）が一件も無ければ、右の列ごと出さない
-  const 右の列 = 手帳あり || 行たち.some((r) => r.カード.some((c) => c.種別 === "受理実績"));
-  const 右の見出し = 手帳あり ? "電話・補正など" : "受理実績";
+  // 公開用（手帳なし）で右側に出すもの（見本の電話・受理実績）が一件も無ければ、右の列ごと出さない
+  const 右の列 = 手帳あり || 行たち.some((r) => r.カード.some((c) => 右の種別.has(c.種別)));
+  const 右の見出し = 手帳あり ? "電話・補正など" : "電話（見本）・受理実績";
 
   const 当てはまる数 = (xs: 見え方[]) => xs.filter((x) => !x.薄く).length;
   const 手引きあり = 中身.filter((x) => 当てはまる数(x.手引き) > 0).length;
@@ -126,9 +126,9 @@ export default function HikakuView({ 行たち, 観点一覧, 品目一覧, 付�
       </p>
       <h1>府県くらべ</h1>
       <p className="lead">
-        観点を一つ選ぶと、記録のある府県と政令市の答えが並ぶ。左が手引きに書いてあること、右が{手帳あり ? "電話で聞いた答え・補正・受理実績" : "受理実績"}
+        観点を一つ選ぶと、記録のある府県と政令市の答えが並ぶ。左が手引きに書いてあること、右が{手帳あり ? "電話で聞いた答え・補正・受理実績" : "電話で聞いた答え（見本）・受理実績"}
         。選んだ手続き{品目が効く ? "・品目" : ""}に当てはまらない記録は薄くして下に置いた。道具は判断しない。判断は行政書士がする。
-        {!手帳あり && "（公開版のため、電話で聞いた答えと補正は載せていない。手引きだけの比較になる）"}
+        {!手帳あり && "（公開版では、作者の電話記録のうち大阪の7件だけを見本として載せている）"}
       </p>
 
       <div className="hk-controls">
@@ -224,8 +224,8 @@ export default function HikakuView({ 行たち, 観点一覧, 品目一覧, 付�
         {右の列 && (
           <div>
             <b>{右あり}</b>
-            <span className={`dot ${手帳あり ? "電話" : "受理実績"}`} />
-            {手帳あり ? "電話・補正などあり" : "受理実績あり"}
+            <span className="dot 電話" />
+            {手帳あり ? "電話・補正などあり" : "電話（見本）・受理実績あり"}
           </div>
         )}
       </div>
@@ -236,6 +236,7 @@ export default function HikakuView({ 行たち, 観点一覧, 品目一覧, 付�
       <div className="legend" style={{ marginTop: 10 }}>
         <span className="label 手引き">手引き</span>
         <span className="label 受理実績">受理実績</span>
+        {!手帳あり && <span className="label 電話">電話</span>}
         {手帳あり && (
           <>
             <span className="label 電話">電話</span>
@@ -326,6 +327,7 @@ function 小さなカード({ x, 今日, 品目 }: { x: 見え方; 今日: Date;
       <div className="card-body">
         <div className="card-top">
           <span className={`label ${c.種別}`}>{c.種別}</span>
+          {c.見本 && <span className="label 見本">見本</span>}
           {古い && <span className="label 再確認">再確認</span>}
           {照合 === "近似（要目視）" && <span className="label 近似">照合：近似（要目視）</span>}
           {照合 === "不一致" && <span className="label 不一致">照合：不一致</span>}

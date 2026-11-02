@@ -198,6 +198,24 @@ for (const { dir, コード } of 県フォルダたち(TECHO)) {
   }
 }
 
+// ---- 見本：公開版に載せる電話記録（app/data/見本/）。手帳と同じ決まりで、見本: true の印が要る ----
+for (const { dir, コード } of 県フォルダたち(path.join(DATA, "見本", 許認可))) {
+  コードを確かめる(dir, コード);
+  const 電話dir = path.join(dir, "電話");
+  if (!fs.existsSync(電話dir)) continue;
+  for (const f of fs.readdirSync(電話dir).filter((n) => n.endsWith(".yaml"))) {
+    const file = path.join(電話dir, f);
+    const d = 検証(file, 電話ファイル);
+    if (!d) continue;
+    if (d.見本 !== true) 誤り(file, null, "見本/ に置く記録には「見本: true」を書いてください");
+    if (d.許可権者.コード !== コード) 誤り(file, null, `許可権者のコード ${d.許可権者.コード} がフォルダ（${コード}）と違います`);
+    for (const a of d.回答) {
+      観点を確かめる(file, a.観点);
+      品目を確かめる(file, a.品目);
+    }
+  }
+}
+
 console.log("");
 if (エラー数 === 0) {
   console.log(`確認おわり：${ファイル数}ファイル、誤りなし`);
