@@ -7,7 +7,11 @@
     "dev": "TECHO=${TECHO:-1} next dev -H 127.0.0.1",
     "build": "TECHO=${TECHO:-0} next build && node scripts/build-check.ts",
     "確認": "node scripts/kakunin.ts",
-    "取込": "node scripts/torikomi.ts"
+    "取込": "node scripts/torikomi.ts",
+    "取得": "node scripts/tebiki/shutoku.ts",
+    "読む": "node scripts/tebiki/yomu.ts",
+    "照合": "node scripts/tebiki/shogo.ts",
+    "鮮度": "node scripts/tebiki/sendo.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^1.3.0",

@@ -78,16 +78,24 @@ export const 県ファイル = z.object({
 export const 手引きファイル = z.object({
   許可権者,
   許認可: z.string().min(1),
+  /** npm run 読む が読んだ日とモデル */
+  読んだ日: 確認日.optional(),
+  モデル: z.string().optional(),
   手引き: z.array(
     z.object({
       文書: z.string().min(1),
-      url: z.string().url(),
+      名前: z.string().optional(),
+      役割: z.string().optional(),
+      /** 文書ごとの公式URL。人がまとめてダウンロードした県（岩手など）は無い */
+      url: z.string().url().nullable().optional(),
       版: z.string().nullable().optional(),
       取得日: 確認日,
       sha256: z.string().nullable().optional(),
       ページ数: z.number().int().positive().nullable().optional(),
       利用規約: z.string().default("未確認"),
       利用規約確認日: 確認日.nullable().optional(),
+      /** 物理ページと印字ページの対応。[物理, 印字] の組 */
+      ページ対応: z.array(z.tuple([z.number().int(), z.number().int()])).optional(),
     }),
   ),
   記録: z
@@ -116,11 +124,20 @@ export const 手引きファイル = z.object({
         観点: 観点id,
         探した語: z.array(z.string()),
         探した文書: z.array(z.string()),
+        確認日: 確認日.optional(),
       }),
     )
     .default([]),
   観点候補: z
-    .array(z.object({ 名前: z.string(), 引用: z.string(), 物理ページ: z.number().int().optional() }))
+    .array(
+      z.object({
+        名前: z.string(),
+        主張: z.string().optional(),
+        文書: z.string().optional(),
+        引用: z.string(),
+        物理ページ: z.number().int().optional(),
+      }),
+    )
     .default([]),
 });
 

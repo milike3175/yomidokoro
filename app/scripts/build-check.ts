@@ -28,7 +28,37 @@ for (const f of ファイルたち(TECHO, /\.ya?ml$/)) {
     }
   }
 }
-const 見張る文 = [...見張る語].map((s) => s.normalize("NFC"));
+// 公開してよいデータ（app/data の YAML。手引きの要約・引用、観点、品目など）に元から出てくる文は見張らない。
+// 「石綿含有産業廃棄物・水銀使用製品産業廃棄物」のような法令の呼び名が、手帳と手引きの両方に出るため
+const 公開の文 = ファイルたち(path.join(APP, "data"), /\.ya?ml$/)
+  .map((f) => fs.readFileSync(f, "utf8"))
+  .join("\n")
+  .normalize("NFC");
+// 品目・付加区分・手続きの呼び名と区切りだけでできた語も見張らない（画面が品目を「・」でつないで出すため）
+const 品目の文 = parse(fs.readFileSync(path.join(APP, "data", "品目.yaml"), "utf8")) ?? {};
+const 呼び名 = [
+  ...(品目の文.品目 ?? []).map((x: { id: string }) => x.id),
+  ...(品目の文.付加区分 ?? []).map((x: { id: string }) => x.id),
+  "建設系以外",
+  "建設系",
+  "新規",
+  "更新",
+  "変更許可",
+  "変更届",
+].sort((a: string, b: string) => b.length - a.length);
+function 呼び名だけ(s: string) {
+  let r = s;
+  for (const w of 呼び名) {
+    // 語の末尾が途中で切れていることがあるので、呼び名の先頭部分でも外す
+    r = r.split(w).join("");
+    for (let n = w.length - 1; n >= 3; n--) if (r.endsWith(w.slice(0, n))) r = r.slice(0, -n);
+  }
+  return r.replace(/[・、，,\s（）()]/g, "").length < 4;
+}
+const 見張る文 = [...見張る語]
+  .map((s) => s.normalize("NFC"))
+  .filter((s) => !公開の文.includes(s) && !呼び名だけ(s));
+const 外した = 見張る語.size - 見張る文.length;
 
 let 漏れ = 0;
 for (const f of ファイルたち(OUT, /\.(html|txt|js|json|rsc)$/)) {
@@ -44,4 +74,4 @@ if (漏れ) {
   console.error("out/ を消しました。");
   process.exit(1);
 }
-console.log(`見張り：手帳の文 ${見張る文.length}件を out/ で探した。混ざっていない`);
+console.log(`見張り：手帳の文 ${見張る文.length}件を out/ で探した。混ざっていない${外した ? `（公開データにも出てくる ${外した}件は外した）` : ""}`);

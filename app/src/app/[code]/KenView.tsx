@@ -12,7 +12,12 @@ const 既定の手続き: 手続き = "新規";
 
 type Props = {
   県名: string;
+  県コード: string;
   手引きの状態: string;
+  改訂: { 日付: string; 内容: string[] } | null;
+  読んだ日: string | null;
+  観点候補: { 名前: string; 主張?: string; 文書?: string; 物理ページ?: number; 引用: string; url?: string }[];
+  照合の内訳: Record<string, number>;
   観点一覧: 観点[];
   品目一覧: { id: string; 建設系: boolean }[];
   付加区分: string[];
@@ -23,13 +28,26 @@ type Props = {
 type 品目判定 = "合う" | "合わない" | "関係なし";
 
 const 状態の説明: Record<string, string> = {
-  検品済み: "手引きは検品済み",
-  未検品: "手引きは自動で読んだだけ（未検品）",
+  検品済み: "手引きは読み込み済みで、引用はすべて出典と照合できた",
+  未検品: "手引きは自動で読んだが、出典と照合できていない引用がある（未検品）",
   未確認: "手引きは手元にあるが未確認",
   未読: "手引きはまだ読んでいない",
 };
 
-export default function KenView({ 県名, 手引きの状態, 観点一覧, 品目一覧, 付加区分, カード: 全カード, 書き出し日 }: Props) {
+export default function KenView({
+  県名,
+  県コード,
+  手引きの状態,
+  改訂,
+  読んだ日,
+  観点候補,
+  照合の内訳,
+  観点一覧,
+  品目一覧,
+  付加区分,
+  カード: 全カード,
+  書き出し日,
+}: Props) {
   // 最初は書き出した日と既定値で描き、ブラウザで開いた時点の日付と URL の指定に置き換える
   const [今日, set今日] = useState<Date>(() => 日付に(書き出し日));
   const [手続き, set手続き] = useState<手続き>(既定の手続き);
@@ -117,8 +135,29 @@ export default function KenView({ 県名, 手引きの状態, 観点一覧, 品�
         <a href="/">全国の地図にもどる</a>
       </p>
       <h1>{県名}</h1>
+      {改訂 && (
+        <div className="kaitei-band" role="alert">
+          <div className="kaitei-title">
+            手引きが改訂されたかもしれない（{表示日(改訂.日付)}に検知）。読み直す
+          </div>
+          <ul>
+            {改訂.内容.slice(0, 6).map((l, i) => (
+              <li key={i}>{l}</li>
+            ))}
+          </ul>
+          <div className="kaitei-how">
+            読み直すまで、手引きから取った記録には「再確認」の印を付けている。読み直す手順：npm run 取得 -- {県コード} のあと npm run 読む -- {県コード}
+          </div>
+        </div>
+      )}
       <p className="lead">
-        {状態の説明[手引きの状態]}。観点{観点一覧.length}項目ごとに、手引き・受理実績・電話で聞いた答えを分けて並べている。道具は判断しない。判断は行政書士がする。
+        {状態の説明[手引きの状態]}
+        {読んだ日
+          ? `（${表示日(読んだ日)}に読んだ。照合：${Object.entries(照合の内訳)
+              .map(([k, v]) => `${k} ${v}`)
+              .join("、")}）`
+          : ""}
+        。観点{観点一覧.length}項目ごとに、手引き・受理実績・電話で聞いた答えを分けて並べている。道具は判断しない。判断は行政書士がする。
       </p>
 
       <nav className="toc-mobile" aria-label="目次">
@@ -320,6 +359,40 @@ export default function KenView({ 県名, 手引きの状態, 観点一覧, 品�
             </section>
           ))}
 
+          {観点候補.length > 0 && (
+            <section className="group" id="kouho">
+              <h2>手引きにある、この県だけの決まり（観点候補）</h2>
+              <p className="lead">観点の一覧に無いが、手引きに書かれていた独自のルール。よく使うものは観点に足す。</p>
+              <div className="cards">
+                {観点候補.map((c, i) => (
+                  <article key={i} className="card 手引き">
+                    <div className="card-body">
+                      <div className="card-top">
+                        <span className="label 手引き">手引き</span>
+                        <span className="note">{c.名前}</span>
+                      </div>
+                      {c.主張 && <p className="a">{c.主張}</p>}
+                      <blockquote>{c.引用}</blockquote>
+                      {c.物理ページ && (
+                        <div className="ref">
+                          {c.url ? (
+                            <a href={c.url} target="_blank" rel="noopener noreferrer">
+                              {c.文書} PDF {c.物理ページ}ページ目
+                            </a>
+                          ) : (
+                            <span>
+                              {c.文書} PDF {c.物理ページ}ページ目
+                            </span>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </article>
+                ))}
+              </div>
+            </section>
+          )}
+
           {未分類.length > 0 && (
             <section className="group" id="mibunrui">
               <h2>観点に無い話（未分類）</h2>
@@ -373,9 +446,20 @@ function Card({
   選んだ品目: string;
   分かりにくい: boolean;
 }) {
-  const 古い = 再確認か(c.確認日, 今日);
+  const 古い = 再確認か(c.確認日, 今日) || !!c.改訂;
+  const 照合 = c.出典?.照合;
+  const 照合の札 =
+    照合 === "一致"
+      ? { cls: "照合済み", 文: "出典と照合済み" }
+      : 照合 === "一致（ページ訂正）"
+        ? { cls: "照合済み", 文: "出典と照合済み（ページ訂正）" }
+        : 照合 === "近似（要目視）"
+          ? { cls: "近似", 文: "照合：近似（要目視）" }
+          : 照合 === "不一致"
+            ? { cls: "不一致", 文: "照合：不一致" }
+            : null;
   const 薄く = !手続きが合う || 品目 === "合わない";
-  const cls = `card ${c.種別}${古い ? " recheck" : ""}${薄く ? " faded" : ""}${品目 === "合う" && !薄く ? " match" : ""}`;
+  const cls = `card ${c.種別}${古い ? " recheck" : ""}${薄く ? " faded" : ""}${品目 === "合う" && !薄く ? " match" : ""}${照合 === "不一致" ? " mismatch" : ""}`;
   const 添え書き: string[] = [];
   if (!手続きが合う) 添え書き.push(`この答えは${c.対象.join("・")}のとき`);
   if (品目 === "合わない" && c.品目) 添え書き.push(`この答えは${c.品目.join("・")}の品目のとき`);
@@ -386,6 +470,8 @@ function Card({
         <div className="card-top">
           <span className={`label ${c.種別}`}>{c.種別}</span>
           {古い && <span className="label 再確認">再確認</span>}
+          {照合の札 && <span className={`label ${照合の札.cls}`}>{照合の札.文}</span>}
+          {c.改訂 && <span className="note">手引きの改訂を検知。読み直すまで再確認</span>}
           {分かりにくい && <span className="label 分かりにくい">手引きが分かりにくい所</span>}
           {品目 === "合う" && !薄く && <span className="label 当てはまる">{選んだ品目}に当てはまる</span>}
           {添え書き.length > 0 && <span className="note">{添え書き.join("。")}</span>}
@@ -403,17 +489,19 @@ function Card({
           <>
             <blockquote>{c.出典.引用}</blockquote>
             <div className="ref">
+              <span style={{ color: "var(--sub)", fontSize: 12 }}>出典</span>
               {c.出典.url ? (
                 <a href={`${c.出典.url}#page=${c.出典.物理ページ}`} target="_blank" rel="noopener noreferrer">
-                  {c.出典.文書} PDF {c.出典.物理ページ}ページ目
+                  {c.出典.文書名 ?? c.出典.文書}　PDF {c.出典.物理ページ}ページ目
                   {c.出典.印字ページ ? `（印字 p.${c.出典.印字ページ}）` : ""}
                 </a>
               ) : (
                 <span>
-                  {c.出典.文書} PDF {c.出典.物理ページ}ページ目
+                  {c.出典.文書名 ?? c.出典.文書}　PDF {c.出典.物理ページ}ページ目
+                  {c.出典.印字ページ ? `（印字 p.${c.出典.印字ページ}）` : ""}
                 </span>
               )}
-              <span style={{ color: "var(--sub)", fontSize: 12 }}>照合：{c.出典.照合}</span>
+              {c.出典.url && <OutLink />}
             </div>
           </>
         )}
@@ -465,6 +553,9 @@ function Card({
             {c.手引きへの参照.url ? (
               <a href={c.手引きへの参照.url} target="_blank" rel="noopener noreferrer">
                 手引き p.{c.手引きへの参照.ページ} を見る
+                {c.手引きへの参照.物理ページ && c.手引きへの参照.物理ページ !== c.手引きへの参照.ページ
+                  ? `（PDF ${c.手引きへの参照.物理ページ}ページ目）`
+                  : ""}
               </a>
             ) : (
               <span>手引き p.{c.手引きへの参照.ページ} を見る</span>

@@ -20,6 +20,8 @@ export const 許認可 = "産廃収集運搬";
 const APP = process.cwd();
 const DATA = path.join(APP, "data");
 const TECHO_DIR = path.join(APP, "..", "手帳");
+/** 手引きの置き場（_出典.yaml だけがリポジトリに入る）。試しのときだけ TEBIKI_ROOT で差し替える */
+const TEBIKI_DIR = process.env.TEBIKI_ROOT ? path.resolve(process.env.TEBIKI_ROOT) : path.join(APP, "..", "手引き");
 
 /** 手帳（みゆき専用の電話記録）を読むか。TECHO=1 のときだけ。公開用の書き出しには入れない */
 export const 手帳を読む = process.env.TECHO === "1";
@@ -44,15 +46,27 @@ export type カード = {
   窓口?: string;
   対象: string[];
   品目?: string[];
-  出典?: { 文書: string; url?: string; 物理ページ: number; 印字ページ?: number | null; 引用: string; 照合: string };
-  手引きへの参照?: { ページ: number; 内容?: string; url?: string };
+  出典?: { 文書: string; 文書名?: string; url?: string; 物理ページ: number; 印字ページ?: number | null; 引用: string; 照合: string };
+  /** 電話の答えから手引きへのリンク。ページ は人が見た印字の番号、物理ページ は PDF の何枚目か */
+  手引きへの参照?: { ページ: number; 物理ページ?: number; 内容?: string; url?: string };
+  /** 手引きの改訂を検知したあと、まだ読み直していない文書から取った記録 */
+  改訂?: boolean;
   探した語?: string[];
 };
+
+export type 手引きの状態 = "検品済み" | "未検品" | "未確認" | "未読";
 
 export type 県データ = {
   県: 県;
   カード: カード[];
   件数: Record<件数の種別, number>;
+  /** 手引き.yaml の有無と照合の結果から決める。無ければ県.yaml の値 */
+  手引きの状態: 手引きの状態;
+  /** 読んだ日より後に改訂を検知していれば、その日付と中身 */
+  改訂: { 日付: string; 内容: string[] } | null;
+  読んだ日: string | null;
+  観点候補: { 名前: string; 主張?: string; 文書?: string; 物理ページ?: number; 引用: string; url?: string }[];
+  照合の内訳: Record<string, number>;
 };
 
 function NFC(s: string) {
@@ -96,12 +110,35 @@ function 全部読む() {
     const カード: カード[] = [];
     const 公開側 = 県フォルダ(path.join(DATA, 許認可), 県.コード);
     let 手引きurl: string | undefined;
+    let 印字から物理: Map<number, number> = new Map();
+    let 状態: 手引きの状態 = 県.手引きの状態;
+    let 読んだ日: string | null = null;
+    let 観点候補: 県データ["観点候補"] = [];
+    const 照合の内訳: Record<string, number> = {};
 
+    // 手引きの置き場の _出典.yaml（改訂の検知）
+    const 手引きdir = 県フォルダ(TEBIKI_DIR, 県.コード);
+    const 出典f = 手引きdir ? path.join(手引きdir, "_出典.yaml") : null;
+    const 出典 = 出典f && fs.existsSync(出典f) ? (parse(fs.readFileSync(出典f, "utf8")) ?? {}) : null;
+    if (出典) 状態 = "未確認";
+
+    let 手引きあり = false;
+    let 検知: { 日付: string; 文書: string[]; 内容: string[] }[] = [];
     if (公開側 && fs.existsSync(path.join(公開側, "手引き.yaml"))) {
+      手引きあり = true;
       const t = 読む(path.join(公開側, "手引き.yaml"), 手引きファイル);
-      const url = new Map(t.手引き.map((d) => [d.文書, d.url]));
-      手引きurl = t.手引き[0]?.url;
+      読んだ日 = t.読んだ日 ?? null;
+      // 読み直したときに npm run 読む が「読み直し済み」を付ける。付いていない検知だけを出す
+      検知 = ((出典?.改訂の検知 ?? []) as (typeof 検知[number] & { 読み直し済み?: string })[]).filter((x) => !x.読み直し済み);
+      const 改訂の文書 = new Set(検知.flatMap((x) => x.文書.map(NFC)));
+      const 全部 = 改訂の文書.has("（入口ページ）");
+      const url = new Map(t.手引き.map((d) => [d.文書, d.url ?? undefined]));
+      const 名 = new Map(t.手引き.map((d) => [d.文書, d.名前]));
+      const 主 = t.手引き.find((d) => d.役割 === "実質の手引き") ?? t.手引き[0];
+      手引きurl = 主?.url ?? undefined;
+      印字から物理 = new Map((主?.ページ対応 ?? []).map(([物, 印]) => [印, 物]));
       for (const r of t.記録) {
+        照合の内訳[r.出典.照合] = (照合の内訳[r.出典.照合] ?? 0) + 1;
         カード.push({
           観点: r.観点,
           種別: "手引き",
@@ -109,12 +146,21 @@ function 全部読む() {
           確認日: r.確認日,
           対象: r.対象,
           品目: 配列に(r.品目),
-          出典: { ...r.出典, url: url.get(r.出典.文書) },
+          出典: { ...r.出典, 文書名: 名.get(r.出典.文書), url: url.get(r.出典.文書) },
+          改訂: 全部 || 改訂の文書.has(NFC(r.出典.文書)),
         });
       }
+      観点候補 = t.観点候補.map((c) => ({
+        ...c,
+        url: c.文書 && url.get(c.文書) && c.物理ページ ? `${url.get(c.文書)}#page=${c.物理ページ}` : undefined,
+      }));
+      const 怪しい = (照合の内訳["近似（要目視）"] ?? 0) + (照合の内訳["不一致"] ?? 0);
+      状態 = t.記録.length > 0 && 怪しい === 0 ? "検品済み" : "未検品";
       for (const n of t.記載なし) {
         カード.push({ 観点: n.観点, 種別: "記載なし", 本文: "手引きを読んだが見つからなかった", 確認日: null, 対象: [], 探した語: n.探した語 });
       }
+    } else if (出典) {
+      検知 = ((出典.改訂の検知 ?? []) as (typeof 検知[number] & { 読み直し済み?: string })[]).filter((x) => !x.読み直し済み);
     }
     if (公開側 && fs.existsSync(path.join(公開側, "受理実績.yaml"))) {
       for (const r of 読む(path.join(公開側, "受理実績.yaml"), 受理実績ファイル)) {
@@ -140,7 +186,11 @@ function 全部読む() {
               品目: 配列に(a.品目),
               候補観点: a.候補観点,
               手引きへの参照: a.手引きへの参照
-                ? { ...a.手引きへの参照, url: 手引きurl ? `${手引きurl}#page=${a.手引きへの参照.ページ}` : undefined }
+                ? (() => {
+                    // 人が言う「2ページ」は印字の番号。PDF の何枚目かに直してリンクする
+                    const 物理 = 印字から物理.get(a.手引きへの参照.ページ) ?? a.手引きへの参照.ページ;
+                    return { ...a.手引きへの参照, 物理ページ: 物理, url: 手引きurl ? `${手引きurl}#page=${物理}` : undefined };
+                  })()
                 : undefined,
             });
           }
@@ -173,7 +223,18 @@ function 全部読む() {
     }
     const 件数 = { 手引き: 0, 受理実績: 0, 電話: 0, 同業者: 0, 補正: 0 };
     for (const c of カード) if (c.種別 !== "記載なし") 件数[c.種別]++;
-    県ごと[県.コード] = { 県, カード, 件数 };
+    const 最新 = 検知.length ? 検知[検知.length - 1] : null;
+    県ごと[県.コード] = {
+      県,
+      カード,
+      件数,
+      手引きの状態: 状態,
+      改訂: 最新 ? { 日付: String(最新.日付), 内容: 検知.flatMap((x) => x.内容) } : null,
+      読んだ日,
+      観点候補,
+      照合の内訳,
+    };
+    void 手引きあり;
   }
   return { 観点一覧, 品目, 県一覧, 県ごと };
 }

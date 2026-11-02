@@ -65,12 +65,13 @@ export default function Home() {
           {県一覧.map((k) => {
             const p = 配置[k.コード];
             const n = 計(k.コード);
-            const cls = `tile lv${濃さ(n)} st-${k.手引きの状態}${p.幅 ? " big" : ""}`;
+            const d = 県ごと[k.コード];
+            const cls = `tile lv${濃さ(n)} st-${d.手引きの状態}${p.幅 ? " big" : ""}${d.改訂 ? " kaitei" : ""}`;
             const style = {
               gridColumn: `${p.列 + 1} / span ${p.幅 ?? 1}`,
               gridRow: `${p.行 + 1} / span ${p.高さ ?? 1}`,
             };
-            const title = `${k.名前}：記録 ${n}件、${状態の説明[k.手引きの状態]}`;
+            const title = `${k.名前}：記録 ${n}件、${状態の説明[d.手引きの状態]}${d.改訂 ? `、手引きの改訂を検知（${d.改訂.日付}）` : ""}`;
             const 中身 = (
               <>
                 <span className="n">{k.短い名}</span>
@@ -138,7 +139,10 @@ export default function Home() {
                 const 中身 = (
                   <>
                     <div className="name">{k.名前}</div>
-                    <div className="state">手引き：{k.手引きの状態 === "未読" ? "まだ読んでいない" : k.手引きの状態}</div>
+                    <div className="state">
+                      手引き：{d.手引きの状態 === "未読" ? "まだ読んでいない" : d.手引きの状態}
+                      {d.改訂 ? "（改訂を検知、再確認）" : ""}
+                    </div>
                     {ある ? (
                       <div className="counts">
                         {種別順.map((t) => (
