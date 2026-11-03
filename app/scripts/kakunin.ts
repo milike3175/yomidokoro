@@ -12,6 +12,7 @@ import {
   受理実績ファイル,
   電話ファイル,
   補正ファイル,
+  判定ファイル,
 } from "../schema/record.ts";
 import { 共通観点ファイル, はじめてファイル } from "../schema/hajimete.ts";
 import { 公的なURLか } from "./hajimete/kyotsu.ts";
@@ -120,7 +121,8 @@ function 県フォルダたち(root: string): { dir: string; コード: string }
   if (!fs.existsSync(root)) return [];
   return fs
     .readdirSync(root)
-    .filter((n) => fs.statSync(path.join(root, n)).isDirectory() && !n.startsWith("."))
+    // _判定 のような _ で始まるフォルダは県ではない
+    .filter((n) => fs.statSync(path.join(root, n)).isDirectory() && !n.startsWith(".") && !n.startsWith("_"))
     .map((n) => {
       const m = NFC(n).match(/^(\d{2}|\d{5})_/);
       if (!m) 誤り(path.join(root, n), null, "フォルダ名は「27_大阪府」のようにコードで始めてください");
@@ -214,6 +216,36 @@ for (const { dir, コード } of 県フォルダたち(path.join(DATA, "見本",
     for (const a of d.回答) {
       観点を確かめる(file, a.観点);
       品目を確かめる(file, a.品目);
+    }
+  }
+}
+
+// ---- 揺れの判定（ケン）：手帳/<許認可>/_判定/ と 見本/<許認可>/_判定/ ----
+// 見本の判定は、見本の電話の記録だけから作ったもののはず（手帳の電話の ID が入っていたら誤り）
+const 見本の電話id = new Set<string>();
+for (const { dir } of 県フォルダたち(path.join(DATA, "見本", 許認可))) {
+  const 電話dir = path.join(dir, "電話");
+  for (const f of fs.existsSync(電話dir) ? fs.readdirSync(電話dir).filter((n) => n.endsWith(".yaml")) : []) {
+    const id = parseDocument(fs.readFileSync(path.join(電話dir, f), "utf8")).toJS()?.id;
+    if (typeof id === "string") 見本の電話id.add(id);
+  }
+}
+for (const [置き場, 電話のid] of [
+  [path.join(TECHO, "_判定"), 電話id],
+  [path.join(DATA, "見本", 許認可, "_判定"), 見本の電話id],
+] as const) {
+  if (!fs.existsSync(置き場)) continue;
+  for (const f of fs.readdirSync(置き場).filter((n) => n.endsWith(".yaml"))) {
+    const file = path.join(置き場, f);
+    const d = 検証(file, 判定ファイル);
+    if (!d) continue;
+    if (!NFC(f).startsWith(`${d.許可権者.コード}_`)) 誤り(file, null, `ファイル名が許可権者のコード ${d.許可権者.コード} で始まっていません`);
+    const ids = new Set<string>();
+    for (const x of d.判定) {
+      観点を確かめる(file, x.観点);
+      if (ids.has(x.id)) 誤り(file, null, `判定の id「${x.id}」が重なっています`);
+      ids.add(x.id);
+      if (!x.もう一度判定 && !電話のid.has(x.電話.id)) 誤り(file, null, `判定 ${x.id} の電話の記録「${x.電話.id}」が、この置き場の電話の記録にありません`);
     }
   }
 }

@@ -243,6 +243,43 @@ export const 補正ファイル = z.object({
   個人名削除: z.number().int().min(0),
 });
 
+// ---- 揺れの判定（ケン）：npm run 判定 が書く。本物は 手帳/<許認可>/_判定/、見本は app/data/見本/<許認可>/_判定/ ----
+// 電話の答えや手引きの主張の文は写さない（IDで引く）。理由の一行は電話の答えを言い換えるので、本物は手帳の中にだけ置く
+
+export const 判定の答え = z.enum(["一致", "補足", "食い違い", "対象が違う", "判定不能"], {
+  error: "判定は 一致・補足・食い違い・対象が違う・判定不能 のどれかです",
+});
+
+export const 判定ファイル = z.object({
+  許可権者,
+  許認可: z.string().min(1),
+  判定日: 確認日,
+  モデル: z.string().min(1),
+  判定: z.array(
+    z.object({
+      /** 電話の記録のID＋観点＋問いの印＋相手のID。走らせ直しても同じものになる（回答の番号は使わない） */
+      id: z.string().min(1),
+      種類: z.enum(["手引きと電話", "電話どうし"]),
+      観点: 観点id,
+      電話: z.object({ id: z.string().min(1), 問いの印: z.string().regex(/^[0-9a-f]{8}$/) }),
+      /** 相手：手引きの記録のID、または別の電話の記録のIDと問いの印 */
+      相手: z.union([
+        z.object({ 手引き: z.string().min(1) }),
+        z.object({ 電話: z.string().min(1), 問いの印: z.string().regex(/^[0-9a-f]{8}$/) }),
+      ]),
+      判定: 判定の答え,
+      理由: z.string().min(1).max(80, { error: "理由は一行（60字以内）にしてください" }),
+      判定日: 確認日,
+      /** ケンに見せた材料の印。材料が変わっていなければ、走らせ直しても聞き直さない */
+      材料の印: z.string().regex(/^[0-9a-f]{8}$/),
+      /** 行政書士が確かめて片付けた印。走らせ直しても消さない */
+      解消: z.boolean().optional(),
+      /** 相手の記録が見つからなくなった（手引きを読み直してIDが変わったなど）。解消を捨てずに残し、確かめ直してもらう */
+      もう一度判定: z.boolean().optional(),
+    }),
+  ),
+});
+
 export type 観点 = z.infer<typeof 観点ファイル>["観点"][number];
 export type 県 = z.infer<typeof 県ファイル>["県"][number];
 export type 政令市 = z.infer<typeof 県ファイル>["政令市"][number];
@@ -250,3 +287,4 @@ export type 手引きデータ = z.infer<typeof 手引きファイル>;
 export type 受理実績データ = z.infer<typeof 受理実績ファイル>;
 export type 電話データ = z.infer<typeof 電話ファイル>;
 export type 補正データ = z.infer<typeof 補正ファイル>;
+export type 判定データ = z.infer<typeof 判定ファイル>;

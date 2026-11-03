@@ -9,8 +9,9 @@
 //
 // 調べること
 //   1. 置き場所：手帳/・_申請/・_鍵/・.env・手引き/<県>/ の本体ファイル（_出典.yaml・_差分.yaml 以外）が入っていないか
-//   2. 手帳の中身：手帳にある記録の答え・指摘・直し方の文（20字以上の部分）が、どこかのファイルに混ざっていないか
-//      （app/data/見本/<X> だけは、元の 手帳/<X> の文を外して調べる）
+//   2. 手帳の中身：手帳にある記録の答え・指摘・直し方の文（20字以上の部分）と、手帳の _判定 の理由の一行が、
+//      どこかのファイルに混ざっていないか（app/data/見本/<X> だけは、元の 手帳/<X> の文を外して調べる。
+//      見本/<許認可>/_判定/ は、見本の電話ファイルに由来する文だけを外す）
 //   3. 鍵の形：sk-ant- で始まる文字列など。見つけても中身は出さず「どのファイルの何行目」だけ出す
 //   4. 公開しない予定のメモ：下の一覧。追跡に入ったら止める（警告どまりのものは印を付けてある）
 //
@@ -198,6 +199,42 @@ for (const f of ファイルたち(TECHO, /\.ya?ml$/)) {
     }
   }
 }
+// 手帳/<許認可>/_判定/ の理由の一行（ケンが電話の答えを言い換えたもの）も見張る。電話の記録の ID ごとに持つ
+/** 判定の理由の語（電話の記録の ID → 語）。見本/ の _判定 で外すのは、見本の電話の ID に結びつく語だけ */
+const 判定の語 = new Map<string, Set<string>>();
+for (const f of ファイルたち(TECHO, /\.ya?ml$/).filter((f) => path.basename(path.dirname(f)) === "_判定")) {
+  let d: any = {};
+  try {
+    d = parse(fs.readFileSync(f, "utf8")) ?? {};
+  } catch {
+    continue;
+  }
+  for (const x of Array.isArray(d.判定) ? d.判定 : []) {
+    if (typeof x?.理由 !== "string" || typeof x?.電話?.id !== "string") continue;
+    const s = NFC(x.理由).replace(/\s+/g, "");
+    if (s.length < 12) continue;
+    const この語 = 判定の語.get(x.電話.id) ?? new Set<string>();
+    判定の語.set(x.電話.id, この語);
+    // 理由は短い（60字以内）ので、20字に満たなければ全体を、それ以上なら20字ずつ切り出す
+    if (s.length < 長さ) この語.add(s);
+    else {
+      for (let i = 0; i + 長さ <= s.length; i += 10) この語.add(s.slice(i, i + 長さ));
+      この語.add(s.slice(-長さ));
+    }
+    for (const w of この語) 見張る語.add(w);
+  }
+}
+// 見本の電話の記録（app/data/見本/<許認可>/<県>/電話/*.yaml）の ID と、その元の手帳ファイル
+const 見本の電話id = new Set<string>();
+const 見本の元 = new Set<string>();
+for (const f of ファイルたち(path.join(APP, "data", "見本"), /\.ya?ml$/).filter((f) => path.basename(path.dirname(f)) === "電話")) {
+  try {
+    const id = parse(fs.readFileSync(f, "utf8"))?.id;
+    if (typeof id === "string") 見本の電話id.add(id);
+  } catch {}
+  見本の元.add(NFC(path.relative(path.join(APP, "data", "見本"), f)));
+}
+
 // 品目・手続きの呼び名だけでできた語は見張らない（build-check.ts と同じ）
 const 品目の文 = parse(fs.readFileSync(path.join(APP, "data", "品目.yaml"), "utf8")) ?? {};
 const 呼び名 = [
@@ -223,7 +260,16 @@ function 呼び名だけ(s: string) {
 const 見張る文 = [...見張る語].filter((s) => !呼び名だけ(s));
 /** 見本/ のファイルで見張る文：同じ相対パスの手帳ファイル（元の記録）の語だけを外す。ほかの手帳の文が入っていれば止める */
 function 見本で見張る文(場所: string): string[] {
-  const 元 = ファイルごとの語.get(場所.slice(見本の置き場.length)) ?? new Set<string>();
+  const 相対 = 場所.slice(見本の置き場.length);
+  // 見本/<許認可>/_判定/ は、同じ場所の手帳の判定（ほかの電話の判定も入っている）を丸ごと外さない。
+  // 外すのは、見本の電話ファイルの元の答えの文と、見本の電話の ID に結びつく判定の理由だけ
+  if (相対.split("/")[1] === "_判定") {
+    const 外す = new Set<string>();
+    for (const p of 見本の元) for (const w of ファイルごとの語.get(p) ?? []) 外す.add(w);
+    for (const id of 見本の電話id) for (const w of 判定の語.get(id) ?? []) 外す.add(w);
+    return 見張る文.filter((s) => !外す.has(s));
+  }
+  const 元 = ファイルごとの語.get(相対) ?? new Set<string>();
   return 見張る文.filter((s) => !元.has(s));
 }
 

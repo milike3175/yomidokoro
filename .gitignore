@@ -9,6 +9,7 @@ out/
 *.wav
 手引き/*/txt/
 app/logs/電話*
+app/logs/判定*
 構成/_相談記録/
 _申請/
 

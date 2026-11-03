@@ -30,3 +30,40 @@ export function 品目で見る(
 export function 手続きが合う(c: { 対象: string[] }, 手続き: 手続き): boolean {
   return c.対象.length === 0 || c.対象.includes(手続き);
 }
+
+/** 記録の品目を配列にそろえる（YAML では1つなら文字、複数なら配列で書ける） */
+const 品目の配列 = (v?: string | string[]) => (v === undefined ? [] : Array.isArray(v) ? v : [v]);
+
+/**
+ * 記録どうし（手引きと電話、電話と電話）の品目が重なるか。揺れの判定に回す組を選ぶときに使う。
+ * 決まりは 品目で見る と同じ：品目で答えが変わらない観点か、どちらかに品目が無ければ重なるとみなす。
+ * 「建設系」「建設系以外」は 品目.yaml の 建設系 の印で具体の品目に広げて比べる。
+ * それ以外の呼び名（石綿含有産業廃棄物などの付加区分）は、同じ呼び名どうしだけ重なる。
+ */
+export function 品目が重なる(
+  a: { 品目?: string | string[] },
+  b: { 品目?: string | string[] },
+  k: { 品目で変わる: boolean } | undefined,
+  品目一覧: 品目の印[],
+): boolean {
+  const pa = 品目の配列(a.品目);
+  const pb = 品目の配列(b.品目);
+  if (!k?.品目で変わる || pa.length === 0 || pb.length === 0) return true;
+  const 広げる = (ps: string[]) =>
+    new Set(
+      ps.flatMap((p) =>
+        p === "建設系"
+          ? 品目一覧.filter((x) => x.建設系).map((x) => x.id)
+          : p === "建設系以外"
+            ? 品目一覧.filter((x) => !x.建設系).map((x) => x.id)
+            : [p],
+      ),
+    );
+  const sb = 広げる(pb);
+  return [...広げる(pa)].some((p) => sb.has(p));
+}
+
+/** 手続き（対象）が重なるか。書かれていない側は、どの手続きにも当てはまるとみなす */
+export function 手続きが重なる(a: { 対象: string[] }, b: { 対象: string[] }): boolean {
+  return a.対象.length === 0 || b.対象.length === 0 || a.対象.some((x) => b.対象.includes(x));
+}
