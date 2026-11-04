@@ -339,7 +339,7 @@ export default function KenView({
             <span className="label 判定 補足">電話で補足</span>
             <span className="label 判定 一致">手引きと一致</span>
             <span className="label 判定 判定不能">判定不能</span>
-            <span>電話の答えと手引きをケン（Claude）が見比べた印。札に指を置くと理由が出る</span>
+            <span>電話の答えと手引きをケン（Claude）が見比べた印。補足と揺れは、観点の下の「見比べ」に理由が出る</span>
           </div>
 
           {群順.map((g) => (
