@@ -23,6 +23,8 @@ import {
   欄の行,
   使う口,
   品目の名たち,
+  中身の印,
+  積替保管ありの注,
   type 書き方の型,
   type 含み,
   空の中身,
@@ -242,7 +244,7 @@ export default function ShoshikiView({
     set中身((c) => ({ ...c, 品目: c.品目.map((x): 品目の選び => (x.id === id ? { ...x, [k]: v === "含まない" ? undefined : v } : x)) }));
   const 品目の見込み = useMemo(() => (様 ? 品目を書き出す(様, 中身) : null), [様, 中身]);
   const 型の見込み = useMemo(() => (様 && 型 ? 型を組む(型, 様, 値たち, 中身) : []), [様, 型, 値たち, 中身]);
-  const 使う = useMemo(() => (型 ? 使う口(型, 値たち) : new Set<string>()), [型, 値たち]);
+  const 使う = useMemo(() => (型 && 様 ? 使う口(型, 値たち, 中身の印(様, 中身)) : new Set<string>()), [型, 様, 値たち, 中身]);
   const 品目の名 = useMemo(() => (様 ? 品目の名たち(様, 中身) : []), [様, 中身]);
 
   return (
@@ -471,11 +473,28 @@ export default function ShoshikiView({
                         有
                       </label>
                     </span>
-                    {中身.積替保管 === "有" && (
-                      <div className={s.check} data-testid="積替保管の知らせ">
-                        <span className={s.badge}>要確認</span>
-                        この道具は今、積替保管を含む申請の下書きに対応していません。積替え又は保管の【有・無】と、積替保管の欄は行政書士が書いてください。
-                      </div>
+                    {中身.積替保管 === "有" && 様 && (
+                      <>
+                        <div className={s.check} data-testid="積替保管の知らせ">
+                          <span className={s.badge}>要確認</span>
+                          {積替保管ありの注(様).map((t, k) => (
+                            <div key={k}>{t}</div>
+                          ))}
+                        </div>
+                        {(様.積替保管?.添付.length ?? 0) > 0 && (
+                          <div className={s.faint} data-testid="添付が要るもの">
+                            添付が要るもの（道具では作れません。{様.県名}の手引きに書いてあるものだけを並べています）
+                            <ul className={s.list}>
+                              {様.積替保管!.添付.map((x, k) => (
+                                <li key={k}>
+                                  {x.いつ && `${x.いつ}：`}
+                                  {x.もの}（出典 {x.出典}）
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+                      </>
                     )}
                   </div>
                 </div>
