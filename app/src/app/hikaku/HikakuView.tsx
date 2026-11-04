@@ -2,9 +2,9 @@
 
 // 府県くらべ：観点を一つ選ぶと、許可権者ごとの記録が縦に並ぶ。
 // 手続き・品目が当てはまるかの判定は県ページと同じもの（@/lib/hantei）を使う。
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { カード, 判定の印 } from "@/lib/data";
-import { 判定の文, 判定の札, 判定の順 } from "@/lib/fuda";
+import { 判定の文, 判定の札, 札に出す判定, 見立てに出す判定, 見立ての順, type 選び } from "@/lib/fuda";
 import type { 観点 } from "../../../schema/record.ts";
 import { 再確認か, 表示日, 日付に } from "@/lib/hizuke";
 import { 手続き一覧, 既定の手続き, 品目で見る, 手続きが合う, type 手続き, type 品目判定 } from "@/lib/hantei";
@@ -42,6 +42,8 @@ type 見え方 = {
   薄く: boolean;
   /** 札に出す判定。記録が当てはまるときは、相手の記録も選んだ手続き・品目に当てはまる組だけ */
   判定: 判定の印[];
+  /** 段の下に理由の一行を出す組 */
+  見立て: 判定の印[];
 };
 
 export default function HikakuView({ 行たち, 観点一覧, 品目一覧, 付加区分, 手帳あり, 書き出し日 }: Props) {
@@ -94,16 +96,14 @@ export default function HikakuView({ 行たち, 観点一覧, 品目一覧, 付�
   const 群順: string[] = [];
   for (const x of 残り) if (!群順.includes(x.群)) 群順.push(x.群);
 
-  // 判定の組の相手が、いまの手続き・品目に当てはまるか。
-  // 当てはまらない相手との組の札は出さない（例：建設系以外の電話の「補足」を、がれき類を選んだときの手引きに付けない）
-  const 相手が合う = (j: 判定の印) => 手続きが合う(j.相手, 手続き) && 品目で見る(j.相手, k, 品目, 品目一覧) !== "合わない";
+  // 札を出す組・理由の一行を出す組の決まりは県ページと同じ（@/lib/fuda）
+  const 今の選び: 選び = { 手続き, 品目, 品目一覧 };
   const 見る = (c: カード): 見え方 => {
     const p = 品目で見る(c, k, 品目, 品目一覧);
     const t = 手続きが合う(c, 手続き);
     const 薄く = !t || p === "合わない";
-    // 薄くした記録は札もいっしょに薄くなるので、組を絞らずにそのまま出す
-    const 判定 = (c.判定 ?? []).filter((j) => 薄く || 相手が合う(j));
-    return { c, 品目: p, 手続き: t, 薄く, 判定 };
+    const js = c.判定 ?? [];
+    return { c, 品目: p, 手続き: t, 薄く, 判定: 札に出す判定(js, 薄く, k, 今の選び), 見立て: 見立てに出す判定(js, 薄く, k, 今の選び) };
   };
   // 当てはまるもの（品目に合う）を上に、当てはまらないものは薄くして下に
   const 並べる = (xs: 見え方[]) => [
@@ -128,11 +128,7 @@ export default function HikakuView({ 行たち, 観点一覧, 品目一覧, 付�
 
   const 当てはまる数 = (xs: 見え方[]) => xs.filter((x) => !x.薄く).length;
   // 段の下に出す見立て：電話の側（主）の、揺れと補足だけ。両方の記録が選んだ手続き・品目に当てはまる組に限る
-  const 見立て = (xs: 見え方[]) =>
-    xs
-      .filter((x) => !x.薄く)
-      .flatMap((x) => x.判定.filter((j) => j.主 && (j.判定 === "食い違い" || j.判定 === "補足")))
-      .sort((a, b) => Number(a.解消) - Number(b.解消) || 判定の順.indexOf(a.判定) - 判定の順.indexOf(b.判定));
+  const 見立て = (xs: 見え方[]) => xs.flatMap((x) => x.見立て).sort(見立ての順);
   const 判定あり = 行たち.some((r) => r.カード.some((c) => (c.判定 ?? []).length > 0));
   const 手引きあり = 中身.filter((x) => 当てはまる数(x.手引き) > 0).length;
   const 記載なし数 = 中身.filter((x) => 当てはまる数(x.手引き) === 0 && x.記載なし).length;
@@ -400,22 +396,47 @@ function Mitate({ js, 飛び先 }: { js: 判定の印[]; 飛び先: string }) {
         </a>
       </div>
       {js.map((j, i) => (
-        <details key={i} className={`hk-ken-pair ${j.判定}${j.解消 ? " 解消" : ""}`}>
-          <summary>
-            <span className={`label 判定 ${j.判定}${j.解消 ? " 解消" : ""}`}>
-              {判定の文(j.判定, j.種類)}
-              {j.解消 ? "・確かめ済み" : ""}
-            </span>
-            <span className="hk-ken-why">{j.理由}</span>
-          </summary>
-          <div className="hk-ken-more">
-            {j.種類 === "電話どうし"
-              ? `前の電話（${j.相手.確認日 ? 表示日(j.相手.確認日) : "日付なし"}${j.相手.窓口 ? ` ${j.相手.窓口}` : ""}）と見比べた`
-              : `手引き（${j.相手.ページ ?? "ページ不明"}）と見比べた`}
-          </div>
-        </details>
+        <Mitate1 key={i} j={j} />
       ))}
     </div>
+  );
+}
+
+/** 見立ての一行。理由が一行に収まらず切れているときだけ、行の末に小さく「全文」と添える */
+function Mitate1({ j }: { j: 判定の印 }) {
+  const 理由の欄 = useRef<HTMLSpanElement>(null);
+  const [切れている, set切れている] = useState(false);
+  const [開いた, set開いた] = useState(false);
+  useEffect(() => {
+    const e = 理由の欄.current;
+    if (!e) return;
+    const 測る = () => set切れている(e.scrollWidth > e.clientWidth + 1);
+    測る();
+    const ro = new ResizeObserver(測る);
+    ro.observe(e);
+    return () => ro.disconnect();
+  }, [j.理由]);
+  return (
+    <details
+      className={`hk-ken-pair ${j.判定}${j.解消 ? " 解消" : ""}`}
+      onToggle={(e) => set開いた((e.currentTarget as HTMLDetailsElement).open)}
+    >
+      <summary>
+        <span className={`label 判定 ${j.判定}${j.解消 ? " 解消" : ""}`}>
+          {判定の文(j.判定, j.種類)}
+          {j.解消 ? "・確かめ済み" : ""}
+        </span>
+        <span className="hk-ken-why" ref={理由の欄}>
+          {j.理由}
+        </span>
+        {切れている && !開いた && <span className="hk-ken-full">全文</span>}
+      </summary>
+      <div className="hk-ken-more">
+        {j.種類 === "電話どうし"
+          ? `前の電話（${j.相手.確認日 ? 表示日(j.相手.確認日) : "日付なし"}${j.相手.窓口 ? ` ${j.相手.窓口}` : ""}）と見比べた`
+          : `手引き（${j.相手.ページ ?? "ページ不明"}）と見比べた`}
+      </div>
+    </details>
   );
 }
 

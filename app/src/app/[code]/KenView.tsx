@@ -3,7 +3,7 @@
 // 県ページの中身。手続き・品目の切り替え、「再確認」、チェックリストは、見た人の画面で計算する。
 import { useEffect, useState } from "react";
 import type { カード } from "@/lib/data";
-import { 判定の順, 判定の文, 判定の札 } from "@/lib/fuda";
+import { 判定の文, 判定の札, 札に出す判定, 見立てに出す判定, 見立ての順, 記録が薄い, type 選び } from "@/lib/fuda";
 import type { 観点 } from "../../../schema/record.ts";
 import { 再確認か, 経過日数, 年月, 表示日, 日付に } from "@/lib/hizuke";
 import { 手続き一覧, 既定の手続き, 品目で見る as 品目の判定, 手続きが合う as 手続きの判定, type 手続き, type 品目判定 } from "@/lib/hantei";
@@ -86,6 +86,8 @@ export default function KenView({
 
   const 観点の記録 = (id: string) => 全カード.filter((c) => c.観点 === id);
   const 観点map = new Map(観点一覧.map((k) => [k.id, k]));
+  // 札を出す組・見比べを出す組の決まりは府県くらべと同じ（@/lib/fuda）
+  const 今の選び: 選び = { 手続き, 品目, 品目一覧 };
 
   // チェックリスト：選んだ手続き（と品目）に当てはまる、手引き（照合一致）・受理実績・1年以内の電話 のどれも無い観点
   const チェック = 観点一覧
@@ -316,6 +318,8 @@ export default function KenView({
                         手続きが合う={手続きが合う(c)}
                         品目={品目で見る(c, k)}
                         選んだ品目={品目}
+                        選び={今の選び}
+                        観点={観点map.get(c.観点)}
                         分かりにくい={手引きに明記.has(c.観点)}
                       />
                     </div>
@@ -368,12 +372,14 @@ export default function KenView({
                               手続きが合う={手続きが合う(c)}
                               品目={品目で見る(c, 観点map.get(c.観点))}
                               選んだ品目={品目}
+                              選び={今の選び}
+                              観点={観点map.get(c.観点)}
                               分かりにくい={c.種別 === "補正" && 手引きに明記.has(c.観点)}
                             />
                           ))}
                         </div>
                       )}
-                      <Mikurabe cs={cs} />
+                      <Mikurabe cs={cs} 観点={k} 選び={今の選び} />
                     </div>
                   );
                 })}
@@ -421,6 +427,8 @@ export default function KenView({
                             手続きが合う={手続きが合う(c)}
                             品目={k ? 品目で見る(c, k) : "関係なし"}
                             選んだ品目={品目}
+                            選び={今の選び}
+                            観点={観点map.get(c.観点)}
                             分かりにくい={false}
                           />
                         </div>
@@ -476,7 +484,7 @@ export default function KenView({
                     <div className="kanten-name" style={{ fontSize: 12, color: "var(--sub)" }}>
                       候補：{c.候補観点}
                     </div>
-                    <Card c={c} 今日={今日} 手続きが合う={手続きが合う(c)} 品目="関係なし" 選んだ品目={品目} 分かりにくい={false} />
+                    <Card c={c} 今日={今日} 手続きが合う={手続きが合う(c)} 品目="関係なし" 選んだ品目={品目} 選び={今の選び} 観点={観点map.get(c.観点)} 分かりにくい={false} />
                   </div>
                 ))}
               </div>
@@ -511,6 +519,8 @@ function Card({
   品目,
   選んだ品目,
   分かりにくい,
+  選び,
+  観点: k,
 }: {
   c: カード;
   今日: Date;
@@ -518,6 +528,8 @@ function Card({
   品目: 品目判定;
   選んだ品目: string;
   分かりにくい: boolean;
+  選び: 選び;
+  観点: 観点 | undefined;
 }) {
   const 古い = 再確認か(c.確認日, 今日) || !!c.改訂;
   const 照合 = c.出典?.照合;
@@ -532,7 +544,7 @@ function Card({
             ? { cls: "不一致", 文: "照合：不一致" }
             : null;
   const 薄く = !手続きが合う || 品目 === "合わない";
-  const 印たち = 判定の札(c.判定 ?? [], c.種別 === "手引き");
+  const 印たち = 判定の札(札に出す判定(c.判定 ?? [], 薄く, k, 選び), c.種別 === "手引き");
   const 揺れ = 印たち.some((x) => x.判定 === "食い違い" && !x.解消);
   const cls = `card ${c.種別}${揺れ ? " yure" : ""}${古い ? " recheck" : ""}${薄く ? " faded" : ""}${品目 === "合う" && !薄く ? " match" : ""}${照合 === "不一致" ? " mismatch" : ""}`;
   const 添え書き: string[] = [];
@@ -664,15 +676,13 @@ function Card({
 type 見比べの側 = { 種別: string; 本文: string; 問い?: string; 確認日: string | null; 窓口?: string; ページ?: string; url?: string };
 
 /** 観点の中で、補足と揺れの組を、二つの記録を並べて理由一行で見せる */
-function Mikurabe({ cs }: { cs: カード[] }) {
+function Mikurabe({ cs, 観点: k, 選び }: { cs: カード[]; 観点: 観点; 選び: 選び }) {
+  // 出す組は府県くらべの見立てと同じ：電話も相手も、選んだ手続き・品目に当てはまる揺れと補足だけ
   const 組 = cs.flatMap((c) =>
-    (c.判定 ?? [])
-      .filter((j) => j.主 && (j.判定 === "食い違い" || j.判定 === "補足"))
-      .map((j) => ({ 電話: c as 見比べの側, j })),
+    見立てに出す判定(c.判定 ?? [], 記録が薄い(c, k, 選び), k, 選び).map((j) => ({ 電話: c as 見比べの側, j })),
   );
   if (組.length === 0) return null;
-  // 揺れを先に、確かめ済みは後ろに
-  組.sort((a, b) => Number(a.j.解消) - Number(b.j.解消) || 判定の順.indexOf(a.j.判定) - 判定の順.indexOf(b.j.判定));
+  組.sort((a, b) => 見立ての順(a.j, b.j));
   return (
     <div className="mikurabe">
       <div className="mikurabe-title">見比べ（ケンの見立て）</div>
