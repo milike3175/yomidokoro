@@ -8,14 +8,14 @@
   --sub: #6e6a62;
   --faint: #a59f94;
   --line: #ddd6c8;
-  --accent: #3b5873;
+  --accent: #276e66; /* ティール（Mi.Like の差し色を、細い字でも読める濃さに） */
   --shadow: 0 1px 2px rgba(60, 50, 30, 0.06), 0 2px 8px rgba(60, 50, 30, 0.05);
 
   /* 出典種別 */
-  --ai: #3b5873; /* 藍：手引き */
-  --ai-bg: #e8edf1;
-  --rokusho: #4d7a6a; /* 緑青：受理実績 */
-  --rokusho-bg: #e5eee9;
+  --ai: #276e66; /* ティール：手引き */
+  --ai-bg: #e4f0ee;
+  --rokusho: #66702e; /* 鶯茶：受理実績（ティール・柿・えんじ・山吹・鼠のどれとも離した、くすんだオリーブ） */
+  --rokusho-bg: #ebeedd;
   --kaki: #b0623a; /* 柿：電話 */
   --kaki-bg: #f7ede4;
   --kaki-band: #efdccb;
@@ -43,13 +43,13 @@
     --sub: #aaa398;
     --faint: #7a746b;
     --line: #3d3a35;
-    --accent: #9fb8cf;
+    --accent: #93cfc6;
     --shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
 
-    --ai: #86a5c2;
-    --ai-bg: #252e36;
-    --rokusho: #84b2a0;
-    --rokusho-bg: #222f2a;
+    --ai: #7fc4ba;
+    --ai-bg: #1f302e;
+    --rokusho: #b3bd74;
+    --rokusho-bg: #2a2d1f;
     --kaki: #d98f64;
     --kaki-bg: #33281f;
     --kaki-band: #40301f;
@@ -282,13 +282,14 @@ h2 {
 }
 a.tile:hover {
   transform: translateY(-1px);
-  box-shadow: 0 3px 10px rgba(40, 60, 80, 0.18);
+  box-shadow: 0 3px 10px rgba(39, 110, 102, 0.18);
 }
 /* 濃さ＝記録の件数 */
 .tile.lv0 { background: var(--paper-2); color: var(--sub); }
 .tile.lv1 { background: color-mix(in srgb, var(--ai) 18%, var(--paper)); }
 .tile.lv2 { background: color-mix(in srgb, var(--ai) 36%, var(--paper)); }
-.tile.lv3 { background: color-mix(in srgb, var(--ai) 60%, var(--paper)); color: var(--on-label); }
+/* lv3 の地は白い字だと読みにくい（4.5 に届かない）ので、明るい画面では墨の字にする */
+.tile.lv3 { background: color-mix(in srgb, var(--ai) 60%, var(--paper)); color: var(--ink); }
 .tile.lv4 { background: var(--ai); color: var(--on-label); }
 /* 枠＝手引きの状態 */
 .tile.st-検品済み { border: 2.5px solid var(--ink); }
@@ -307,6 +308,12 @@ a.tile:hover {
 .swatch.lv1 { background: color-mix(in srgb, var(--ai) 18%, var(--paper)); }
 .swatch.lv2 { background: color-mix(in srgb, var(--ai) 36%, var(--paper)); }
 .swatch.lv3 { background: color-mix(in srgb, var(--ai) 60%, var(--paper)); }
+/* 暗い画面の lv3：暗い字で 4.5 以上になるよう地を少し濃くする */
+@media (prefers-color-scheme: dark) {
+  .tile.lv3,
+  .swatch.lv3 { background: color-mix(in srgb, var(--ai) 70%, var(--paper)); }
+  .tile.lv3 { color: var(--on-label); }
+}
 .swatch.lv4 { background: var(--ai); }
 .swatch.st-検品済み { border: 2.5px solid var(--ink); background: var(--paper); }
 .swatch.st-未検品 { border: 2px dashed var(--ai); background: var(--paper); }
