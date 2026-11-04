@@ -14,15 +14,15 @@ export default function HajimeteIndex() {
       <h1>はじめての許認可</h1>
       <p className="lead">
         許認可の名前と自治体を入れると、Claude が公式サイト（lg.jp・go.jp・自治体のドメインだけ）から手引きと案内ページを探して読み、
-        どの許認可にも共通する観点{観点.length}項目と、その許認可だけの観点を、出典つきで出す。引用はすべてプログラムで本文と照らし合わせてある。
-        初めて扱う許認可の、最初の下調べに使う。判断は行政書士が窓口で確かめてから。
+        どの許認可にも共通する観点{観点.length}項目と、その許認可だけの観点を、出典つきで出します。引用はすべてプログラムで本文と照らし合わせています。
+        初めて扱う許認可の、最初の下調べに使います。判断は、行政書士が窓口で確かめてからにしてください。
       </p>
       <p className="hint">
         新しく調べるとき：<code>npm run 探す -- &quot;建設業許可&quot; &quot;和歌山県&quot;</code> のあと <code>npm run はじめて読む -- 建設業許可_和歌山県</code>
       </p>
 
       {一覧.length === 0 ? (
-        <p className="none">まだ調べた許認可がない。</p>
+        <p className="none">まだ調べた許認可がありません。</p>
       ) : (
         <div className="pref-grid hj-grid">
           {一覧.map((d) => (

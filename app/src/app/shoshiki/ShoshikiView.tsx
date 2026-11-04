@@ -65,13 +65,13 @@ async function docxを作る(置: 置いた様式, 様: 様式, 値たち: 値):
   const JSZip = (await import("jszip")).default;
   const zip = await JSZip.loadAsync(置.バイト);
   const entry = zip.file(様.本文);
-  if (!entry) return { ok: false, 理由: `${様.本文} が見つからない` };
+  if (!entry) return { ok: false, 理由: `${様.本文} が見つかりません` };
   const 元 = await entry.async("uint8array");
   const 本文 = new TextDecoder("utf-8", { fatal: true }).decode(元);
   // 文字にして戻したときに元と同じバイトになるか（BOM や改行の扱いで変わるなら書かない）
   const 戻し = new TextEncoder().encode(本文);
   if (戻し.length !== 元.length || 戻し.some((v, i) => v !== 元[i])) {
-    return { ok: false, 理由: "本文を文字にして戻すと元と同じにならない。書かない" };
+    return { ok: false, 理由: "本文を文字にして戻すと元と同じになりません。書きません" };
   }
   const r = 記入する(本文, 様, 値たち);
   if (!r.ok) return r;
@@ -85,7 +85,7 @@ async function docxを作る(置: 置いた様式, 様: 様式, 値たち: 値):
     createFolders: false,
   });
   if (Object.keys(zip.files).join("\n") !== 名前の並び.join("\n")) {
-    return { ok: false, 理由: "zip の中のファイルの並びが変わった。書かない" };
+    return { ok: false, 理由: "zip の中のファイルの並びが変わりました。書きません" };
   }
   // 圧縮方式を元と同じ DEFLATE にする。JSZip は、読み込んだパーツの方式と同じなら圧縮データを解かずにそのまま書く
   // （指定しないと全パーツが無圧縮で詰め直される）
@@ -123,7 +123,7 @@ export default function ShoshikiView({
   async function 置く(ファイル名: string, バイト: Uint8Array) {
     // 様式を見分ける計算（sha256）は、https か 127.0.0.1 で開いたときだけブラウザが使わせてくれる
     if (!globalThis.crypto?.subtle) {
-      set知らせ("この開き方では様式を見分けられない。https のページか、このパソコンの 127.0.0.1 で開き直す");
+      set知らせ("この開き方では様式を見分けられません。https のページか、このパソコンの 127.0.0.1 で開き直してください");
       return;
     }
     const sha256 = await sha256を出す(バイト);
@@ -135,27 +135,27 @@ export default function ShoshikiView({
   async function 試しの様式を置く(x: 公開する様式) {
     const url = new URL(x.場所, location.origin);
     if (url.origin !== location.origin) {
-      set知らせ("このサイトの外の場所は読まない");
+      set知らせ("このサイトの外の場所は読みません");
       return;
     }
     try {
       const r = await fetch(url, { credentials: "omit", cache: "no-store" });
       if (!r.ok) {
-        set知らせ(`様式を読み込めなかった（${r.status}）`);
+        set知らせ(`様式を読み込めませんでした（${r.status}）`);
         return;
       }
       const バイト = new Uint8Array(await r.arrayBuffer());
       if (!globalThis.crypto?.subtle) {
-        set知らせ("この開き方では様式を見分けられない。https のページか、このパソコンの 127.0.0.1 で開き直す");
+        set知らせ("この開き方では様式を見分けられません。https のページか、このパソコンの 127.0.0.1 で開き直してください");
         return;
       }
       if ((await sha256を出す(バイト)) !== x.sha256) {
-        set知らせ("読み込んだ様式の中身が、載せた様式と違う。使わない");
+        set知らせ("読み込んだ様式の中身が、載せた様式と違います。使いません");
         return;
       }
       await 置く(x.場所.split("/").pop() ?? "様式.docx", バイト);
     } catch {
-      set知らせ("様式を読み込めなかった");
+      set知らせ("様式を読み込めませんでした");
     }
   }
 
@@ -175,8 +175,8 @@ export default function ShoshikiView({
         const w2 = f.次の空白 - f.次の頭;
         const sp = 住所を分ける(v, f.空白, w2);
         const 説明: string[] = [];
-        if (sp.二行目) 説明.push(`${sp.区切り}で2行目へ送る：1行目「${sp.一行目}」／2行目「${sp.二行目}」。切る位置を確かめる`);
-        if (sp.切り捨て) 説明.push(`2行目にも入らず「${sp.切り捨て}」が切れる。書き方を考え直す`);
+        if (sp.二行目) 説明.push(`${sp.区切り}で2行目へ送ります：1行目「${sp.一行目}」／2行目「${sp.二行目}」。切る位置を確かめてください`);
+        if (sp.切り捨て) 説明.push(`2行目にも入らず「${sp.切り捨て}」が切れます。書き方を考え直してください`);
         m.set(f.id, { id: f.id, 見出し: f.見出し, 状態: 説明.length ? "要確認" : "書いた", 説明 });
       } else if (f.種類 === "空白") {
         const v = 全角に((値たち[f.id] ?? "").trim());
@@ -184,7 +184,7 @@ export default function ShoshikiView({
         if (!v) continue;
         const n = Array.from(v).length;
         m.set(f.id, n > 入る
-          ? { id: f.id, 見出し: f.見出し, 状態: "要確認", 説明: [`${入る}字の欄に${n}字。${入る}字で切れる`] }
+          ? { id: f.id, 見出し: f.見出し, 状態: "要確認", 説明: [`${入る}字の欄に${n}字です。${入る}字で切れます`] }
           : { id: f.id, 見出し: f.見出し, 状態: "書いた", 説明: [] });
       }
     }
@@ -195,12 +195,12 @@ export default function ShoshikiView({
     if (!置 || !様) return;
     const r = await docxを作る(置, 様, 値たち);
     if (!r.ok) {
-      set知らせ(`書かなかった：${r.理由}`);
+      set知らせ(`書きませんでした：${r.理由}`);
       return;
     }
     const 確 = r.結果.filter((x) => x.状態 === "要確認").length;
     保存させる(r.blob, `記入_${様.県コード}_${置.ファイル名.replace(/\.docx$/i, "")}.docx`);
-    set知らせ(`記入した docx を保存した（このパソコンの中だけ）。要確認 ${確}件。Word で開いて確かめる`);
+    set知らせ(`記入した docx を保存しました（このパソコンの中だけ）。要確認 ${確}件。Word で開いて確かめてください`);
   }
 
   function 控えを保存() {
@@ -208,21 +208,21 @@ export default function ShoshikiView({
     const k = 控えを作る(様, 値たち, 今日());
     const 名 = (値たち["氏名"] ?? "").trim() || "事業者";
     保存させる(new Blob([JSON.stringify(k, null, 2) + "\n"], { type: "application/json" }), `控え_${名}_${k.保存日}.json`);
-    set控えの知らせ("事業者の控えを保存した（このパソコンの中だけ）。次はこのファイルを読み込めば、同じ値で書ける");
+    set控えの知らせ("事業者の控えを保存しました（このパソコンの中だけ）。次はこのファイルを読み込めば、同じ値で書けます");
   }
 
   async function 控えを受ける(f: File | undefined) {
     if (!f) return;
     const r = 控えを読む(await f.text());
     if (!r.ok) {
-      set控えの知らせ(`読めなかった：${r.理由}`);
+      set控えの知らせ(`読めませんでした：${r.理由}`);
       return;
     }
     set値たち(r.控え.値);
     const 違う = 様 && r.控え.様式.sha256 !== 様.sha256;
     set控えの知らせ(
-      `控え（${r.控え.保存日} 保存）を読み込んだ。` +
-        (違う ? `この控えは別の様式（${r.控え.様式.名前}）で保存したもの。同じ id の欄だけ入れた。確かめる` : ""),
+      `控え（${r.控え.保存日} 保存）を読み込みました。` +
+        (違う ? `この控えは別の様式（${r.控え.様式.名前}）で保存したものです。同じ id の欄だけ入れました。確かめてください` : ""),
     );
   }
 
@@ -235,13 +235,13 @@ export default function ShoshikiView({
       </a>
       <h1>様式に書く（試し）</h1>
       <p className="lead">
-        県の公式の様式ファイルに、事業者の情報を書き込む。書き込みはこのブラウザの中だけで行い、様式も事業者の情報もどこにも送らない（Claude にも送らない）。
-        様式の欄の空白だけを同じ字数の値に置き換えるので、書式・改行・枠はそのまま残る。最後は必ず Word で開いて、行政書士が確かめる。
+        県の公式の様式ファイルに、事業者の情報を書き込みます。書き込みはこのブラウザの中だけで行い、様式も事業者の情報もどこにも送りません（Claude にも送りません）。
+        様式の欄の空白だけを同じ字数の値に置き換えるので、書式・改行・枠はそのまま残ります。最後は必ず Word で開いて、行政書士が確かめてください。
       </p>
 
       {試せる.length > 0 && (
         <div className={s.trial}>
-          <p className={s.note}>まず試すなら：県の様式の写しを、このサイトに一つだけ置いてある。押すとこのサイトから読み込む（外へは何も送らない）。架空の会社で書いてみる</p>
+          <p className={s.note}>まず試すなら：県の様式の写しを、このサイトに一つだけ置いています。押すとこのサイトから読み込みます（外へは何も送りません）。架空の会社で書いてみてください</p>
           {試せる.map((x) => (
             <div key={x.sha256}>
               <div className={s.buttons}>
@@ -258,7 +258,7 @@ export default function ShoshikiView({
                 <a href={x.規約} target="_blank" rel="noopener noreferrer">
                   {x.規約の名前}
                 </a>
-                に基づき、中身を変えずに掲載している。
+                に基づき、中身を変えずに掲載しています。
               </p>
             </div>
           ))}
@@ -266,7 +266,7 @@ export default function ShoshikiView({
       )}
 
       <h2>1．様式を県のページから取ってくる</h2>
-      <p className={s.note}>道具は県のサイトから様式を取ってこない。下のページを開いて、様式ファイルを自分で保存する。</p>
+      <p className={s.note}>道具は県のサイトから様式を取ってきません。下のページを開いて、様式ファイルを自分で保存してください。</p>
       <ul className={s.list}>
         {様式たち.map((x) => (
           <li key={x.sha256}>
@@ -293,7 +293,7 @@ export default function ShoshikiView({
         }}
         onClick={() => 受け口.current?.click()}
       >
-        ダウンロードした様式（docx）をここに置く。押して選んでもよい
+        ダウンロードした様式（docx）をここに置いてください。押して選ぶこともできます
         <input
           ref={受け口}
           type="file"
@@ -309,9 +309,9 @@ export default function ShoshikiView({
 
       {手帳版 && (
         <div className={s.techo}>
-          <p className={s.note}>手元の版だけ：手引き/ にすでにある様式（公開版には出ない）</p>
+          <p className={s.note}>手元の版だけ：手引き/ にすでにある様式（公開版には出ません）</p>
           {手元.length === 0 ? (
-            <p className={s.note}>手引き/&lt;県&gt;/様式/ に様式ファイルが無い。</p>
+            <p className={s.note}>手引き/&lt;県&gt;/様式/ に様式ファイルがありません。</p>
           ) : (
             <ul className={s.list}>
               {手元.map((t) => (
@@ -334,14 +334,14 @@ export default function ShoshikiView({
       {置 && (
         <p className={s.placed} data-testid="置いた様式">
           置いた様式：{置.ファイル名}（sha256 {置.sha256.slice(0, 16)}…）
-          {様 ? <strong>　{様.県名}「{様.名前}」と分かった</strong> : <strong className={s.warn}>　知らない様式。まだ対応表が無いので書けない</strong>}
+          {様 ? <strong>　{様.県名}「{様.名前}」と分かりました</strong> : <strong className={s.warn}>　知らない様式です。まだ対応表が無いので書けません</strong>}
         </p>
       )}
 
       {様 && (
         <>
           <h2>3．事業者の情報を入れる</h2>
-          <p className={s.note}>半角の英数字は全角にして書く。空けた欄は様式のまま（触らない）。</p>
+          <p className={s.note}>半角の英数字は全角にして書きます。空けた欄は様式のままにします（触りません）。</p>
           <div className={s.form}>
             {様.欄.map((f) => {
               const 見 = 見込み.get(f.id);
@@ -407,7 +407,7 @@ export default function ShoshikiView({
 
       <h2>事業者の控え</h2>
       <p className={s.note}>
-        入れた値を、このパソコンにファイル（JSON）で保存する。ブラウザには溜めない。次に同じ事業者の申請書を作るときは、様式を置いてから控えを読み込む。
+        入れた値を、このパソコンにファイル（JSON）で保存します。ブラウザには溜めません。次に同じ事業者の申請書を作るときは、様式を置いてから控えを読み込んでください。
       </p>
       <div className={s.buttons}>
         <button type="button" disabled={!様} data-testid="控えを保存" onClick={控えを保存}>

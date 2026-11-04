@@ -91,8 +91,8 @@ export default async function HajimetePage({ params }: { params: Promise<{ id: s
         <span className="hj-place">{d.自治体名}</span>
       </h1>
       <p className="lead">
-        公式サイト{d.自治体ドメイン ? `（${d.自治体ドメイン}）` : ""}の手引き・案内ページを Claude が探して読み、要点を自分の言葉でまとめたもの。
-        引用は本文そのままで、プログラムで照らし合わせてある。{d.読んだ日}に読んだ。申請前に窓口で再確認すること。
+        公式サイト{d.自治体ドメイン ? `（${d.自治体ドメイン}）` : ""}の手引き・案内ページを Claude が探して読み、要点を自分の言葉でまとめたものです。
+        引用は本文そのままで、プログラムで照らし合わせています。{d.読んだ日}に読みました。申請前に窓口で再確認してください。
       </p>
 
       <section className="summary hj-summary" aria-label="かかった時間と費用">
@@ -149,8 +149,8 @@ export default async function HajimetePage({ params }: { params: Promise<{ id: s
               <span>{x.名前 ?? x.文書}</span>
             )}
             <span className="hint">
-              {x.ページ数 ? `${x.ページ数}ページ` : "文字にできなかった"}
-              {x.読んだ ? "" : "・読んでいない（様式など）"}　取得 {x.取得日}
+              {x.ページ数 ? `${x.ページ数}ページ` : "文字にできませんでした"}
+              {x.読んだ ? "" : "・読んでいません（様式など）"}　取得 {x.取得日}
             </span>
           </li>
         ))}
@@ -172,7 +172,7 @@ export default async function HajimetePage({ params }: { params: Promise<{ id: s
       <h2>共通の観点</h2>
       <div className="legend">
         <span className="label 手引き">手引き</span>手引き・案内ページに明記
-        <span className="label 記載なし">記載なし</span>探したが無い。窓口に電話で聞くこと
+        <span className="label 記載なし">記載なし</span>探しましたが、ありません。窓口に電話で聞いてください
       </div>
       {観点.map((k, i) => {
         const rs = d.記録.filter((r) => r.観点 === k.id);
@@ -194,7 +194,7 @@ export default async function HajimetePage({ params }: { params: Promise<{ id: s
                     <div className="card-top">
                       <span className="label 記載なし">記載なし</span>
                     </div>
-                    <p className="a">手引き・案内ページには書かれていなかった。窓口に電話で聞くこと。</p>
+                    <p className="a">手引き・案内ページには書かれていませんでした。窓口に電話で聞いてください。</p>
                     <div className="q">探したもの　{k.探すもの}</div>
                     {無し && <div className="q">探した語　{無し.探した語.join("、")}</div>}
                   </div>
@@ -207,9 +207,9 @@ export default async function HajimetePage({ params }: { params: Promise<{ id: s
 
       <section className="group" id="dokuji">
         <h2>この許認可だけの観点</h2>
-        <p className="lead">共通の観点に当てはまらないが、{d.許認可名}の手引きに書かれていた、申請前に知っておくべき決まり（Claude が拾った候補）。</p>
+        <p className="lead">共通の観点には当てはまりませんが、{d.許認可名}の手引きに書かれていた、申請前に知っておくべき決まりです（Claude が拾った候補）。</p>
         <div className="cards">
-          {d.独自の観点.length === 0 && <p className="none">見つからなかった。</p>}
+          {d.独自の観点.length === 0 && <p className="none">見つかりませんでした。</p>}
           {d.独自の観点.map((c, i) => (
             <HjCard key={i} 主張={c.主張} s={c.出典} d={d} 名前={c.名前} />
           ))}

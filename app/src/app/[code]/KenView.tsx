@@ -26,10 +26,10 @@ type Props = {
 };
 
 const 状態の説明: Record<string, string> = {
-  検品済み: "手引きは読み込み済みで、引用はすべて出典と照合できた",
-  未検品: "手引きは自動で読んだが、出典と照合できていない引用がある（未検品）",
-  未確認: "手引きは手元にあるが未確認",
-  未読: "手引きはまだ読んでいない",
+  検品済み: "手引きは読み込み済みで、引用はすべて出典と照合できました",
+  未検品: "手引きは自動で読みましたが、出典と照合できていない引用があります（未検品）",
+  未確認: "手引きは手元にありますが、未確認です",
+  未読: "手引きはまだ読んでいません",
 };
 
 export default function KenView({
@@ -101,12 +101,12 @@ export default function KenView({
           (c.種別 === "電話" && c.確認日 !== null && 経過日数(c.確認日, 今日) <= 365),
       );
       if (裏付けあり) return null;
-      let 理由 = "手引きをまだ読んでいない";
-      if (cs.some((c) => c.種別 === "記載なし")) 理由 = "手引きを読んだが載っていない";
-      if (使える.some((c) => c.種別 === "電話")) 理由 = "前回の電話から1年を超えた";
-      else if (使える.some((c) => c.種別 === "手引き")) 理由 = "手引きの記録はあるが出典と照合できていない";
+      let 理由 = "手引きをまだ読んでいません";
+      if (cs.some((c) => c.種別 === "記載なし")) 理由 = "手引きを読みましたが、載っていません";
+      if (使える.some((c) => c.種別 === "電話")) 理由 = "前回の電話から1年を超えました";
+      else if (使える.some((c) => c.種別 === "手引き")) 理由 = "手引きの記録はありますが、出典と照合できていません";
       else if (cs.some((c) => c.種別 === "電話" || c.種別 === "受理実績"))
-        理由 = `記録はあるが、${手続き}${品目 ? `・${品目}` : ""}には当てはまらない`;
+        理由 = `記録はありますが、${手続き}${品目 ? `・${品目}` : ""}には当てはまりません`;
       return { k, 理由 };
     })
     .filter((x) => x !== null);
@@ -133,12 +133,12 @@ export default function KenView({
       <h1>{県名}</h1>
       <p className="hk-entry">
         <a href={`/hikaku/?${new URLSearchParams({ 観点: "排出事業者", ...(品目 ? { 品目 } : {}), 手続き }).toString()}`}>府県くらべ</a>
-        <span className="hint">同じ観点を、ほかの府県と並べて見る</span>
+        <span className="hint">同じ観点を、ほかの府県と並べて見られます</span>
       </p>
       {改訂 && (
         <div className="kaitei-band" role="alert">
           <div className="kaitei-title">
-            手引きが改訂されたかもしれない（{表示日(改訂.日付)}に検知）。読み直す
+            手引きが改訂されたかもしれません（{表示日(改訂.日付)}に検知）。読み直してください
           </div>
           <ul>
             {改訂.内容.slice(0, 6).map((l, i) => (
@@ -146,20 +146,20 @@ export default function KenView({
             ))}
           </ul>
           <div className="kaitei-how">
-            読み直すまで、手引きから取った記録には「再確認」の印を付けている。読み直す手順：npm run 取得 -- {県コード} のあと npm run 読む -- {県コード}
+            読み直すまで、手引きから取った記録には「再確認」の印を付けています。読み直す手順：npm run 取得 -- {県コード} のあと npm run 読む -- {県コード}
           </div>
         </div>
       )}
       <p className="lead">
         {状態の説明[手引きの状態]}
         {読んだ日
-          ? `（${表示日(読んだ日)}に読んだ。照合：${Object.entries(照合の内訳)
+          ? `（${表示日(読んだ日)}に読みました。照合：${Object.entries(照合の内訳)
               .map(([k, v]) => `${k} ${v}`)
               .join("、")}）`
           : ""}
-        。観点{観点一覧.length}項目ごとに、手引き・受理実績・電話で聞いた答えを分けて並べている。道具は判断しない。判断は行政書士がする。
+        。観点{観点一覧.length}項目ごとに、手引き・受理実績・電話で聞いた答えを分けて並べています。道具は判断しません。判断は行政書士がします。
         {政令市.length > 0 &&
-          `${政令市.map((s) => s.名前).join("・")}（政令市）の窓口で聞いた記録は、許可権者が違うので${県名}の記録とは分けて、下の${政令市.map((s) => `「${s.名前}（政令市）の窓口」`).join("・")}に置いた。`}
+          `${政令市.map((s) => s.名前).join("・")}（政令市）の窓口で聞いた記録は、許可権者が違うので${県名}の記録とは分けて、下の${政令市.map((s) => `「${s.名前}（政令市）の窓口」`).join("・")}に置いています。`}
       </p>
 
       <nav className="toc-mobile" aria-label="目次">
@@ -188,7 +188,7 @@ export default function KenView({
                 </button>
               ))}
             </div>
-            <div className="hint">選んだ手続きに当てはまる記録だけで、チェックリストを作る。</div>
+            <div className="hint">選んだ手続きに当てはまる記録だけで、チェックリストを作ります。</div>
           </div>
           <div className="panel">
             <label className="panel-title" htmlFor="hinmoku">
@@ -213,8 +213,8 @@ export default function KenView({
             </select>
             <div className="hint">
               {選んだ品目
-                ? `${選んだ品目.id}は${選んだ品目.建設系 ? "建設系にもなりうる品目" : "建設系以外の品目"}として見る。`
-                : "品目で答えが変わる観点で、当てはまる記録を目立たせる。"}
+                ? `${選んだ品目.id}は${選んだ品目.建設系 ? "建設系にもなりうる品目" : "建設系以外の品目"}として見ます。`
+                : "品目で答えが変わる観点で、当てはまる記録を目立たせます。"}
             </div>
           </div>
           <nav className="panel toc" aria-label="目次">
@@ -256,9 +256,9 @@ export default function KenView({
               電話で聞くことのチェックリスト<span className="cnt">{チェック.length}件</span>
             </h2>
             <div className="lead" style={{ margin: 0 }}>
-              {手続き}のときに、手引き（出典と照合済み）・受理実績・1年以内の電話のどれも無い観点。電話で答えが入ると消える。
+              {手続き}のときに、手引き（出典と照合済み）・受理実績・1年以内の電話のどれも無い観点です。電話で答えが入ると消えます。
             </div>
-            {チェック.length === 0 && <p className="empty-all">聞くことは残っていない。</p>}
+            {チェック.length === 0 && <p className="empty-all">聞くことは残っていません。</p>}
             {群順.map((g) => {
               const items = チェック.filter((x) => x.k.群 === g);
               if (items.length === 0) return null;
@@ -292,11 +292,11 @@ export default function KenView({
               この県で補正になったこと<span className="cnt">{補正.filter(当てはまる).length}件</span>
             </h2>
             <div className="lead" style={{ margin: 0 }}>
-              出す前に見直すこと。審査で直すよう言われた点と、どう直して通ったか。{手続き}
-              {品目 ? `・${品目}` : ""}に当てはまらないものは薄くして下に置いた。
+              出す前に見直すところです。審査で直すよう言われた点と、どう直して通ったかを載せています。{手続き}
+              {品目 ? `・${品目}` : ""}に当てはまらないものは薄くして下に置いています。
             </div>
             {補正の並び.length === 0 ? (
-              <p className="empty-all">まだ補正の記録がない。</p>
+              <p className="empty-all">まだ補正の記録がありません。</p>
             ) : (
               <div className="cards">
                 {補正の並び.map((c, i) => {
@@ -344,7 +344,7 @@ export default function KenView({
             <span className="label 判定 補足">電話で補足</span>
             <span className="label 判定 一致">手引きと一致</span>
             <span className="label 判定 判定不能">判定不能</span>
-            <span>電話の答えと手引きを Claude が見比べた印。補足と揺れは、観点の下の「見比べ」に理由が出る</span>
+            <span>電話の答えと手引きを Claude が見比べた印です。補足と揺れは、観点の下の「見比べ」に理由が出ます</span>
           </div>
 
           {群順.map((g) => (
@@ -360,7 +360,7 @@ export default function KenView({
                         <span className="no">{k.番号}</span>
                         <span className="title">{k.表示名}</span>
                         {k.品目で変わる && <span className="tag">品目で変わる</span>}
-                        {cs.length === 0 && <span className="nothing">まだ記録がない</span>}
+                        {cs.length === 0 && <span className="nothing">まだ記録がありません</span>}
                       </div>
                       {cs.length > 0 && (
                         <div className="cards">
@@ -398,7 +398,7 @@ export default function KenView({
                   {s.名前}（政令市）の窓口<span className="cnt">{s.カード.length}件</span>
                 </h2>
                 <p className="lead">
-                  {s.名前}の窓口で聞いた記録。許可権者が{県名}とは別なので、{県名}の記録と並べても食い違い（揺れ）としては数えない。上のチェックリストにも入れていない。
+                  {s.名前}の窓口で聞いた記録です。許可権者が{県名}とは別なので、{県名}の記録と並べても食い違い（揺れ）としては数えません。上のチェックリストにも入れていません。
                 </p>
                 {並び.map(({ k, cs }) => (
                   <div key={k?.id ?? "未分類"} className="kanten">
@@ -443,7 +443,7 @@ export default function KenView({
           {観点候補.length > 0 && (
             <section className="group" id="kouho">
               <h2>手引きにある、この県だけの決まり（観点候補）</h2>
-              <p className="lead">観点の一覧に無いが、手引きに書かれていた独自のルール。よく使うものは観点に足す。</p>
+              <p className="lead">観点の一覧には無いものの、手引きに書かれていた独自のルールです。よく使うものは観点に足します。</p>
               <div className="cards">
                 {観点候補.map((c, i) => (
                   <article key={i} className="card 手引き">
@@ -477,7 +477,7 @@ export default function KenView({
           {未分類.length > 0 && (
             <section className="group" id="mibunrui">
               <h2>観点に無い話（未分類）</h2>
-              <p className="lead">観点の一覧に当てはまらなかった記録。よく出るものは観点に足す。</p>
+              <p className="lead">観点の一覧に当てはまらなかった記録です。よく出るものは観点に足します。</p>
               <div className="cards">
                 {未分類.map((c, i) => (
                   <div key={i}>
@@ -661,12 +661,12 @@ function Card({
       </div>
 
       {c.種別 === "電話" && c.確認日 && (
-        <div className="band">{年月(c.確認日)}に電話で確認した内容。公式見解ではない。申請前に再確認すること</div>
+        <div className="band">{年月(c.確認日)}に電話で確認した内容です。公式見解ではありません。申請前に再確認してください</div>
       )}
       {c.種別 === "補正" && c.年 && (
-        <div className="band">{c.年}年に審査で指摘された内容。運用は変わりうる。申請前に再確認すること</div>
+        <div className="band">{c.年}年に審査で指摘された内容です。運用は変わることがあります。申請前に再確認してください</div>
       )}
-      {c.種別 === "同業者" && <div className="band">同業者から聞いた参考情報。公式見解ではない。申請前に再確認すること</div>}
+      {c.種別 === "同業者" && <div className="band">同業者から聞いた参考情報です。公式見解ではありません。申請前に再確認してください</div>}
     </article>
   );
 }
@@ -703,7 +703,7 @@ function Mikurabe({ cs, 観点: k, 選び }: { cs: カード[]; 観点: 観点; 
         </div>
       ))}
       <div className="mikurabe-note">
-        二つの記録を並べて Claude が見立てた一行。道具は判断しない。食い違うかどうかを決めるのは行政書士。
+        二つの記録を並べて Claude が見立てた一行です。道具は判断しません。食い違うかどうかを決めるのは行政書士です。
       </div>
     </div>
   );

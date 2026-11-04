@@ -7,7 +7,7 @@ const 状態の説明: Record<string, string> = {
   検品済み: "検品済み",
   未検品: "未検品（自動で読んだだけ）",
   未確認: "手引き未確認",
-  未読: "まだ読んでいない",
+  未読: "まだ読んでいません",
 };
 
 /** 件数を濃さの5段階に */
@@ -38,15 +38,15 @@ export default function Home() {
     <>
       <h1>全国の地図</h1>
       <p className="lead">
-        色の濃さが記録の件数、枠の線が手引きの読み込み状況。記録のある県を押すと、観点{観点一覧.length}項目ごとの中身が見られる。
+        色の濃さは記録の件数、枠の線は手引きの読み込み状況です。記録のある県を押すと、観点{観点一覧.length}項目ごとの中身が見られます。
       </p>
       <p className="hk-entry">
         <a href="/hajimete/">はじめての許認可</a>
-        <span className="hint">許認可の名前と自治体から、公式の手引きを探して読み、要点を出典つきで出す（建設業許可・罹災証明書など）</span>
+        <span className="hint">許認可の名前と自治体から、公式の手引きを探して読み、要点を出典つきで出します（建設業許可・罹災証明書など）</span>
       </p>
       <p className="hk-entry">
         <a href="/hikaku/?観点=排出事業者&手続き=新規">府県くらべ</a>
-        <span className="hint">観点を一つ選ぶと、府県ごとの答えが並ぶ（排出事業者の書き方など）</span>
+        <span className="hint">観点を一つ選ぶと、府県ごとの答えが並びます（排出事業者の書き方など）</span>
       </p>
 
       <div className="summary">
@@ -128,7 +128,7 @@ export default function Home() {
           <div className="legend">
             <span className="legend-item">
               <span className="swatch shi-mark">市</span>
-              政令市の窓口の記録もある（件数に含む）
+              政令市の窓口の記録もあります（件数に含みます）
             </span>
           </div>
           <div className="legend">
@@ -165,7 +165,7 @@ export default function Home() {
                   <>
                     <div className="name">{k.名前}</div>
                     <div className="state">
-                      手引き：{d.手引きの状態 === "未読" ? "まだ読んでいない" : d.手引きの状態}
+                      手引き：{d.手引きの状態 === "未読" ? "まだ読んでいません" : d.手引きの状態}
                       {d.改訂 ? "（改訂を検知、再確認）" : ""}
                     </div>
                     {ある ? (
@@ -178,7 +178,7 @@ export default function Home() {
                         ))}
                       </div>
                     ) : (
-                      <div className="none">まだ記録がない</div>
+                      <div className="none">まだ記録がありません</div>
                     )}
                     {d.政令市.map((s) => (
                       <div key={s.市.コード} className="counts shi-counts">

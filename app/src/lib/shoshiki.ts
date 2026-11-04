@@ -194,13 +194,13 @@ type 差し替え = { 箱: number; 文字: string };
 export function 記入する(本文: string, 様: 様式, 値たち: 値): 記入の結果 {
   const 箱たち = [...本文.matchAll(箱の形)];
   if (箱たち.length !== 様.箱の数) {
-    return { ok: false, 理由: `本文の文字の箱の数が ${箱たち.length}（この様式なら ${様.箱の数}）。別の版の様式かもしれないので書かない` };
+    return { ok: false, 理由: `本文の文字の箱の数が ${箱たち.length}（この様式なら ${様.箱の数}）です。別の版の様式かもしれないので書きません` };
   }
   const 中身 = (i: number) => 箱たち[i][1];
   const 守る = (i: number) => /xml:space="preserve"/.test(箱たち[i][0].slice(0, 箱たち[i][0].indexOf(">")));
   const 元と同じか = (i: number, want: string, label: string): string | null => {
-    if (中身(i) !== want) return `${label}：元の字が様式と違う（${i}番目の箱）。書かない`;
-    if (!守る(i)) return `${label}：空白を守る印が無い箱（${i}番目）。書かない`;
+    if (中身(i) !== want) return `${label}：元の字が様式と違います（${i}番目の箱）。書きません`;
+    if (!守る(i)) return `${label}：空白を守る印が無い箱です（${i}番目）。書きません`;
     return null;
   };
 
@@ -223,7 +223,7 @@ export function 記入する(本文: string, 様: 様式, 値たち: 値): 記�
       const 右寄せ = (v: string, w: number, 名: string) => {
         const z = Array.from(全角に(v));
         if (z.length > w) {
-          説明.push(`${名}が${w}字を超えたので切った`);
+          説明.push(`${名}が${w}字を超えたので切りました`);
           return z.slice(z.length - w).join("");
         }
         return SP.repeat(w - z.length) + z.join("");
@@ -258,7 +258,7 @@ export function 記入する(本文: string, 様: 様式, 値たち: 値): 記�
         id: f.id,
         見出し: f.見出し,
         状態: r.切った ? "要確認" : "書いた",
-        説明: r.切った ? [`${幅 - (f.頭 ?? 0)}字を超えたので「${r.文字.slice((f.頭 ?? 0))}」で切った。様式の欄に収まる書き方を確かめる`] : [],
+        説明: r.切った ? [`${幅 - (f.頭 ?? 0)}字を超えたので「${r.文字.slice((f.頭 ?? 0))}」で切りました。様式の欄に収まる書き方を確かめてください`] : [],
       });
       continue;
     }
@@ -272,16 +272,16 @@ export function 記入する(本文: string, 様: 様式, 値たち: 値): 記�
     if (s.二行目) {
       const r2 = そろえる(s.二行目, w2);
       差したち.push({ 箱: f.次の箱, 文字: SP.repeat(f.次の頭) + r2.文字 });
-      説明.push(`1行目（${f.空白}字）に入らないので、${s.区切り}で切って2行目へ送った。切る位置を確かめる`);
+      説明.push(`1行目（${f.空白}字）に入らないので、${s.区切り}で切って2行目へ送りました。切る位置を確かめてください`);
     }
-    if (s.切り捨て) 説明.push(`2行目（${w2}字）にも入らず「${s.切り捨て}」を切り捨てた。書き方を考え直す`);
+    if (s.切り捨て) 説明.push(`2行目（${w2}字）にも入らず「${s.切り捨て}」を切り捨てました。書き方を考え直してください`);
     結果.push({ id: f.id, 見出し: f.見出し, 状態: 説明.length ? "要確認" : "書いた", 説明 });
   }
 
   // 後ろから差し替える（前の位置がずれないように）
   const 箱ごと = new Map<number, string>();
   for (const d of 差したち) {
-    if (箱ごと.has(d.箱)) return { ok: false, 理由: `${d.箱}番目の箱に二つの欄が書こうとしている。対応表を直す` };
+    if (箱ごと.has(d.箱)) return { ok: false, 理由: `${d.箱}番目の箱に二つの欄が書こうとしています。対応表を直してください` };
     箱ごと.set(d.箱, d.文字);
   }
   let out = 本文;
@@ -315,11 +315,11 @@ export function 控えを読む(text: string): { ok: true; 控え: 控え } | { 
   try {
     d = JSON.parse(text);
   } catch {
-    return { ok: false, 理由: "JSON として読めない" };
+    return { ok: false, 理由: "JSON として読めません" };
   }
   const o = d as Partial<控え>;
   if (!o || o.種類 !== "よみどころ 事業者の控え" || o.版 !== 1 || typeof o.値 !== "object" || !o.様式?.sha256) {
-    return { ok: false, 理由: "よみどころの事業者の控えの形ではない" };
+    return { ok: false, 理由: "よみどころの事業者の控えの形ではありません" };
   }
   const 値: 値 = {};
   for (const [k, v] of Object.entries(o.値 ?? {})) if (typeof v === "string") 値[k] = v;

@@ -142,10 +142,6 @@ select {
   font-size: 13px;
   letter-spacing: 0.04em;
 }
-.site-sub {
-  color: var(--sub);
-  font-size: 13px;
-}
 .site-nav {
   margin-left: auto;
   display: flex;
