@@ -2,7 +2,7 @@
 
 // 県ページの中身。手続き・品目の切り替え、「再確認」、チェックリストは、見た人の画面で計算する。
 import { useEffect, useState } from "react";
-import type { カード } from "@/lib/data";
+import type { カード, 判定の印, 判定の種類 } from "@/lib/data";
 import type { 観点 } from "../../../schema/record.ts";
 import { 再確認か, 経過日数, 年月, 表示日, 日付に } from "@/lib/hizuke";
 import { 手続き一覧, 既定の手続き, 品目で見る as 品目の判定, 手続きが合う as 手続きの判定, type 手続き, type 品目判定 } from "@/lib/hantei";
@@ -334,6 +334,13 @@ export default function KenView({
             <span className="label 再確認">再確認</span>
             <span>確認から1年を超えた記録</span>
           </div>
+          <div className="legend">
+            <span className="label 判定 食い違い">揺れあり、要確認</span>
+            <span className="label 判定 補足">電話で補足</span>
+            <span className="label 判定 一致">手引きと一致</span>
+            <span className="label 判定 判定不能">判定不能</span>
+            <span>電話の答えと手引きをケン（Claude）が見比べた印。札に指を置くと理由が出る</span>
+          </div>
 
           {群順.map((g) => (
             <section key={g} id={群id(g)} className="group">
@@ -365,6 +372,7 @@ export default function KenView({
                           ))}
                         </div>
                       )}
+                      <Mikurabe cs={cs} />
                     </div>
                   );
                 })}
@@ -523,7 +531,9 @@ function Card({
             ? { cls: "不一致", 文: "照合：不一致" }
             : null;
   const 薄く = !手続きが合う || 品目 === "合わない";
-  const cls = `card ${c.種別}${古い ? " recheck" : ""}${薄く ? " faded" : ""}${品目 === "合う" && !薄く ? " match" : ""}${照合 === "不一致" ? " mismatch" : ""}`;
+  const 印たち = 判定の札(c.判定 ?? [], c.種別 === "手引き");
+  const 揺れ = 印たち.some((x) => x.判定 === "食い違い" && !x.解消);
+  const cls = `card ${c.種別}${揺れ ? " yure" : ""}${古い ? " recheck" : ""}${薄く ? " faded" : ""}${品目 === "合う" && !薄く ? " match" : ""}${照合 === "不一致" ? " mismatch" : ""}`;
   const 添え書き: string[] = [];
   if (!手続きが合う) 添え書き.push(`この答えは${c.対象.join("・")}のとき`);
   if (品目 === "合わない" && c.品目) 添え書き.push(`この答えは${c.品目.join("・")}の品目のとき`);
@@ -535,6 +545,12 @@ function Card({
           <span className={`label ${c.種別}`}>{c.種別}</span>
           {c.見本 && <span className="label 見本">見本</span>}
           {古い && <span className="label 再確認">再確認</span>}
+          {印たち.map((x) => (
+            <span key={x.判定 + x.文} className={`label 判定 ${x.判定}${x.解消 ? " 解消" : ""}`} title={x.理由たち.join("\n")}>
+              {x.文}
+              {x.解消 ? "・確かめ済み" : ""}
+            </span>
+          ))}
           {照合の札 && <span className={`label ${照合の札.cls}`}>{照合の札.文}</span>}
           {c.改訂 && <span className="note">手引きの改訂を検知。読み直すまで再確認</span>}
           {分かりにくい && <span className="label 分かりにくい">手引きが分かりにくい所</span>}
@@ -639,5 +655,98 @@ function Card({
       )}
       {c.種別 === "同業者" && <div className="band">同業者から聞いた参考情報。公式見解ではない。申請前に再確認すること</div>}
     </article>
+  );
+}
+
+// ---- 揺れの印（ケンの判定） ----
+// 印を出すのは「揺れあり、要確認」「電話で補足」「手引きと一致」の三つ。「判定不能」は小さく灰色で。
+// 「対象が違う」は data.ts の時点で外してある。解消（行政書士が確かめた）は消さずに弱める
+
+const 判定の順: 判定の種類[] = ["食い違い", "補足", "一致", "判定不能"];
+
+/** 手引きのカードの側では、一致の相手は電話なので「電話と一致」と言う */
+function 判定の文(判定: 判定の種類, 種類: 判定の印["種類"], 手引きの側 = false) {
+  if (判定 === "食い違い") return "揺れあり、要確認";
+  if (判定 === "補足") return "電話で補足";
+  if (判定 === "一致") return 種類 === "電話どうし" ? "前の電話と一致" : 手引きの側 ? "電話と一致" : "手引きと一致";
+  return "判定不能";
+}
+
+/** カードに付ける札。同じ答えの組はまとめ、全部が確かめ済みのときだけ弱める */
+function 判定の札(js: 判定の印[], 手引きの側: boolean) {
+  const 札: { 判定: 判定の種類; 文: string; 解消: boolean; 理由たち: string[] }[] = [];
+  for (const 判定 of 判定の順) {
+    for (const 種類 of ["手引きと電話", "電話どうし"] as const) {
+      const 組 = js.filter((j) => j.判定 === 判定 && j.種類 === 種類);
+      if (組.length === 0) continue;
+      const 文 = 判定の文(判定, 種類, 手引きの側);
+      const 前 = 札.find((x) => x.文 === 文);
+      const 理由たち = 組.map((j) => `ケンの理由：${j.理由}`);
+      if (前) {
+        前.解消 = 前.解消 && 組.every((j) => j.解消);
+        前.理由たち.push(...理由たち);
+      } else 札.push({ 判定, 文, 解消: 組.every((j) => j.解消), 理由たち });
+    }
+  }
+  return 札;
+}
+
+type 見比べの側 = { 種別: string; 本文: string; 問い?: string; 確認日: string | null; 窓口?: string; ページ?: string; url?: string };
+
+/** 観点の中で、補足と揺れの組を、二つの記録を並べて理由一行で見せる */
+function Mikurabe({ cs }: { cs: カード[] }) {
+  const 組 = cs.flatMap((c) =>
+    (c.判定 ?? [])
+      .filter((j) => j.主 && (j.判定 === "食い違い" || j.判定 === "補足"))
+      .map((j) => ({ 電話: c as 見比べの側, j })),
+  );
+  if (組.length === 0) return null;
+  // 揺れを先に、確かめ済みは後ろに
+  組.sort((a, b) => Number(a.j.解消) - Number(b.j.解消) || 判定の順.indexOf(a.j.判定) - 判定の順.indexOf(b.j.判定));
+  return (
+    <div className="mikurabe">
+      <div className="mikurabe-title">見比べ（ケンの見立て）</div>
+      {組.map(({ 電話, j }, i) => (
+        <div key={i} className={`mikurabe-pair ${j.判定}${j.解消 ? " 解消" : ""}`}>
+          <div className="mikurabe-head">
+            <span className={`label 判定 ${j.判定}${j.解消 ? " 解消" : ""}`}>
+              {判定の文(j.判定, j.種類)}
+              {j.解消 ? "・確かめ済み" : ""}
+            </span>
+            <span className="mikurabe-why">{j.理由}</span>
+          </div>
+          <div className="mikurabe-two">
+            {/* 手引きと電話は、手引きを左に。電話どうしは、前の電話を左に */}
+            <Kata x={j.相手} 見出し={j.種類 === "電話どうし" ? "前の電話" : "手引き"} />
+            <Kata x={電話} 見出し={j.種類 === "電話どうし" ? "あとの電話" : "電話"} />
+          </div>
+        </div>
+      ))}
+      <div className="mikurabe-note">
+        二つの記録を並べてケン（Claude）が見立てた一行。道具は判断しない。食い違うかどうかを決めるのは行政書士。
+      </div>
+    </div>
+  );
+}
+
+function Kata({ x, 見出し }: { x: 見比べの側; 見出し: string }) {
+  return (
+    <div className={`mikurabe-side ${x.種別}`}>
+      <div className="mikurabe-side-top">
+        <span className={`label ${x.種別}`}>{見出し}</span>
+        {x.確認日 && <span className="note">{表示日(x.確認日)}</span>}
+        {x.窓口 && <span className="note">{x.窓口}</span>}
+      </div>
+      <p>{x.本文}</p>
+      {x.問い && <div className="q">問い　{x.問い}</div>}
+      {x.ページ &&
+        (x.url ? (
+          <a className="ref" href={x.url} target="_blank" rel="noopener noreferrer">
+            {x.ページ}
+          </a>
+        ) : (
+          <span className="ref">{x.ページ}</span>
+        ))}
+    </div>
   );
 }

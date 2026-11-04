@@ -1060,3 +1060,74 @@ a.tile:hover {
 .hj-ng { margin: 0 0 20px; padding: 10px 14px; border: 1px dashed var(--shu); border-radius: 6px; font-size: 13.5px; background: var(--paper); }
 .hj-ng b { color: var(--shu); }
 .hj-ng ul { margin: 6px 0 0; padding-left: 1.2em; word-break: break-all; }
+
+/* 揺れの印（ケンの判定）。揺れは二重線、補足・一致は細い枠、判定不能は小さく灰色。確かめ済みは弱める */
+.label.判定 { background: transparent; font-weight: 700; }
+.label.判定.食い違い { color: var(--shu); border: 3px double var(--shu); padding: 3px 8px; }
+.label.判定.補足 { color: var(--accent); border: 1px solid var(--accent); }
+.label.判定.一致 { color: var(--sub); border: 1px solid var(--line); }
+.label.判定.判定不能 { color: var(--faint); border: 1px solid transparent; font-weight: 400; font-size: 10.5px; padding: 4px 4px; }
+.label.判定.解消 { opacity: 0.55; border-style: dotted; }
+.card.yure { border: 3px double var(--shu); }
+
+.mikurabe {
+  margin-top: 10px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--paper);
+}
+.mikurabe-title {
+  font-size: 12.5px;
+  color: var(--sub);
+  margin-bottom: 6px;
+}
+.mikurabe-pair {
+  padding: 8px 0;
+  border-top: 1px solid var(--line);
+}
+.mikurabe-pair.食い違い { border-top: 3px double var(--shu); }
+.mikurabe-pair.解消 { opacity: 0.6; }
+.mikurabe-head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 8px;
+}
+.mikurabe-why {
+  font-size: 14px;
+  line-height: 1.6;
+}
+.mikurabe-two {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+@media (max-width: 640px) {
+  .mikurabe-two { grid-template-columns: 1fr; }
+}
+.mikurabe-side {
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-size: 13.5px;
+  line-height: 1.65;
+  border: 1px solid var(--line);
+}
+.mikurabe-side.手引き { background: var(--ai-bg); }
+.mikurabe-side.電話 { background: var(--kaki-bg); }
+.mikurabe-side p { margin: 4px 0; }
+.mikurabe-side-top {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+.mikurabe-side-top .note,
+.mikurabe-side .q { font-size: 12px; color: var(--sub); }
+.mikurabe-side .ref { font-size: 12px; }
+.mikurabe-note {
+  font-size: 12px;
+  color: var(--sub);
+  margin-top: 4px;
+}

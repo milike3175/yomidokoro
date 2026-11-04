@@ -14,6 +14,7 @@
 //      見本/<許認可>/_判定/ は、見本の電話ファイルに由来する文だけを外す）
 //   3. 鍵の形：sk-ant- で始まる文字列など。見つけても中身は出さず「どのファイルの何行目」だけ出す
 //   4. 公開しない予定のメモ：下の一覧。追跡に入ったら止める（警告どまりのものは印を付けてある）
+//   5. 見本/<許認可>/_判定/ の組：電話が見本の電話の記録で、相手が手引きか見本の電話であること（画面に理由が出るため）
 //
 // 守ること
 //   - 手帳の文も鍵も、画面には一切出さない。出すのはファイル名と行番号だけ
@@ -199,8 +200,23 @@ for (const f of ファイルたち(TECHO, /\.ya?ml$/)) {
     }
   }
 }
+// 見本の電話の記録（app/data/見本/<許認可>/<県>/電話/*.yaml）の ID と、その元の手帳ファイル
+const 見本の電話id = new Set<string>();
+const 見本の元 = new Set<string>();
+for (const f of ファイルたち(path.join(APP, "data", "見本"), /\.ya?ml$/).filter((f) => path.basename(path.dirname(f)) === "電話")) {
+  try {
+    const id = parse(fs.readFileSync(f, "utf8"))?.id;
+    if (typeof id === "string") 見本の電話id.add(id);
+  } catch {}
+  見本の元.add(NFC(path.relative(path.join(APP, "data", "見本"), f)));
+}
+/** 組が見本の電話だけでできているか（相手が手引きか、相手の電話も見本）。見本の判定に入ってよいのはこの組だけ */
+const 見本だけの組 = (x: any) =>
+  typeof x?.電話?.id === "string" &&
+  見本の電話id.has(x.電話.id) &&
+  (typeof x?.相手?.手引き === "string" || (typeof x?.相手?.電話 === "string" && 見本の電話id.has(x.相手.電話)));
 // 手帳/<許認可>/_判定/ の理由の一行（ケンが電話の答えを言い換えたもの）も見張る。電話の記録の ID ごとに持つ
-/** 判定の理由の語（電話の記録の ID → 語）。見本/ の _判定 で外すのは、見本の電話の ID に結びつく語だけ */
+/** 判定の理由の語（電話の記録の ID → 語）。見本/ の _判定 で外すのは、見本の電話だけでできた組の語だけ */
 const 判定の語 = new Map<string, Set<string>>();
 for (const f of ファイルたち(TECHO, /\.ya?ml$/).filter((f) => path.basename(path.dirname(f)) === "_判定")) {
   let d: any = {};
@@ -213,8 +229,10 @@ for (const f of ファイルたち(TECHO, /\.ya?ml$/).filter((f) => path.basenam
     if (typeof x?.理由 !== "string" || typeof x?.電話?.id !== "string") continue;
     const s = NFC(x.理由).replace(/\s+/g, "");
     if (s.length < 12) continue;
-    const この語 = 判定の語.get(x.電話.id) ?? new Set<string>();
-    判定の語.set(x.電話.id, この語);
+    // 見本の電話と、見本でない電話の組（電話どうし）は、見本の側でも外さない（見本でない電話の言い換えを含むため）
+    const 鍵 = 見本だけの組(x) ? x.電話.id : "（見本でない組）";
+    const この語 = 判定の語.get(鍵) ?? new Set<string>();
+    判定の語.set(鍵, この語);
     // 理由は短い（60字以内）ので、20字に満たなければ全体を、それ以上なら20字ずつ切り出す
     if (s.length < 長さ) この語.add(s);
     else {
@@ -223,16 +241,6 @@ for (const f of ファイルたち(TECHO, /\.ya?ml$/).filter((f) => path.basenam
     }
     for (const w of この語) 見張る語.add(w);
   }
-}
-// 見本の電話の記録（app/data/見本/<許認可>/<県>/電話/*.yaml）の ID と、その元の手帳ファイル
-const 見本の電話id = new Set<string>();
-const 見本の元 = new Set<string>();
-for (const f of ファイルたち(path.join(APP, "data", "見本"), /\.ya?ml$/).filter((f) => path.basename(path.dirname(f)) === "電話")) {
-  try {
-    const id = parse(fs.readFileSync(f, "utf8"))?.id;
-    if (typeof id === "string") 見本の電話id.add(id);
-  } catch {}
-  見本の元.add(NFC(path.relative(path.join(APP, "data", "見本"), f)));
 }
 
 // 品目・手続きの呼び名だけでできた語は見張らない（build-check.ts と同じ）
@@ -310,6 +318,18 @@ for (const t of 対象たち) {
   });
   // 2. 手帳の文。app/data/見本/<X> は、みゆきが公開を了承した見本なので、元の 手帳/<X> の文だけは一致しても通す。
   //    見本/ にそれ以外の手帳の文があれば止める。見本/ 以外のファイルは今までどおり全部の手帳の文で調べる
+  // 5. 見本/<許認可>/_判定/ の組は、見本の電話の記録だけでできていること（ほかの電話の組が入っていれば止める）
+  if (t.場所.startsWith(見本の置き場) && t.場所.slice(見本の置き場.length).split("/")[1] === "_判定" && /\.ya?ml$/.test(t.場所)) {
+    let 組: any[] = [];
+    try {
+      const d = parse(text) ?? {};
+      組 = Array.isArray(d.判定) ? d.判定 : [];
+    } catch {
+      記す(止める理由, `${t.場所}（${t.出どころ}）：見本の判定ファイルが読めない`);
+    }
+    const 外れ = 組.filter((x) => !見本だけの組(x)).length;
+    if (外れ) 記す(止める理由, `${t.場所}（${t.出どころ}）：見本の電話の記録ではない電話の組が ${外れ}件入っている（判定の理由は表示しません）`);
+  }
   const この見張る文 = t.場所.startsWith(見本の置き場) ? 見本で見張る文(t.場所) : 見張る文;
   if (この見張る文.length) {
     const 詰めた行 = 行たち.map((l) => l.replace(/\s+/g, ""));

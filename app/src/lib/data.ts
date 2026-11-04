@@ -1,6 +1,7 @@
 // ビルド時（と開発中の表示時）に YAML を読み、画面用の形にそろえる。サーバー側だけで使う。
 import fs from "node:fs";
 import path from "node:path";
+import crypto from "node:crypto";
 import { parse } from "yaml";
 import type { ZodType } from "zod";
 import {
@@ -11,6 +12,7 @@ import {
   受理実績ファイル,
   電話ファイル,
   補正ファイル,
+  判定ファイル,
   type 観点,
   type 県,
   type 政令市,
@@ -58,6 +60,25 @@ export type カード = {
   /** 公開版に載せる見本の電話記録（app/data/見本/ から読んだもの） */
   見本?: boolean;
   探した語?: string[];
+  /** ケンの判定（揺れ）。この記録と、相手の記録の組ごと。「対象が違う」は付けない */
+  判定?: 判定の印[];
+};
+
+/** 画面に出す判定の答え。「対象が違う」は印を出さないので入れない */
+export type 判定の種類 = "一致" | "補足" | "食い違い" | "判定不能";
+
+export type 判定の印 = {
+  判定: 判定の種類;
+  理由: string;
+  種類: "手引きと電話" | "電話どうし";
+  /** 行政書士が確かめて片付けた。印は消さずに弱める */
+  解消: boolean;
+  /** 相手の記録が見つからなくなった組 */
+  もう一度判定: boolean;
+  /** 組の主（電話の答えの側）。手引きの側・古い電話の側は false。見比べを一度だけ出すのに使う */
+  主: boolean;
+  /** 組の相手（画面で並べて見せる分だけ写す） */
+  相手: { 種別: 種別; 本文: string; 問い?: string; 確認日: string | null; 窓口?: string; ページ?: string; url?: string };
 };
 
 export type 手引きの状態 = "検品済み" | "未検品" | "未確認" | "未読";
@@ -108,6 +129,14 @@ function 配列に(v: string | string[] | undefined): string[] | undefined {
   return Array.isArray(v) ? v : [v];
 }
 
+/** 問いの文から作る短い印。scripts/yure/hantei.ts の「印」と同じ式（変えると判定の組が全部つながらなくなる） */
+function 問いの印(s: string) {
+  return crypto.createHash("sha256").update(NFC(s).replace(/\s+/g, "")).digest("hex").slice(0, 8);
+}
+
+/** 判定が付いたが、相手の記録が見つからなかった組の数（書き出しのときに知らせる） */
+export const つながらない判定: { 許可権者: string; 件数: number }[] = [];
+
 let cache: ReturnType<typeof 全部読む> | null = null;
 
 function 全部読む() {
@@ -128,6 +157,8 @@ function 全部読む() {
     let 読んだ日: string | null = null;
     let 観点候補: 県データ["観点候補"] = [];
     const 照合の内訳: Record<string, number> = {};
+    /** 判定ファイルの ID（手引きの記録のID、電話は「電話の記録のID#観点#問いの印」）から、その記録のカードを引く */
+    const 鍵から: Map<string, カード> = new Map();
 
     // 手引きの置き場の _出典.yaml（改訂の検知）
     const 手引きdir = 県フォルダ(TEBIKI_DIR, 県.コード);
@@ -152,7 +183,7 @@ function 全部読む() {
       印字から物理 = new Map((主?.ページ対応 ?? []).map(([物, 印]) => [印, 物]));
       for (const r of t.記録) {
         照合の内訳[r.出典.照合] = (照合の内訳[r.出典.照合] ?? 0) + 1;
-        カード.push({
+        const c: カード = {
           観点: r.観点,
           種別: "手引き",
           本文: r.主張,
@@ -161,7 +192,9 @@ function 全部読む() {
           品目: 配列に(r.品目),
           出典: { ...r.出典, 文書名: 名.get(r.出典.文書), url: url.get(r.出典.文書) },
           改訂: 全部 || 改訂の文書.has(NFC(r.出典.文書)),
-        });
+        };
+        カード.push(c);
+        鍵から.set(r.id, c);
       }
       観点候補 = t.観点候補.map((c) => ({
         ...c,
@@ -190,7 +223,7 @@ function 全部読む() {
         for (const f of fs.readdirSync(電話dir).filter((n) => n.endsWith(".yaml")).sort()) {
           const d = 読む(path.join(電話dir, f), 電話ファイル);
           for (const a of d.回答) {
-            カード.push({
+            const c: カード = {
               観点: a.観点,
               種別: d.種別,
               本文: a.答え,
@@ -208,8 +241,46 @@ function 全部読む() {
                     return { ...a.手引きへの参照, 物理ページ: 物理, url: 手引きurl ? `${手引きurl}#page=${物理}` : undefined };
                   })()
                 : undefined,
-            });
+            };
+            カード.push(c);
+            // 同じ電話で同じ問いに観点を分けて答えることがあるので、観点も鍵に入れる（判定の id と同じ考え方）
+            鍵から.set(`${d.id}#${a.観点}#${問いの印(a.問い)}`, c);
           }
+        }
+      }
+      // ケンの判定：電話と同じ置き場から読む（TECHO=1 は手帳/<許認可>/_判定/、公開版は 見本/<許認可>/_判定/ だけ）
+      const 判定dir = path.join(電話の置き場, 許認可, "_判定");
+      const 判定f = fs.existsSync(判定dir)
+        ? fs.readdirSync(判定dir).find((n) => NFC(n).startsWith(`${県.コード}_`) && n.endsWith(".yaml"))
+        : undefined;
+      if (判定f) {
+        let 迷子 = 0;
+        const 写す = (c: カード): 判定の印["相手"] => ({
+          種別: c.種別,
+          本文: c.本文,
+          問い: c.問い,
+          確認日: c.確認日,
+          窓口: c.窓口,
+          ページ: c.出典
+            ? `${c.出典.文書名 ?? c.出典.文書}　PDF ${c.出典.物理ページ}ページ目${c.出典.印字ページ ? `（印字 p.${c.出典.印字ページ}）` : ""}`
+            : undefined,
+          url: c.出典?.url ? `${c.出典.url}#page=${c.出典.物理ページ}` : undefined,
+        });
+        for (const x of 読む(path.join(判定dir, 判定f), 判定ファイル).判定) {
+          if (x.判定 === "対象が違う") continue;
+          const 電話 = 鍵から.get(`${x.電話.id}#${x.観点}#${x.電話.問いの印}`);
+          const 相手 = 鍵から.get("手引き" in x.相手 ? x.相手.手引き : `${x.相手.電話}#${x.観点}#${x.相手.問いの印}`);
+          if (!電話 || !相手) {
+            迷子++;
+            continue;
+          }
+          const 共通 = { 判定: x.判定, 理由: x.理由, 種類: x.種類, 解消: !!x.解消, もう一度判定: !!x.もう一度判定 };
+          (電話.判定 ??= []).push({ ...共通, 主: true, 相手: 写す(相手) });
+          (相手.判定 ??= []).push({ ...共通, 主: false, 相手: 写す(電話) });
+        }
+        if (迷子) {
+          つながらない判定.push({ 許可権者: 県.名前, 件数: 迷子 });
+          console.warn(`${県.名前}：判定 ${迷子}件の相手の記録が見つからない（問いや手引きを直したなら npm run 判定 をやり直す）`);
         }
       }
     }
