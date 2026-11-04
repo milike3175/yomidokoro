@@ -1,7 +1,7 @@
 {
   "name": "yomidokoro-desktop",
   "productName": "yomidokoro",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "private": true,
   "description": "よみどころ（試し版）。app/out をダブルクリックで開けるアプリにしたもの",
   "main": "main.cjs",

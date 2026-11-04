@@ -47,6 +47,63 @@ process.on("uncaughtException", (e) => {
 });
 process.on("unhandledRejection", (e) => 記録("unhandledRejection", String(e && e.stack ? e.stack : e)));
 
+// ---- 開いた場所の確かめ（Windows）----
+// Chromium の守りの仕組み（サンドボックス）は、Mac と共有している場所（Parallels の C:\Mac\・\\Mac\・\\psf\）や
+// ネットワークの場所の上では動かず、画面の処理が立ち上がれずに閉じる（launch-failed、アクセス拒否）。
+// 守りの仕組みは切らない（--no-sandbox は使わない）。代わりに、場所を変えて開き直すよう案内して終える。
+const 場所の案内 =
+  "このアプリは Mac と共有している場所やネットワークの場所からは開けません。\n\n" +
+  "Windows のフォルダ（例：C:\\yomidokoro）に zip を写して、そこで展開してから開いてください。";
+let 案内した = false;
+function 案内して終える(理由, 詳しく) {
+  if (案内した) return;
+  案内した = true;
+  記録("unsupported location", 理由, 詳しく ?? {});
+  try {
+    dialog.showErrorBox("よみどころ：この場所からは開けません", `${場所の案内}\n\nいまの場所：${process.execPath}\n\n記録：${記録の置き場を決める()}`);
+  } catch {}
+  app.exit(1);
+}
+/** 共有・ネットワークの場所なら、その理由を返す。問題なければ null */
+function 共有の場所か(p) {
+  const s = String(p || "").replace(/\//g, "\\");
+  const 小 = s.toLowerCase();
+  if (/^[a-z]:\\mac(\\|$)/.test(小)) return "parallels shared folder (C:\\Mac\\)";
+  if (小.startsWith("\\\\mac\\") || 小.startsWith("\\\\psf\\")) return "parallels shared folder (\\\\Mac\\ or \\\\psf\\)";
+  if (小.startsWith("\\\\?\\unc\\")) return "network location (\\\\?\\UNC\\)";
+  if (小.startsWith("\\\\") && !小.startsWith("\\\\?\\") && !小.startsWith("\\\\.\\")) return "network location (UNC)";
+  return null;
+}
+/** ドライブ文字がネットワークドライブ（net use で割り当てたもの）か。C: は調べない */
+function ネットワークドライブか(p) {
+  const m = /^([a-zA-Z]):/.exec(String(p || ""));
+  if (!m || m[1].toUpperCase() === "C") return false;
+  try {
+    const { spawnSync } = require("node:child_process");
+    const r = spawnSync("net", ["use"], { encoding: "utf8", timeout: 3000, windowsHide: true });
+    const 文字 = m[1].toUpperCase();
+    return String(r.stdout || "")
+      .split(/\r?\n/)
+      .some((line) => new RegExp(`(^|\\s)${文字}:(\\s|$)`, "i").test(line));
+  } catch {
+    return false;
+  }
+}
+if (process.platform === "win32") {
+  const exe = process.execPath;
+  let 本当の場所 = exe;
+  try {
+    本当の場所 = fs.realpathSync.native(exe);
+  } catch {}
+  const 理由 = 共有の場所か(exe) || 共有の場所か(本当の場所) || (ネットワークドライブか(exe) ? "network drive" : null);
+  記録("location check", { exe, realpath: 本当の場所, result: 理由 || "ok" });
+  if (理由) {
+    案内して終える(理由, { exe, realpath: 本当の場所 });
+    // app.exit の後に下の処理（窓を作るなど）へ進まないよう、ここで読み込みを止める（CommonJS の最上位の return）
+    return;
+  }
+}
+
 // Parallels などの仮想の画面で落ちることがあるので、Windows では GPU を使わない
 if (process.platform === "win32") {
   app.disableHardwareAcceleration();
@@ -189,7 +246,25 @@ function 窓を開く(はじめのページ = "/") {
 <p>この記録のファイルを作った人に送ってください：<br><code>${記録の置き場を決める().replace(/[<>&]/g, "")}</code></p></body>`;
     void win.loadURL("data:text/html;charset=utf-8," + encodeURIComponent(html));
   });
-  win.webContents.on("render-process-gone", (_e, d) => 記録("render-process-gone", d));
+  // 窓の中身が読み込まれる前に、ページの処理が立ち上がれずに落ちる（launch-failed）ときは、
+  // 開いた場所のせい（共有・ネットワークの場所でサンドボックスが動かない）であることが多い。
+  // 一度だけ読み込み直し、それでも落ちたら場所を変えて開き直すよう案内して終える（黙って閉じない）。
+  let 読み込めた = false;
+  let 立ち上がれなかった回数 = 0;
+  win.webContents.on("did-finish-load", () => {
+    読み込めた = true;
+  });
+  win.webContents.on("render-process-gone", (_e, d) => {
+    記録("render-process-gone", d);
+    if (読み込めた || !d || d.reason !== "launch-failed") return;
+    立ち上がれなかった回数 += 1;
+    if (立ち上がれなかった回数 < 2 && !win.isDestroyed()) {
+      記録("renderer launch-failed before first load; reloading once");
+      win.webContents.reload();
+      return;
+    }
+    案内して終える("renderer launch-failed before first load", { count: 立ち上がれなかった回数, details: d });
+  });
   win.webContents.on("unresponsive", () => 記録("unresponsive"));
   win.on("closed", () => 記録("window closed"));
   win.loadURL(`${住所}://${家}${はじめのページ}`);
@@ -249,7 +324,17 @@ function 献立(win) {
 }
 
 // 二つ目を開こうとしたら、一つ目の窓を前に出す
-app.on("child-process-gone", (_e, d) => 記録("child-process-gone", d));
+// GPU などの処理が立ち上がれない（launch-failed）ときも、最初の画面が出る前なら場所の案内を出して終える。
+// Chromium は GPU の処理が何度も立ち上がれないと自分で閉じてしまうので、二回目で案内する。
+let 画面が出た = false;
+let 子が立ち上がれなかった回数 = 0;
+app.on("browser-window-created", (_e, w) => w.webContents.once("did-finish-load", () => (画面が出た = true)));
+app.on("child-process-gone", (_e, d) => {
+  記録("child-process-gone", d);
+  if (画面が出た || !d || d.reason !== "launch-failed") return;
+  子が立ち上がれなかった回数 += 1;
+  if (子が立ち上がれなかった回数 >= 2) 案内して終える(`${d.type} launch-failed before first load`, { count: 子が立ち上がれなかった回数, details: d });
+});
 app.on("render-process-gone", (_e, _wc, d) => 記録("app render-process-gone", d));
 app.on("will-quit", () => 記録("will-quit"));
 

@@ -13,12 +13,17 @@
 ### Windows
 zip は二つある。どちらを使うかは、Windows の「設定」の「システム」の「バージョン情報」にある「システムの種類」で決める。
 
-- 「ARM ベース プロセッサ」と書いてある（Mac の Parallels の Windows など）：`yomidokoro-0.0.2-win-arm64.zip`
-- 「x64 ベース プロセッサ」と書いてある（ふつうの Windows 機）：`yomidokoro-0.0.2-win-x64.zip`
+- 「ARM ベース プロセッサ」と書いてある（Mac の Parallels の Windows など）：`yomidokoro-0.0.3-win-arm64.zip`
+- 「x64 ベース プロセッサ」と書いてある（ふつうの Windows 機）：`yomidokoro-0.0.3-win-x64.zip`
 
-1. zip を Windows の中の場所（デスクトップやドキュメント）に置き、右クリックして「すべて展開」
-   （Mac と共有しているフォルダ（`\\Mac\...`）の上では展開しない。Windows 側に写してから）
-2. 展開したフォルダの中の `yomidokoro.exe` をダブルクリック
+**Mac と共有している場所では開けません。** `C:\Mac\...`、`\\Mac\...`、`\\psf\...` の場所や、
+Windows のデスクトップ・ドキュメントが Mac とつながっている場合（Parallels の「Mac とフォルダを共有」が入っているとき）、
+ネットワークの場所（`\\` で始まる場所、ネットワークドライブ）では、開こうとしても閉じてしまいます。
+必ず `C:\yomidokoro` などの Windows の中のフォルダに zip を写して、そこで展開してください。
+（この場所から開いたときは「この場所からは開けません」という案内が出て終わります）
+
+1. エクスプローラーで `C:\` を開き、新しいフォルダ `yomidokoro` を作る。zip をそこに写し、右クリックして「すべて展開」
+2. 展開したフォルダ（`C:\yomidokoro\...`）の中の `yomidokoro.exe` をダブルクリック
 3. 青い画面「Windows によって PC が保護されました」が出たら、「詳細情報」を押し、「実行」を押す
    （署名をしていないアプリなので出る。一度実行すれば、次からは出ない）
 
@@ -30,7 +35,7 @@ zip のまま中の exe を開くと動かない。必ず展開してから開�
 Mac では `~/Library/Application Support/yomidokoro/launch-log.txt`。
 
 ### Mac（Apple のチップの Mac）
-1. `yomidokoro-0.0.2-arm64-mac.zip` をダブルクリックして展開し、`yomidokoro.app` を「アプリケーション」に移す
+1. `yomidokoro-0.0.3-arm64-mac.zip` をダブルクリックして展開し、`yomidokoro.app` を「アプリケーション」に移す
 2. ダブルクリックすると「開いていません」「Apple は検証できませんでした」と出る。「完了」で閉じる
 3. 「システム設定」の「プライバシーとセキュリティ」を開き、下の方の「yomidokoro がブロックされました」の横の「このまま開く」を押す。もう一度確認が出たら「開く」
    （古い macOS では、アプリを右クリックして「開く」でもよい）
@@ -61,3 +66,6 @@ npm run 書き出し:mac              # Mac 版（zip、署名なし）
 
 画面（`_写し/site`）と記入の対応表（`_写し/様式`）は app.asar の中に入れる。日本語のフォルダ名が asar の外に出ると、Windows の zip の展開で崩れることがあるため。
 Windows では GPU を使わない（`app.disableHardwareAcceleration()`。Parallels などの仮想の画面で落ちるのを避ける）。
+Windows で exe の場所が Mac との共有（`C:\Mac\`・`\\Mac\`・`\\psf\`）やネットワークの場所なら、窓を作らずに案内を出して終える。
+Chromium のサンドボックスがその上では動かず、画面の処理が launch-failed（アクセス拒否）で落ちるため。サンドボックスは切らない（`--no-sandbox` は使わない）。
+最初の画面が出る前にページの処理が launch-failed で二回落ちたとき、GPU などの処理が二回落ちたときも、同じ案内を出して終える。
