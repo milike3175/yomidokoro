@@ -6,7 +6,7 @@
 // 例外は「試す」ボタンだけ：このサイトと同じ場所に置いた様式（app/public/、公開する様式.yaml で sha256 ごとに許したもの）を
 // 同じオリジンから読み込む（GET。何も送らない）。読み込んだ中身の sha256 が一覧と違えば使わない。
 
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   docxに書く,
   品目たち,
@@ -68,6 +68,19 @@ function 保存させる(data: Blob, name: string) {
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
+// デスクトップ版（desktop/preload.cjs）が出す控えの口。ブラウザで開いたときは無い
+type 控えの口の型 = {
+  保存: (ファイル名: string, 中身: string) => Promise<{ ok: true; ファイル名: string; 置き場: string } | { ok: false; 理由: string }>;
+  一覧: () => Promise<{ ファイル名: string; 更新: string }[] | { ok: false; 理由: string }>;
+  開く: (ファイル名: string) => Promise<{ ok: true; 中身: string } | { ok: false; 理由: string }>;
+  置き場を開く: () => Promise<unknown>;
+};
+function アプリの控えの口(): 控えの口の型 | null {
+  if (typeof window === "undefined") return null;
+  const y = (window as unknown as { yomidokoro?: { 控え?: 控えの口の型 } }).yomidokoro;
+  return y?.控え ?? null;
+}
+
 function 今日(): string {
   const d = new Date();
   const p = (n: number) => String(n).padStart(2, "0");
@@ -118,6 +131,26 @@ export default function ShoshikiView({
   const [重ねる, set重ねる] = useState(false);
   const 受け口 = useRef<HTMLInputElement>(null);
   const 控えの口 = useRef<HTMLInputElement>(null);
+  // アプリの中では、控えは決まった置き場に保存し、その一覧から選んで読み込む
+  const [アプリ, setアプリ] = useState<控えの口の型 | null>(null);
+  const [控えの一覧, set控えの一覧] = useState<{ ファイル名: string; 更新: string }[]>([]);
+  const [選んだ控え, set選んだ控え] = useState<string>("");
+  async function 一覧を読み直す(口: 控えの口の型 | null = アプリ) {
+    if (!口) return;
+    const r = await 口.一覧();
+    if (!Array.isArray(r)) {
+      set控えの知らせ(`控えの一覧を読めませんでした：${r.理由}`);
+      return;
+    }
+    set控えの一覧(r);
+    set選んだ控え((v) => (r.some((x) => x.ファイル名 === v) ? v : (r[0]?.ファイル名 ?? "")));
+  }
+  useEffect(() => {
+    const 口 = アプリの控えの口();
+    setアプリ(口);
+    void 一覧を読み直す(口);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const 様 = 置?.様 ?? null;
   const 型 = (様 && 型たち.find((t) => t.sha256 === 様.sha256)) || null;
@@ -205,17 +238,44 @@ export default function ShoshikiView({
     set知らせ(`記入した docx を保存しました（このパソコンの中だけ）。要確認 ${確}件。Word で開いて確かめてください`);
   }
 
-  function 控えを保存() {
+  async function 控えを保存() {
     if (!様) return;
     const k = 控えを作る(様, 値たち, 今日(), 中身);
     const 名 = (値たち["氏名"] ?? "").trim() || "事業者";
-    保存させる(new Blob([JSON.stringify(k, null, 2) + "\n"], { type: "application/json" }), `控え_${名}_${k.保存日}.json`);
+    const 文 = JSON.stringify(k, null, 2) + "\n";
+    const ファイル名 = `控え_${名}_${k.保存日}.json`;
+    if (アプリ) {
+      const r = await アプリ.保存(ファイル名, 文);
+      if (!r.ok) {
+        set控えの知らせ(`保存できませんでした：${r.理由}`);
+        return;
+      }
+      await 一覧を読み直す();
+      set選んだ控え(r.ファイル名);
+      set控えの知らせ(`事業者の控えを「${r.ファイル名}」として保存しました（このパソコンの中だけ。置き場：${r.置き場}）。次は下の一覧から選んで読み込めます`);
+      return;
+    }
+    保存させる(new Blob([文], { type: "application/json" }), ファイル名);
     set控えの知らせ("事業者の控えを保存しました（このパソコンの中だけ）。次はこのファイルを読み込めば、同じ値で書けます");
+  }
+
+  async function アプリの控えを読む() {
+    if (!アプリ || !選んだ控え) return;
+    const r = await アプリ.開く(選んだ控え);
+    if (!r.ok) {
+      set控えの知らせ(`読めませんでした：${r.理由}`);
+      return;
+    }
+    控えの文を受ける(r.中身);
   }
 
   async function 控えを受ける(f: File | undefined) {
     if (!f) return;
-    const r = 控えを読む(await f.text());
+    控えの文を受ける(await f.text());
+  }
+
+  function 控えの文を受ける(文: string) {
+    const r = 控えを読む(文);
     if (!r.ok) {
       set控えの知らせ(`読めませんでした：${r.理由}`);
       return;
@@ -717,12 +777,41 @@ export default function ShoshikiView({
       <p className={s.note}>
         入れた値を、このパソコンにファイル（JSON）で保存します。ブラウザには溜めません。次に同じ事業者の申請書を作るときは、様式を置いてから控えを読み込んでください。
       </p>
+      {アプリ && (
+        <p className={s.note}>
+          アプリでは、控えをこのパソコンの決まった置き場（よみどころ専用のフォルダ）に保存し、一覧から選んで読み込みます。
+        </p>
+      )}
       <div className={s.buttons}>
-        <button type="button" disabled={!様} data-testid="控えを保存" onClick={控えを保存}>
+        <button type="button" disabled={!様} data-testid="控えを保存" onClick={() => void 控えを保存()}>
           控えを保存する
         </button>
+        {アプリ && (
+          <>
+            <select
+              value={選んだ控え}
+              onChange={(e) => set選んだ控え(e.target.value)}
+              disabled={控えの一覧.length === 0}
+              data-testid="控えの一覧"
+              aria-label="保存した控え"
+            >
+              {控えの一覧.length === 0 && <option value="">保存した控えはまだありません</option>}
+              {控えの一覧.map((x) => (
+                <option key={x.ファイル名} value={x.ファイル名}>
+                  {x.ファイル名}
+                </option>
+              ))}
+            </select>
+            <button type="button" disabled={!選んだ控え} data-testid="控えを一覧から読む" onClick={() => void アプリの控えを読む()}>
+              選んだ控えを読み込む
+            </button>
+            <button type="button" data-testid="控えの置き場を開く" onClick={() => void アプリ.置き場を開く()}>
+              置き場を開く
+            </button>
+          </>
+        )}
         <button type="button" data-testid="控えを読む" onClick={() => 控えの口.current?.click()}>
-          控えを読み込む
+          {アプリ ? "ほかの場所のファイルから読み込む" : "控えを読み込む"}
         </button>
         <input
           ref={控えの口}

@@ -248,3 +248,15 @@ div.preview {
 .pre {
   white-space: pre-wrap;
 }
+
+/* アプリの控えの一覧 */
+.buttons select {
+  font: inherit;
+  font-size: 14px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: var(--paper);
+  color: var(--ink);
+  max-width: 100%;
+}

@@ -13,8 +13,8 @@
 ### Windows
 zip は二つある。どちらを使うかは、Windows の「設定」の「システム」の「バージョン情報」にある「システムの種類」で決める。
 
-- 「ARM ベース プロセッサ」と書いてある（Mac の Parallels の Windows など）：`yomidokoro-0.0.3-win-arm64.zip`
-- 「x64 ベース プロセッサ」と書いてある（ふつうの Windows 機）：`yomidokoro-0.0.3-win-x64.zip`
+- 「ARM ベース プロセッサ」と書いてある（Mac の Parallels の Windows など）：`yomidokoro-0.0.4-win-arm64.zip`
+- 「x64 ベース プロセッサ」と書いてある（ふつうの Windows 機）：`yomidokoro-0.0.4-win-x64.zip`
 
 **Mac と共有している場所では開けません。** `C:\Mac\...`、`\\Mac\...`、`\\psf\...` の場所や、
 Windows のデスクトップ・ドキュメントが Mac とつながっている場合（Parallels の「Mac とフォルダを共有」が入っているとき）、
@@ -35,7 +35,7 @@ zip のまま中の exe を開くと動かない。必ず展開してから開�
 Mac では `~/Library/Application Support/yomidokoro/launch-log.txt`。
 
 ### Mac（Apple のチップの Mac）
-1. `yomidokoro-0.0.3-arm64-mac.zip` をダブルクリックして展開し、`yomidokoro.app` を「アプリケーション」に移す
+1. `yomidokoro-0.0.4-arm64-mac.zip` をダブルクリックして展開し、`yomidokoro.app` を「アプリケーション」に移す
 2. ダブルクリックすると「開いていません」「Apple は検証できませんでした」と出る。「完了」で閉じる
 3. 「システム設定」の「プライバシーとセキュリティ」を開き、下の方の「yomidokoro がブロックされました」の横の「このまま開く」を押す。もう一度確認が出たら「開く」
    （古い macOS では、アプリを右クリックして「開く」でもよい）
@@ -69,3 +69,12 @@ Windows では GPU を使わない（`app.disableHardwareAcceleration()`。Paral
 Windows で exe の場所が Mac との共有（`C:\Mac\`・`\\Mac\`・`\\psf\`）やネットワークの場所なら、窓を作らずに案内を出して終える。
 Chromium のサンドボックスがその上では動かず、画面の処理が launch-failed（アクセス拒否）で落ちるため。サンドボックスは切らない（`--no-sandbox` は使わない）。
 最初の画面が出る前にページの処理が launch-failed で二回落ちたとき、GPU などの処理が二回落ちたときも、同じ案内を出して終える。
+
+## 事業者の控え（0.0.4 から）
+
+アプリでは、控えをブラウザのダウンロードではなく、よみどころ専用の置き場に保存する。読み込むときは、その置き場の一覧から選ぶ。
+
+- Windows：`%APPDATA%\yomidokoro\控え`
+- Mac：`~/Library/Application Support/yomidokoro/控え`
+
+同じ名前があるときは上書きせず、`_2`、`_3` を付けて別に残す。置き場は「ファイル」の献立の「事業者の控えの置き場を開く」か、画面の「置き場を開く」で開ける。ほかの場所に置いた控え（ブラウザ版で保存したものなど）は「ほかの場所のファイルから読み込む」で読める。

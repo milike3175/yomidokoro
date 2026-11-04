@@ -3,6 +3,7 @@
 //   ネットの口（ポート）は開かないので、外のパソコンからは接続できない。
 // - 県のサイトへのリンクは、アプリの中では開かず、いつものブラウザで開く。
 // - 様式を県のサイトから取ってきて、利用者フォルダ（userData/様式/）に置き、sha256 を記録する（lib/shutoku.cjs）。
+// - 事業者の控えは利用者フォルダの 控え/ に置く（lib/hikae.cjs）。このパソコンの外には出さない。
 // - Claude の API は呼ばない。鍵も扱わない。
 "use strict";
 
@@ -111,6 +112,7 @@ if (process.platform === "win32") {
 }
 
 const { 様式を取ってくる, 取ってきた様式の一覧, 様式の目録 } = require("./lib/shutoku.cjs");
+const 控え = require("./lib/hikae.cjs");
 
 const 住所 = "yomi";
 const 家 = "app";
@@ -295,6 +297,10 @@ function 献立(win) {
       submenu: [
         ...様式の項目,
         {
+          label: "事業者の控えの置き場を開く",
+          click: () => void shell.openPath(控え.控えの置き場(app.getPath("userData"))),
+        },
+        {
           label: "取ってきた様式の置き場を開く",
           click: () => {
             const d = path.join(app.getPath("userData"), "様式");
@@ -369,6 +375,20 @@ if (!app.requestSingleInstanceLock()) {
     配る();
 
     ipcMain.handle("様式の一覧", () => 取ってきた様式の一覧(app.getPath("userData"), 対応表の置き場()));
+    // 事業者の控え。中身は記録に書かない（失敗したときも理由の文だけ）
+    const 控えの口 = (名前, f) =>
+      ipcMain.handle(名前, (_e, ...a) => {
+        try {
+          return f(...a);
+        } catch (e) {
+          記録(`${名前} failed`, String(e && e.code ? e.code : "error"));
+          return { ok: false, 理由: "このパソコンの控えの置き場に書けませんでした" };
+        }
+      });
+    控えの口("控えを保存", (名, 中身) => 控え.控えを保存(app.getPath("userData"), 名, 中身));
+    控えの口("控えの一覧", () => 控え.控えの一覧(app.getPath("userData")));
+    控えの口("控えを開く", (名) => 控え.控えを開く(app.getPath("userData"), 名));
+    控えの口("控えの置き場を開く", () => shell.openPath(控え.控えの置き場(app.getPath("userData"))));
 
     // 試し：YOMIDOKORO_SHUTOKU=30 なら、窓を出さずに一回だけ取ってきて結果を出して終わる
     if (process.env.YOMIDOKORO_SHUTOKU) {
