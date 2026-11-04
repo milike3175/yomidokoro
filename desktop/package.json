@@ -1,7 +1,7 @@
 {
   "name": "yomidokoro-desktop",
   "productName": "yomidokoro",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "private": true,
   "description": "よみどころ（試し版）。app/out をダブルクリックで開けるアプリにしたもの",
   "main": "main.cjs",
@@ -9,8 +9,8 @@
     "写す": "node scripts/copy-out.mjs",
     "start": "node scripts/copy-out.mjs && electron .",
     "様式を試す": "node scripts/copy-out.mjs && YOMIDOKORO_SHUTOKU=30 electron .",
-    "書き出し:win": "node scripts/copy-out.mjs && electron-builder --win zip --x64",
-    "書き出し:mac": "node scripts/copy-out.mjs && electron-builder --mac zip --arm64"
+    "書き出し:win": "node scripts/copy-out.mjs && electron-builder --win zip --x64 --arm64 --publish never",
+    "書き出し:mac": "node scripts/copy-out.mjs && electron-builder --mac zip --arm64 --publish never"
   },
   "devDependencies": {
     "electron": "45.2.2",
@@ -26,19 +26,22 @@
       "main.cjs",
       "preload.cjs",
       "lib/**",
-      "package.json"
-    ],
-    "extraResources": [
-      { "from": "_写し/site", "to": "site" },
-      { "from": "_写し/様式", "to": "様式の対応表" }
+      "package.json",
+      "_写し/site/**",
+      "_写し/様式/**"
     ],
     "asar": true,
     "win": {
-      "target": ["zip"],
-      "signAndEditExecutable": false
+      "target": [
+        "zip"
+      ],
+      "signAndEditExecutable": false,
+      "artifactName": "${productName}-${version}-win-${arch}.${ext}"
     },
     "mac": {
-      "target": ["zip"],
+      "target": [
+        "zip"
+      ],
       "identity": null,
       "category": "public.app-category.productivity"
     }

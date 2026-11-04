@@ -6,10 +6,51 @@
 // - Claude の API は呼ばない。鍵も扱わない。
 "use strict";
 
-const { app, BrowserWindow, Menu, dialog, ipcMain, net, protocol, session, shell } = require("electron");
+const { app, BrowserWindow, Menu, dialog, ipcMain, protocol, session, shell } = require("electron");
 const fs = require("node:fs");
 const path = require("node:path");
-const { pathToFileURL } = require("node:url");
+const os = require("node:os");
+
+// ---- 起動の記録（launch-log.txt）----
+// 一瞬で閉じたときに理由を追えるよう、起動の最初から時刻つきで書く。
+// 置き場：userData/launch-log.txt（Windows：%APPDATA%\yomidokoro\launch-log.txt）。
+// 書くのはアプリの動き（起動・窓・読み込み・落ちた理由）だけ。様式に書いた値や事業者の控えは書かない。
+let 記録の置き場 = null;
+function 記録の置き場を決める() {
+  if (記録の置き場) return 記録の置き場;
+  try {
+    const d = app.getPath("userData");
+    fs.mkdirSync(d, { recursive: true });
+    記録の置き場 = path.join(d, "launch-log.txt");
+  } catch {
+    記録の置き場 = path.join(os.tmpdir(), "yomidokoro-launch-log.txt");
+  }
+  return 記録の置き場;
+}
+function 記録(...words) {
+  try {
+    const line = `${new Date().toISOString()} ${words.map((w) => (typeof w === "string" ? w : JSON.stringify(w))).join(" ")}\n`;
+    fs.appendFileSync(記録の置き場を決める(), line);
+  } catch {}
+}
+記録(
+  "start",
+  { version: app.getVersion(), platform: process.platform, arch: process.arch, electron: process.versions.electron, os: os.release(), packaged: app.isPackaged, exe: process.execPath },
+);
+process.on("uncaughtException", (e) => {
+  記録("uncaughtException", String(e && e.stack ? e.stack : e));
+  try {
+    dialog.showErrorBox("よみどころ：起動中にエラー", `${String(e && e.message ? e.message : e)}\n\n記録：${記録の置き場を決める()}`);
+  } catch {}
+});
+process.on("unhandledRejection", (e) => 記録("unhandledRejection", String(e && e.stack ? e.stack : e)));
+
+// Parallels などの仮想の画面で落ちることがあるので、Windows では GPU を使わない
+if (process.platform === "win32") {
+  app.disableHardwareAcceleration();
+  記録("hardware acceleration disabled");
+}
+
 const { 様式を取ってくる, 取ってきた様式の一覧, 様式の目録 } = require("./lib/shutoku.cjs");
 
 const 住所 = "yomi";
@@ -19,13 +60,32 @@ protocol.registerSchemesAsPrivileged([
   { scheme: 住所, privileges: { standard: true, secure: true, supportFetchAPI: true, corsEnabled: false } },
 ]);
 
-/** 書き出した画面の置き場。書き出したアプリでは resources/site、手元で動かすときは desktop/_写し/site */
+/** 書き出した画面の置き場。書き出したアプリでも手元でも desktop/_写し/site（書き出したアプリでは app.asar の中）。
+ *  日本語のフォルダ名が asar の外に出ると、Windows の zip の展開で名前が崩れることがあるので、全部 asar に入れる */
 function 画面の置き場() {
-  return app.isPackaged ? path.join(process.resourcesPath, "site") : path.join(__dirname, "_写し", "site");
+  return path.join(__dirname, "_写し", "site");
 }
 function 対応表の置き場() {
-  return app.isPackaged ? path.join(process.resourcesPath, "様式の対応表") : path.join(__dirname, "_写し", "様式");
+  return path.join(__dirname, "_写し", "様式");
 }
+
+const 種類 = {
+  ".html": "text/html; charset=utf-8",
+  ".txt": "text/plain; charset=utf-8",
+  ".css": "text/css; charset=utf-8",
+  ".js": "text/javascript; charset=utf-8",
+  ".mjs": "text/javascript; charset=utf-8",
+  ".json": "application/json; charset=utf-8",
+  ".woff2": "font/woff2",
+  ".woff": "font/woff",
+  ".svg": "image/svg+xml",
+  ".png": "image/png",
+  ".jpg": "image/jpeg",
+  ".jpeg": "image/jpeg",
+  ".webp": "image/webp",
+  ".ico": "image/x-icon",
+  ".yaml": "text/plain; charset=utf-8",
+};
 
 /** yomi://app/30/?手続き=新規 → site/30/index.html。置き場の外は返さない */
 function 住所からファイル(urlText) {
@@ -53,7 +113,16 @@ function 配る() {
     const u = new URL(req.url);
     if (u.host !== 家) return new Response("not found", { status: 404 });
     const f = 住所からファイル(req.url);
-    if (f) return net.fetch(pathToFileURL(f).toString());
+    if (f) {
+      // asar の中のファイルも読めるよう、fs で読んで返す
+      try {
+        const buf = await fs.promises.readFile(f);
+        return new Response(buf, { status: 200, headers: { "content-type": 種類[path.extname(f).toLowerCase()] || "application/octet-stream" } });
+      } catch (e) {
+        記録("read failed", String(e));
+        return new Response("read failed", { status: 500 });
+      }
+    }
     const 無い = path.join(画面の置き場(), "404.html");
     if (fs.existsSync(無い)) {
       return new Response(fs.readFileSync(無い), { status: 404, headers: { "content-type": "text/html; charset=utf-8" } });
@@ -105,7 +174,22 @@ function 窓を開く(はじめのページ = "/") {
       外で開く(url);
     }
   });
+  // 起動の記録と、読み込みに失敗したときの知らせ（白い画面のままにしない）
+  記録("window created");
+  win.webContents.on("did-finish-load", () => 記録("did-finish-load", win.webContents.getURL()));
+  win.webContents.on("did-fail-load", (_e, code, desc, url, isMainFrame) => {
+    記録("did-fail-load", { code, desc, url, isMainFrame });
+    if (code === -3 || !isMainFrame || String(url).startsWith("data:")) return; // -3 は読み込みの取り消し（失敗ではない）
+    const html = `<!doctype html><meta charset="utf-8"><title>よみどころ</title><body style="font-family:sans-serif;background:#f4f0e6;padding:2em;line-height:1.8">
+<h1>画面を読み込めませんでした</h1><p>エラー：${code} ${String(desc).replace(/[<>&]/g, "")}</p>
+<p>この記録のファイルを作った人に送ってください：<br><code>${記録の置き場を決める().replace(/[<>&]/g, "")}</code></p></body>`;
+    void win.loadURL("data:text/html;charset=utf-8," + encodeURIComponent(html));
+  });
+  win.webContents.on("render-process-gone", (_e, d) => 記録("render-process-gone", d));
+  win.webContents.on("unresponsive", () => 記録("unresponsive"));
+  win.on("closed", () => 記録("window closed"));
   win.loadURL(`${住所}://${家}${はじめのページ}`);
+  記録("loadURL", `${住所}://${家}${はじめのページ}`);
   return win;
 }
 
@@ -161,7 +245,12 @@ function 献立(win) {
 }
 
 // 二つ目を開こうとしたら、一つ目の窓を前に出す
+app.on("child-process-gone", (_e, d) => 記録("child-process-gone", d));
+app.on("render-process-gone", (_e, _wc, d) => 記録("app render-process-gone", d));
+app.on("will-quit", () => 記録("will-quit"));
+
 if (!app.requestSingleInstanceLock()) {
+  記録("another yomidokoro is already running; this one quits");
   app.quit();
 } else {
   app.on("second-instance", () => {
@@ -173,6 +262,7 @@ if (!app.requestSingleInstanceLock()) {
   });
 
   app.whenReady().then(async () => {
+    記録("ready", { site: fs.existsSync(path.join(画面の置き場(), "index.html")), yaml: fs.existsSync(対応表の置き場()) });
     // カメラ・マイク・位置などの許可は全部断る
     session.defaultSession.setPermissionRequestHandler((_wc, _perm, cb) => cb(false));
     配る();
