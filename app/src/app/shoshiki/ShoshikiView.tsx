@@ -108,6 +108,11 @@ export default function ShoshikiView({ 様式たち, 手元, 手帳版 }: { 様�
   const 様 = 置?.様 ?? null;
 
   async function 置く(ファイル名: string, バイト: Uint8Array) {
+    // 様式を見分ける計算（sha256）は、https か 127.0.0.1 で開いたときだけブラウザが使わせてくれる
+    if (!globalThis.crypto?.subtle) {
+      set知らせ("この開き方では様式を見分けられない。https のページか、このパソコンの 127.0.0.1 で開き直す");
+      return;
+    }
     const sha256 = await sha256を出す(バイト);
     set置({ ファイル名, sha256, バイト, 様: 表.get(sha256) ?? null });
     set知らせ("");

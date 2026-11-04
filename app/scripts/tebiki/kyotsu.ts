@@ -74,6 +74,17 @@ export type ファイル記録 = {
   文字にした日?: string;
 };
 
+/** 申請書の様式（docx・xlsx）。手引き/<県>/様式/ に置く。本体は上げない（.gitignore 済み）。sha256 で欄の対応表（app/data/様式/）と結ぶ */
+export type 様式記録 = {
+  ファイル名: string;
+  名前?: string;
+  url: string | null;
+  sha256: string;
+  取得日: string;
+  サイズ: number;
+  最終更新: string | null;
+};
+
 export type 出典 = {
   許可権者?: { コード: string; 名前: string };
   入口?: string;
@@ -81,6 +92,9 @@ export type 出典 = {
   文書?: { 名前: string; 版?: string; 役割?: string }[];
   取り寄せ?: { url: string; 名前?: string; 役割?: string; 版?: string }[];
   ファイル?: ファイル記録[];
+  /** 申請書の様式の公式URL（npm run 取得 が 手引き/<県>/様式/ に取ってくる） */
+  様式の取り寄せ?: { url: string; 名前?: string }[];
+  様式?: 様式記録[];
   入口の文書一覧?: { 確認日: string; リンク: { 名前: string; url: string }[] };
   改訂の検知?: { 日付: string; 文書: string[]; 内容: string[]; 読み直し済み?: string }[];
   鮮度確認日?: string;
