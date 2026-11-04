@@ -228,3 +228,23 @@
 div.preview {
   padding-left: 10px;
 }
+
+/* 石綿・水銀含有ばいじん等の3通り */
+.fukumi {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  padding: 2px 0;
+}
+/* くり返しの差し込み口（車両ごとの用途など） */
+.kumi {
+  display: grid;
+  grid-template-columns: 1.5em 1fr 2fr;
+  gap: 6px;
+  align-items: center;
+  margin-bottom: 6px;
+}
+/* 型の見込み：全角空白の字下げを見せる */
+.pre {
+  white-space: pre-wrap;
+}

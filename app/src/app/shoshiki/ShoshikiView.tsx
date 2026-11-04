@@ -12,6 +12,14 @@ import {
   品目たち,
   品目を書き出す,
   丸の説明,
+  区分がある,
+  含みたち,
+  型を組む,
+  型の鍵,
+  くり返しの鍵,
+  入っている組,
+  type 書き方の型,
+  type 含み,
   空の中身,
   控えを作る,
   控えを読む,
@@ -72,9 +80,10 @@ async function docxを作る(
   様: 様式,
   値たち: 値,
   中身: 申請の中身,
+  型: 書き方の型 | null,
 ): Promise<{ ok: true; blob: Blob; 結果: 欄の結果[] } | { ok: false; 理由: string }> {
   const JSZip = (await import("jszip")).default;
-  const r = await docxに書く(JSZip, 置.バイト, 様, 値たち, 中身);
+  const r = await docxに書く(JSZip, 置.バイト, 様, 値たち, 中身, 型);
   if (!r.ok) return r;
   const blob = new Blob([r.バイト as BlobPart], { type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document" });
   return { ok: true, blob, 結果: r.結果 };
@@ -82,11 +91,13 @@ async function docxを作る(
 
 export default function ShoshikiView({
   様式たち,
+  型たち,
   手元,
   手帳版,
   試せる,
 }: {
   様式たち: 様式[];
+  型たち: 書き方の型[];
   手元: 手元の様式[];
   手帳版: boolean;
   試せる: 公開する様式[];
@@ -102,6 +113,7 @@ export default function ShoshikiView({
   const 控えの口 = useRef<HTMLInputElement>(null);
 
   const 様 = 置?.様 ?? null;
+  const 型 = (様 && 型たち.find((t) => t.sha256 === 様.sha256)) || null;
 
   async function 置く(ファイル名: string, バイト: Uint8Array) {
     // 様式を見分ける計算（sha256）は、https か 127.0.0.1 で開いたときだけブラウザが使わせてくれる
@@ -176,7 +188,7 @@ export default function ShoshikiView({
 
   async function 書いて保存() {
     if (!置 || !様) return;
-    const r = await docxを作る(置, 様, 値たち, 中身);
+    const r = await docxを作る(置, 様, 値たち, 中身, 型);
     if (!r.ok) {
       set知らせ(`書きませんでした：${r.理由}`);
       return;
@@ -219,9 +231,12 @@ export default function ShoshikiView({
       ...c,
       品目: c.品目.some((x) => x.id === id) ? c.品目.filter((x) => x.id !== id) : [...c.品目, { id }],
     }));
-  const 添えを切り替える = (id: string, k: "石綿" | "水銀使用製品" | "水銀含有ばいじん等") =>
-    set中身((c) => ({ ...c, 品目: c.品目.map((x): 品目の選び => (x.id === id ? { ...x, [k]: !x[k] } : x)) }));
+  const 水銀使用製品を切り替える = (id: string) =>
+    set中身((c) => ({ ...c, 品目: c.品目.map((x): 品目の選び => (x.id === id ? { ...x, 水銀使用製品: !x.水銀使用製品 } : x)) }));
+  const 含みを選ぶ = (id: string, k: "石綿" | "水銀含有ばいじん等", v: 含み) =>
+    set中身((c) => ({ ...c, 品目: c.品目.map((x): 品目の選び => (x.id === id ? { ...x, [k]: v === "含まない" ? undefined : v } : x)) }));
   const 品目の見込み = useMemo(() => (様 ? 品目を書き出す(様, 中身) : null), [様, 中身]);
+  const 型の見込み = useMemo(() => (様 && 型 ? 型を組む(型, 様, 値たち, 中身) : []), [様, 型, 値たち, 中身]);
 
   return (
     <>
@@ -395,24 +410,34 @@ export default function ShoshikiView({
                               <input type="checkbox" data-testid={`品目-${h.id}`} checked={!!x} onChange={() => 品目を切り替える(h.id)} />
                               {h.名前}
                             </label>
-                            {x && (h.石綿 || h.水銀使用製品 || h.水銀含有ばいじん等) && (
+                            {x && 様 && (区分がある(様, h.id, "石綿") || 区分がある(様, h.id, "水銀使用製品") || 区分がある(様, h.id, "水銀含有ばいじん等")) && (
                               <span className={s.soe}>
-                                {h.石綿 && (
+                                {(["石綿", "水銀含有ばいじん等"] as const)
+                                  .filter((k) => 区分がある(様, h.id, k))
+                                  .map((k) => {
+                                    const 名 = k === "石綿" ? "石綿含有産業廃棄物" : "水銀含有ばいじん等";
+                                    const 今 = x[k] ?? "含まない";
+                                    return (
+                                      <span key={k} className={s.fukumi} data-testid={`${k}-${h.id}`}>
+                                        {含みたち.map((c) => (
+                                          <label key={c.値} className={s.check1}>
+                                            <input
+                                              type="radio"
+                                              name={`${k}-${h.id}`}
+                                              data-testid={`${k}-${h.id}-${c.値}`}
+                                              checked={今 === c.値}
+                                              onChange={() => 含みを選ぶ(h.id, k, c.値)}
+                                            />
+                                            {c.言い方(名)}
+                                          </label>
+                                        ))}
+                                      </span>
+                                    );
+                                  })}
+                                {区分がある(様, h.id, "水銀使用製品") && (
                                   <label className={s.check1}>
-                                    <input type="checkbox" data-testid={`石綿-${h.id}`} checked={!!x.石綿} onChange={() => 添えを切り替える(h.id, "石綿")} />
-                                    石綿含有産業廃棄物を含む
-                                  </label>
-                                )}
-                                {h.水銀使用製品 && (
-                                  <label className={s.check1}>
-                                    <input type="checkbox" data-testid={`水銀使用製品-${h.id}`} checked={!!x.水銀使用製品} onChange={() => 添えを切り替える(h.id, "水銀使用製品")} />
+                                    <input type="checkbox" data-testid={`水銀使用製品-${h.id}`} checked={!!x.水銀使用製品} onChange={() => 水銀使用製品を切り替える(h.id)} />
                                     水銀使用製品産業廃棄物を含む
-                                  </label>
-                                )}
-                                {h.水銀含有ばいじん等 && (
-                                  <label className={s.check1}>
-                                    <input type="checkbox" data-testid={`水銀含有ばいじん等-${h.id}`} checked={!!x.水銀含有ばいじん等} onChange={() => 添えを切り替える(h.id, "水銀含有ばいじん等")} />
-                                    水銀含有ばいじん等を含む
                                   </label>
                                 )}
                               </span>
@@ -422,7 +447,7 @@ export default function ShoshikiView({
                       })}
                     </div>
                     <div className={s.faint}>
-                      並びは廃棄物処理法施行令の順です。石綿・水銀の欄は、その区分になりうる品目にだけ出しています（石綿は和歌山の手引き p4 の4品目。水銀の2つは法令の区分から道具が選んだもので、要確認です）。
+                      並びは廃棄物処理法施行令の順です。石綿・水銀の欄は、その区分になりうる品目にだけ出しています。どの品目に出すかは県で違うことがあるので、様式ごとの対応表に持っています（和歌山：石綿は手引き p4 の4品目。水銀の2つは法令の区分から道具が選んだもので、要確認です）。
                     </div>
                   </div>
                 </div>
@@ -461,6 +486,7 @@ export default function ShoshikiView({
                         <div>水銀含有ばいじん等【有・無】（{品目の見込み.水銀含有ばいじん等の番号}）</div>
                         <div>積替え又は保管【有・無】</div>
                       </div>
+                      <div className={s.faint}>【有・無】の○は、Word の囲い文字で付けます。LibreOffice では囲い文字が見えず「無」などが消えて見えるので、Word で開いて確かめてください。</div>
                       <div className={s.faint}>事業計画の概要の品目表、品目の名前の列（和歌山の様式記載例 p1〜p2 の書き方）</div>
                       <ol className={s.preview}>
                         {品目の見込み.表の行.map((t, k) => (
@@ -476,6 +502,102 @@ export default function ShoshikiView({
                     </div>
                   </div>
                 )}
+              </div>
+            </>
+          )}
+
+          {様.文の欄 && 型 && (
+            <>
+              <h3 className={s.h3}>事業計画の概要・環境保全措置の文（{型.県名}の記載例の書き方の型）</h3>
+              <p className={s.note}>
+                型の文は{型.県名}の記載例と手引きから前もって作ったものです。下の欄に入れた事業者の中身を、このブラウザの中で差し込みます（どこにも送りません）。
+                空けた所は様式に「【要確認：…】」と残します。品目を選んだときだけ書きます。型の文は記載例の会社の例なので、事業者の実際に合わせて行政書士が直してください。
+              </p>
+              <div className={s.form}>
+                {型.差し込み口
+                  .filter((d) => d.種類 !== "自動")
+                  .map((d) =>
+                    d.種類 === "聞き取り" ? (
+                      <div key={d.id} className={s.row}>
+                        <label className={s.label} htmlFor={型の鍵(d.id)}>
+                          {d.見出し}
+                        </label>
+                        <div>
+                          <input
+                            id={型の鍵(d.id)}
+                            data-testid={型の鍵(d.id)}
+                            className={s.input}
+                            value={値たち[型の鍵(d.id)] ?? ""}
+                            placeholder={d.例 ? `例：${d.例}` : ""}
+                            onChange={変える(型の鍵(d.id))}
+                          />
+                          {d.説明 && <div className={s.faint}>{d.説明}</div>}
+                        </div>
+                      </div>
+                    ) : (
+                      <div key={d.id} className={s.row}>
+                        <div className={s.label}>{d.見出し}</div>
+                        <div>
+                          {Array.from({ length: Math.min(d.最大 ?? 10, Math.max(1, ...入っている組(型, d.id, 値たち).map((n) => n + 1))) }, (_, j) => j + 1).map((n) => (
+                            <div key={n} className={s.kumi}>
+                              <span className={s.faint}>{n}</span>
+                              {(d.項目 ?? []).map((k) => (
+                                <input
+                                  key={k.id}
+                                  aria-label={`${d.見出し} ${n} ${k.見出し}`}
+                                  data-testid={くり返しの鍵(d.id, n, k.id)}
+                                  className={s.input}
+                                  value={値たち[くり返しの鍵(d.id, n, k.id)] ?? ""}
+                                  placeholder={k.例 ? `${k.見出し}（例：${k.例}）` : k.見出し}
+                                  onChange={変える(くり返しの鍵(d.id, n, k.id))}
+                                />
+                              ))}
+                            </div>
+                          ))}
+                          {d.説明 && <div className={s.faint}>{d.説明}</div>}
+                        </div>
+                      </div>
+                    ),
+                  )}
+                {中身.品目.length > 0 &&
+                  型の見込み.map((g) => (
+                    <div key={g.id} className={s.row}>
+                      <div className={s.label}>{g.見出し}</div>
+                      <div data-testid={`型の見込み-${g.id}`}>
+                        <div className={s.preview}>
+                          {g.行たち.map((t, k) => (
+                            <div key={k} className={s.pre}>
+                              {t || "\u00a0"}
+                            </div>
+                          ))}
+                        </div>
+                        {g.要確認.length > 0 && (
+                          <div className={s.check}>
+                            <span className={s.badge}>要確認</span>
+                            {g.要確認.map((t, k) => (
+                              <div key={k}>{t}</div>
+                            ))}
+                          </div>
+                        )}
+                        <details className={s.faint}>
+                          <summary>この欄の型の文と出典</summary>
+                          <ul className={s.list}>
+                            {(型.欄.find((x) => x.id === g.id)?.行 ?? [])
+                              .flatMap((r) => (r.くり返し ? [r, ...(r.行 ?? [])] : [r]))
+                              .filter((r) => r.字 || r.空なら)
+                              .map((r, k) => (
+                                <li key={k}>
+                                  {r.字 || r.空なら}
+                                  {r.条件 && `（${r.条件}のとき）`}　
+                                  {r.写し === "まま" ? "記載例の文のまま" : r.写し === "一部" ? "差し込み口のほかは記載例の文のまま" : "記載例に文が無い"}
+                                  {r.出典 && `／出典 ${r.出典}`}
+                                </li>
+                              ))}
+                          </ul>
+                        </details>
+                      </div>
+                    </div>
+                  ))}
               </div>
             </>
           )}
