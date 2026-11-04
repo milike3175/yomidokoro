@@ -271,7 +271,7 @@ export default function HikakuView({ 行たち, 観点一覧, 品目一覧, 付�
           <span className="label 判定 補足">電話で補足</span>
           <span className="label 判定 一致">手引きと一致</span>
           <span className="label 判定 判定不能">判定不能</span>
-          <span>電話の答えと手引きをケン（Claude）が見比べた印。補足と揺れは、段の下に理由の一行が出る。並べた見比べは県ページで</span>
+          <span>電話の答えと手引きを Claude が見比べた印。補足と揺れは、段の下に理由の一行が出る。並べた見比べは県ページで</span>
         </div>
       )}
 
@@ -390,7 +390,7 @@ function Mitate({ js, 飛び先 }: { js: 判定の印[]; 飛び先: string }) {
   return (
     <div className="hk-ken">
       <div className="hk-ken-title">
-        ケンの見立て
+        Claude の見立て
         <a href={飛び先} className="hk-link">
           県ページで並べて見る
         </a>

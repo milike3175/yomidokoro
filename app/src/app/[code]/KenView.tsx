@@ -344,7 +344,7 @@ export default function KenView({
             <span className="label 判定 補足">電話で補足</span>
             <span className="label 判定 一致">手引きと一致</span>
             <span className="label 判定 判定不能">判定不能</span>
-            <span>電話の答えと手引きをケン（Claude）が見比べた印。補足と揺れは、観点の下の「見比べ」に理由が出る</span>
+            <span>電話の答えと手引きを Claude が見比べた印。補足と揺れは、観点の下の「見比べ」に理由が出る</span>
           </div>
 
           {群順.map((g) => (
@@ -685,7 +685,7 @@ function Mikurabe({ cs, 観点: k, 選び }: { cs: カード[]; 観点: 観点; 
   組.sort((a, b) => 見立ての順(a.j, b.j));
   return (
     <div className="mikurabe">
-      <div className="mikurabe-title">見比べ（ケンの見立て）</div>
+      <div className="mikurabe-title">見比べ（Claude の見立て）</div>
       {組.map(({ 電話, j }, i) => (
         <div key={i} className={`mikurabe-pair ${j.判定}${j.解消 ? " 解消" : ""}`}>
           <div className="mikurabe-head">
@@ -703,7 +703,7 @@ function Mikurabe({ cs, 観点: k, 選び }: { cs: カード[]; 観点: 観点; 
         </div>
       ))}
       <div className="mikurabe-note">
-        二つの記録を並べてケン（Claude）が見立てた一行。道具は判断しない。食い違うかどうかを決めるのは行政書士。
+        二つの記録を並べて Claude が見立てた一行。道具は判断しない。食い違うかどうかを決めるのは行政書士。
       </div>
     </div>
   );

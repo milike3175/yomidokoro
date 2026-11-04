@@ -25,7 +25,7 @@ export function 判定の札(js: 判定の印[], 手引きの側: boolean): 札[
       if (組.length === 0) continue;
       const 文 = 判定の文(判定, 種類, 手引きの側);
       const 前 = 札たち.find((x) => x.文 === 文);
-      const 理由たち = 組.map((j) => `ケンの理由：${j.理由}`);
+      const 理由たち = 組.map((j) => `Claude の理由：${j.理由}`);
       if (前) {
         前.解消 = 前.解消 && 組.every((j) => j.解消);
         前.理由たち.push(...理由たち);
