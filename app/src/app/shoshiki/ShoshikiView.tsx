@@ -18,6 +18,11 @@ import {
   型の鍵,
   くり返しの鍵,
   入っている組,
+  形の鍵,
+  選んだ形,
+  欄の行,
+  使う口,
+  品目の名たち,
   type 書き方の型,
   type 含み,
   空の中身,
@@ -237,6 +242,8 @@ export default function ShoshikiView({
     set中身((c) => ({ ...c, 品目: c.品目.map((x): 品目の選び => (x.id === id ? { ...x, [k]: v === "含まない" ? undefined : v } : x)) }));
   const 品目の見込み = useMemo(() => (様 ? 品目を書き出す(様, 中身) : null), [様, 中身]);
   const 型の見込み = useMemo(() => (様 && 型 ? 型を組む(型, 様, 値たち, 中身) : []), [様, 型, 値たち, 中身]);
+  const 使う = useMemo(() => (型 ? 使う口(型, 値たち) : new Set<string>()), [型, 値たち]);
+  const 品目の名 = useMemo(() => (様 ? 品目の名たち(様, 中身) : []), [様, 中身]);
 
   return (
     <>
@@ -514,10 +521,62 @@ export default function ShoshikiView({
                 空けた所は様式に「【要確認：…】」と残します。品目を選んだときだけ書きます。型の文は記載例の会社の例なので、事業者の実際に合わせて行政書士が直してください。
               </p>
               <div className={s.form}>
+                {型.欄
+                  .filter((k) => (k.形?.length ?? 0) > 1)
+                  .map((k) => {
+                    const 今 = 選んだ形(k, 値たち);
+                    return (
+                      <div key={`形-${k.id}`} className={s.row}>
+                        <div className={s.label}>{k.見出し}の書き方の形</div>
+                        <div data-testid={`形-${k.id}`}>
+                          <span className={s.date}>
+                            {k.形!.map((f) => (
+                              <label key={f.id} className={s.check1}>
+                                <input
+                                  type="radio"
+                                  name={`形-${k.id}`}
+                                  data-testid={`形-${k.id}-${f.id}`}
+                                  checked={今?.id === f.id}
+                                  onChange={() => set値たち((v) => ({ ...v, [形の鍵(k.id)]: f.id }))}
+                                />
+                                {f.見出し}
+                              </label>
+                            ))}
+                          </span>
+                          {k.形の説明 && <div className={s.faint}>{k.形の説明}</div>}
+                          {今?.説明 && <div className={s.faint}>{今.説明}</div>}
+                        </div>
+                      </div>
+                    );
+                  })}
                 {型.差し込み口
-                  .filter((d) => d.種類 !== "自動")
+                  .filter((d) => d.種類 !== "自動" && 使う.has(d.id))
                   .map((d) =>
-                    d.種類 === "聞き取り" ? (
+                    d.種類 === "品目ごと" ? (
+                      <div key={d.id} className={s.row}>
+                        <div className={s.label}>{d.見出し}</div>
+                        <div data-testid={`品目ごと-${d.id}`}>
+                          {品目の名.length === 0 && <div className={s.faint}>上で品目を選ぶと、品目ごとの欄が出ます</div>}
+                          {品目の名.map((h) => (
+                            <div key={h.鍵} className={s.kumi}>
+                              <span className={s.faint}>{h.名}</span>
+                              {(d.項目 ?? []).map((k) => (
+                                <input
+                                  key={k.id}
+                                  aria-label={`${h.名} ${k.見出し}`}
+                                  data-testid={くり返しの鍵(d.id, h.鍵, k.id)}
+                                  className={s.input}
+                                  value={値たち[くり返しの鍵(d.id, h.鍵, k.id)] ?? ""}
+                                  placeholder={k.例 ? `${k.見出し}（例：${k.例}）` : k.見出し}
+                                  onChange={変える(くり返しの鍵(d.id, h.鍵, k.id))}
+                                />
+                              ))}
+                            </div>
+                          ))}
+                          {d.説明 && <div className={s.faint}>{d.説明}</div>}
+                        </div>
+                      </div>
+                    ) : d.種類 === "聞き取り" ? (
                       <div key={d.id} className={s.row}>
                         <label className={s.label} htmlFor={型の鍵(d.id)}>
                           {d.見出し}
@@ -582,14 +641,23 @@ export default function ShoshikiView({
                         <details className={s.faint}>
                           <summary>この欄の型の文と出典</summary>
                           <ul className={s.list}>
-                            {(型.欄.find((x) => x.id === g.id)?.行 ?? [])
+                            {(() => {
+                              const k = 型.欄.find((x) => x.id === g.id);
+                              return k ? 欄の行(k, 値たち) : [];
+                            })()
                               .flatMap((r) => (r.くり返し ? [r, ...(r.行 ?? [])] : [r]))
                               .filter((r) => r.字 || r.空なら)
                               .map((r, k) => (
                                 <li key={k}>
                                   {r.字 || r.空なら}
                                   {r.条件 && `（${r.条件}のとき）`}　
-                                  {r.写し === "まま" ? "記載例の文のまま" : r.写し === "一部" ? "差し込み口のほかは記載例の文のまま" : "記載例に文が無い"}
+                                  {r.写し === "まま"
+                                    ? "記載例の文のまま"
+                                    : r.写し === "一部"
+                                      ? "差し込み口のほかは記載例の文のまま"
+                                      : r.写し === "組み替え"
+                                        ? "記載例の言い回しを道具が組み替えた"
+                                        : "記載例に文が無い"}
                                   {r.出典 && `／出典 ${r.出典}`}
                                 </li>
                               ))}
