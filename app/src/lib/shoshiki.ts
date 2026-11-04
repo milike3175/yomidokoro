@@ -129,12 +129,14 @@ export type 様式 = {
   品目の並べ方?: 品目の並べ方;
   /** 積替保管「有」のときの知らせと、添付が要るもの（手引きに書いてあるものだけ） */
   積替保管?: { 注: string[]; 添付: { もの: string; いつ?: string; 出典: string }[] };
-  /** 様式の各面の頭の段落。w:pageBreakBefore を付けて、前の面があふれても次の面をページの頭から始める */
-  改ページの前?: 改ページの欄[];
+  /** 前の面の最後の段落。末尾に改ページの run を足して、前の面があふれても次の面をページの頭から始める */
+  改ページ?: 改ページの欄[];
+  /** 表の行（その行の中の箱）。行の段落に w:keepNext を付けて、次の行と別のページに分かれないようにする */
+  次と離さない?: { 見出し: string; 箱: number; 字: string }[];
   書かない: 書かない欄[];
 };
 
-/** 面の頭の段落（その段落の最初の箱と、元の字）。元から改ページのある面は持たない */
+/** 面の前の段落（その段落の中の箱と、元の字）と、次の面の名前。元から改ページのある面は持たない */
 export type 改ページの欄 = { 面: string; 箱: number; 字: string };
 
 /**
@@ -1098,40 +1100,52 @@ export function 記入する(本文: string, 様: 様式, 値たち: 値, 中身
     }
   }
 
-  // ---- 様式の各面の頭で改ページ（2026-11-04 夜 みゆき「次の様式に変わるところできちんとページを変えてほしい」） ----
-  // 面の頭の段落の w:pPr に w:pageBreakBefore を足すだけ。元から改ページのある段落は書かない（二重にしない）
-  for (const g of 様.改ページの前 ?? []) {
-    const err = 元と同じか一字(g.箱, g.字, `${g.面}の頭`);
+  // ---- 様式の面の変わり目で改ページ（2026-11-04 夜 みゆき「次の様式に変わるところできちんとページを変えてほしい」） ----
+  // 前の面の最後の段落の末尾に、改ページだけの run を足す（みゆきが Word で案B8 を見て決めた形）。
+  // 面の頭の段落に w:pageBreakBefore を付けるやり方は、浮いた表とつながる段落で Word が崩れたのでやめた。
+  // 元から改ページのある段落には足さない（二重にしない）
+  for (const g of 様.改ページ ?? []) {
+    const err = 元と同じか一字(g.箱, g.字, `${g.面}の前`);
     if (err) return { ok: false, 理由: err };
     const 段 = 箱の段落(g.箱);
-    if (!段) return { ok: false, 理由: `${g.面}の頭：段落が見つかりません。書きません` };
+    if (!段) return { ok: false, 理由: `${g.面}の前：段落が見つかりません。書きません` };
     const 中 = 本文.slice(段.始め, 段.終わり);
     if (/<w:pageBreakBefore[\s/>]/.test(中) || /<w:br [^>]*w:type="page"/.test(中) || /<w:sectPr[\s>]/.test(中)) {
-      return { ok: false, 理由: `${g.面}の頭：元から改ページがある段落です。二重にしないので書きません。対応表を直してください` };
+      return { ok: false, 理由: `${g.面}の前：元から改ページがある段落です。二重にしないので書きません。対応表を直してください` };
     }
-    const 開き = 本文.indexOf(">", 段.始め) + 1;
-    if (本文.startsWith("<w:pPr/>", 開き)) {
-      変え.push({ 始め: 開き, 終わり: 開き + 8, 字: "<w:pPr><w:pageBreakBefore/></w:pPr>" });
-    } else if (本文.startsWith("<w:pPr>", 開き)) {
-      // w:pPr の中の順番：pStyle・keepNext・keepLines の後ろ、ほかのものの前
-      let k = 開き + 7;
-      for (;;) {
-        const m = /^<w:(pStyle|keepNext|keepLines)(?=[\s/>])[^>]*\/>/.exec(本文.slice(k, k + 200));
-        if (!m) break;
-        k += m[0].length;
-      }
-      変え.push({ 始め: k, 終わり: k, 字: "<w:pageBreakBefore/>" });
-    } else {
-      変え.push({ 始め: 開き, 終わり: 開き, 字: "<w:pPr><w:pageBreakBefore/></w:pPr>" });
-    }
+    変え.push({ 始め: 段.閉じ, 終わり: 段.閉じ, 字: '<w:r><w:br w:type="page"/></w:r>' });
   }
-  if (様.改ページの前?.length) {
+  if (様.改ページ?.length) {
     結果.push({
       id: "改ページ",
-      見出し: "様式の面の頭の改ページ",
+      見出し: "様式の面の変わり目の改ページ",
       状態: "書いた",
-      説明: [`${様.改ページの前.map((g) => g.面).join("・")}の頭で、必ずページを変えるようにしました（前の面があふれても、次の面はページの頭から始まります）。ほかの面は元の様式に改ページがあります`],
+      説明: [`${様.改ページ.map((g) => g.面).join("・")}の前で、必ずページを変えるようにしました（前の面があふれても、次の面はページの頭から始まります）。ほかの面は元の様式の改ページのままです`],
     });
+  }
+
+  // ---- 表の行を次の行と離さない（w:keepNext。従業員数の表の見出しの行が、数字の行と別のページに分かれないように） ----
+  for (const g of 様.次と離さない ?? []) {
+    const err = 元と同じか一字(g.箱, g.字, g.見出し);
+    if (err) return { ok: false, 理由: err };
+    const pos = 箱たち[g.箱].index!;
+    const 行の始め = Math.max(本文.lastIndexOf("<w:tr>", pos), 本文.lastIndexOf("<w:tr ", pos));
+    const 行の終わり = 本文.indexOf("</w:tr>", pos);
+    if (行の始め < 0 || 行の終わり < 0 || /<w:tbl>/.test(本文.slice(行の始め, 行の終わり))) return { ok: false, 理由: `${g.見出し}：表の行の形が読めません。書きません` };
+    for (const p of 段落たち) {
+      if (p.始め < 行の始め || p.終わり > 行の終わり) continue;
+      const 開き = 本文.indexOf(">", p.始め) + 1;
+      const 頭 = 本文.slice(p.始め, 開き);
+      if (頭.endsWith("/>")) continue;
+      if (/<w:keepNext[\s/>]/.test(本文.slice(開き, p.閉じ))) continue;
+      if (本文.startsWith("<w:pPr/>", 開き)) 変え.push({ 始め: 開き, 終わり: 開き + 8, 字: "<w:pPr><w:keepNext/></w:pPr>" });
+      else if (本文.startsWith("<w:pPr>", 開き)) {
+        // w:pPr の中の順番：pStyle の後ろ
+        const m = /^<w:pStyle(?=[\s/>])[^>]*\/>/.exec(本文.slice(開き + 7, 開き + 207));
+        const k = 開き + 7 + (m ? m[0].length : 0);
+        変え.push({ 始め: k, 終わり: k, 字: "<w:keepNext/>" });
+      } else 変え.push({ 始め: 開き, 終わり: 開き, 字: "<w:pPr><w:keepNext/></w:pPr>" });
+    }
   }
 
   // 後ろから差し替える（前の位置がずれないように）
