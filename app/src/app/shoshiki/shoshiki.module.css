@@ -187,3 +187,44 @@
   margin: 8px 0 0;
   word-break: break-all;
 }
+
+/* 品目の選び（2026-11-04） */
+.hinmoku {
+  display: grid;
+  gap: 4px;
+  font-size: 14px;
+}
+.hinmokuRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 14px;
+  line-height: 1.8;
+}
+.check1 {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  cursor: pointer;
+}
+.soe {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 2px 12px;
+  font-size: 13px;
+  color: var(--sub);
+  padding-left: 10px;
+  border-left: 2px solid var(--line);
+}
+.preview {
+  margin: 4px 0 10px;
+  padding: 8px 10px 8px 2.2em;
+  font-size: 13.5px;
+  line-height: 1.8;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+}
+div.preview {
+  padding-left: 10px;
+}

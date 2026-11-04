@@ -8,7 +8,11 @@
 
 import { useMemo, useRef, useState } from "react";
 import {
-  記入する,
+  docxに書く,
+  品目たち,
+  品目を書き出す,
+  丸の説明,
+  空の中身,
   控えを作る,
   控えを読む,
   住所を分ける,
@@ -16,6 +20,8 @@ import {
   type 様式,
   type 値,
   type 欄の結果,
+  type 申請の中身,
+  type 品目の選び,
 } from "@/lib/shoshiki";
 import type { 公開する様式 } from "@/lib/kokai-yoshiki";
 import s from "./shoshiki.module.css";
@@ -60,41 +66,17 @@ function base64からバイト(b64: string): Uint8Array {
   return out;
 }
 
-/** 記入した docx を作る。本文の1ファイルだけを差し替え、ほかは読み込んだ圧縮データのまま書き出す */
-async function docxを作る(置: 置いた様式, 様: 様式, 値たち: 値): Promise<{ ok: true; blob: Blob; 結果: 欄の結果[] } | { ok: false; 理由: string }> {
+/** 記入した docx を作る。本文の1ファイルだけを差し替え、ほかは読み込んだ圧縮データのまま書き出す（lib/shoshiki.ts の docxに書く） */
+async function docxを作る(
+  置: 置いた様式,
+  様: 様式,
+  値たち: 値,
+  中身: 申請の中身,
+): Promise<{ ok: true; blob: Blob; 結果: 欄の結果[] } | { ok: false; 理由: string }> {
   const JSZip = (await import("jszip")).default;
-  const zip = await JSZip.loadAsync(置.バイト);
-  const entry = zip.file(様.本文);
-  if (!entry) return { ok: false, 理由: `${様.本文} が見つかりません` };
-  const 元 = await entry.async("uint8array");
-  const 本文 = new TextDecoder("utf-8", { fatal: true }).decode(元);
-  // 文字にして戻したときに元と同じバイトになるか（BOM や改行の扱いで変わるなら書かない）
-  const 戻し = new TextEncoder().encode(本文);
-  if (戻し.length !== 元.length || 戻し.some((v, i) => v !== 元[i])) {
-    return { ok: false, 理由: "本文を文字にして戻すと元と同じになりません。書きません" };
-  }
-  const r = 記入する(本文, 様, 値たち);
+  const r = await docxに書く(JSZip, 置.バイト, 様, 値たち, 中身);
   if (!r.ok) return r;
-  const 名前の並び = Object.keys(zip.files);
-  zip.file(様.本文, new TextEncoder().encode(r.本文), {
-    binary: true,
-    date: entry.date,
-    compression: "DEFLATE",
-    unixPermissions: entry.unixPermissions,
-    dosPermissions: entry.dosPermissions,
-    createFolders: false,
-  });
-  if (Object.keys(zip.files).join("\n") !== 名前の並び.join("\n")) {
-    return { ok: false, 理由: "zip の中のファイルの並びが変わりました。書きません" };
-  }
-  // 圧縮方式を元と同じ DEFLATE にする。JSZip は、読み込んだパーツの方式と同じなら圧縮データを解かずにそのまま書く
-  // （指定しないと全パーツが無圧縮で詰め直される）
-  const blob = await zip.generateAsync({
-    type: "blob",
-    compression: "DEFLATE",
-    platform: "DOS",
-    mimeType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-  });
+  const blob = new Blob([r.バイト as BlobPart], { type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document" });
   return { ok: true, blob, 結果: r.結果 };
 }
 
@@ -112,6 +94,7 @@ export default function ShoshikiView({
   const 表 = useMemo(() => new Map(様式たち.map((x) => [x.sha256, x])), [様式たち]);
   const [置, set置] = useState<置いた様式 | null>(null);
   const [値たち, set値たち] = useState<値>({});
+  const [中身, set中身] = useState<申請の中身>({ ...空の中身, 品目: [] });
   const [知らせ, set知らせ] = useState<string>("");
   const [控えの知らせ, set控えの知らせ] = useState<string>("");
   const [重ねる, set重ねる] = useState(false);
@@ -193,7 +176,7 @@ export default function ShoshikiView({
 
   async function 書いて保存() {
     if (!置 || !様) return;
-    const r = await docxを作る(置, 様, 値たち);
+    const r = await docxを作る(置, 様, 値たち, 中身);
     if (!r.ok) {
       set知らせ(`書きませんでした：${r.理由}`);
       return;
@@ -205,7 +188,7 @@ export default function ShoshikiView({
 
   function 控えを保存() {
     if (!様) return;
-    const k = 控えを作る(様, 値たち, 今日());
+    const k = 控えを作る(様, 値たち, 今日(), 中身);
     const 名 = (値たち["氏名"] ?? "").trim() || "事業者";
     保存させる(new Blob([JSON.stringify(k, null, 2) + "\n"], { type: "application/json" }), `控え_${名}_${k.保存日}.json`);
     set控えの知らせ("事業者の控えを保存しました（このパソコンの中だけ）。次はこのファイルを読み込めば、同じ値で書けます");
@@ -219,6 +202,7 @@ export default function ShoshikiView({
       return;
     }
     set値たち(r.控え.値);
+    set中身(r.控え.申請 ?? { ...空の中身, 品目: [] });
     const 違う = 様 && r.控え.様式.sha256 !== 様.sha256;
     set控えの知らせ(
       `控え（${r.控え.保存日} 保存）を読み込みました。` +
@@ -227,6 +211,17 @@ export default function ShoshikiView({
   }
 
   const 変える = (id: string) => (e: React.ChangeEvent<HTMLInputElement>) => set値たち((v) => ({ ...v, [id]: e.target.value }));
+
+  // 品目の選び。並びは施行令の順に lib がそろえる
+  const 選び = useMemo(() => new Map(中身.品目.map((x) => [x.id, x])), [中身]);
+  const 品目を切り替える = (id: string) =>
+    set中身((c) => ({
+      ...c,
+      品目: c.品目.some((x) => x.id === id) ? c.品目.filter((x) => x.id !== id) : [...c.品目, { id }],
+    }));
+  const 添えを切り替える = (id: string, k: "石綿" | "水銀使用製品" | "水銀含有ばいじん等") =>
+    set中身((c) => ({ ...c, 品目: c.品目.map((x): 品目の選び => (x.id === id ? { ...x, [k]: !x[k] } : x)) }));
+  const 品目の見込み = useMemo(() => (様 ? 品目を書き出す(様, 中身) : null), [様, 中身]);
 
   return (
     <>
@@ -380,6 +375,110 @@ export default function ShoshikiView({
               );
             })}
           </div>
+
+          {様.品目 && 品目の見込み && (
+            <>
+              <h3 className={s.h3}>申請する品目と積替保管</h3>
+              <p className={s.note}>
+                この様式とこの道具は、特別管理産業廃棄物を含みません（普通の産業廃棄物の収集運搬だけです）。特別管理産業廃棄物の申請は、別の様式で行政書士が作ってください。
+              </p>
+              <div className={s.form}>
+                <div className={s.row}>
+                  <div className={s.label}>品目（産業廃棄物の種類）</div>
+                  <div>
+                    <div className={s.hinmoku} data-testid="品目">
+                      {品目たち.map((h) => {
+                        const x = 選び.get(h.id);
+                        return (
+                          <div key={h.id} className={s.hinmokuRow}>
+                            <label className={s.check1}>
+                              <input type="checkbox" data-testid={`品目-${h.id}`} checked={!!x} onChange={() => 品目を切り替える(h.id)} />
+                              {h.名前}
+                            </label>
+                            {x && (h.石綿 || h.水銀使用製品 || h.水銀含有ばいじん等) && (
+                              <span className={s.soe}>
+                                {h.石綿 && (
+                                  <label className={s.check1}>
+                                    <input type="checkbox" data-testid={`石綿-${h.id}`} checked={!!x.石綿} onChange={() => 添えを切り替える(h.id, "石綿")} />
+                                    石綿含有産業廃棄物を含む
+                                  </label>
+                                )}
+                                {h.水銀使用製品 && (
+                                  <label className={s.check1}>
+                                    <input type="checkbox" data-testid={`水銀使用製品-${h.id}`} checked={!!x.水銀使用製品} onChange={() => 添えを切り替える(h.id, "水銀使用製品")} />
+                                    水銀使用製品産業廃棄物を含む
+                                  </label>
+                                )}
+                                {h.水銀含有ばいじん等 && (
+                                  <label className={s.check1}>
+                                    <input type="checkbox" data-testid={`水銀含有ばいじん等-${h.id}`} checked={!!x.水銀含有ばいじん等} onChange={() => 添えを切り替える(h.id, "水銀含有ばいじん等")} />
+                                    水銀含有ばいじん等を含む
+                                  </label>
+                                )}
+                              </span>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                    <div className={s.faint}>
+                      並びは廃棄物処理法施行令の順です。石綿・水銀の欄は、その区分になりうる品目にだけ出しています（石綿は和歌山の手引き p4 の4品目。水銀の2つは法令の区分から道具が選んだもので、要確認です）。
+                    </div>
+                  </div>
+                </div>
+                <div className={s.row}>
+                  <div className={s.label}>積替え又は保管</div>
+                  <div>
+                    <span className={s.date}>
+                      <label className={s.check1}>
+                        <input type="radio" name="積替保管" data-testid="積替保管-無" checked={中身.積替保管 === "無"} onChange={() => set中身((c) => ({ ...c, 積替保管: "無" }))} />
+                        無
+                      </label>
+                      <label className={s.check1}>
+                        <input type="radio" name="積替保管" data-testid="積替保管-有" checked={中身.積替保管 === "有"} onChange={() => set中身((c) => ({ ...c, 積替保管: "有" }))} />
+                        有
+                      </label>
+                    </span>
+                    {中身.積替保管 === "有" && (
+                      <div className={s.check} data-testid="積替保管の知らせ">
+                        <span className={s.badge}>要確認</span>
+                        この道具は今、積替保管を含む申請の下書きに対応していません。積替え又は保管の【有・無】と、積替保管の欄は行政書士が書いてください。
+                      </div>
+                    )}
+                  </div>
+                </div>
+                {中身.品目.length > 0 && (
+                  <div className={s.row}>
+                    <div className={s.label}>様式にこう書きます</div>
+                    <div data-testid="品目の見込み">
+                      <div className={s.faint}>第1面「事業の範囲」（和歌山の申請書記載例 p1 の書き方）</div>
+                      <div className={s.preview}>
+                        {品目の見込み.行たち.map((t, k) => (
+                          <div key={k}>{t}</div>
+                        ))}
+                        <div>石綿含有産業廃棄物【有・無】（{品目の見込み.石綿の番号}）</div>
+                        <div>水銀使用製品産業廃棄物【有・無】</div>
+                        <div>水銀含有ばいじん等【有・無】（{品目の見込み.水銀含有ばいじん等の番号}）</div>
+                        <div>積替え又は保管【有・無】</div>
+                      </div>
+                      <div className={s.faint}>事業計画の概要の品目表、品目の名前の列（和歌山の様式記載例 p1〜p2 の書き方）</div>
+                      <ol className={s.preview}>
+                        {品目の見込み.表の行.map((t, k) => (
+                          <li key={k}>{t}</li>
+                        ))}
+                      </ol>
+                      <div className={s.check} data-testid="要確認-品目">
+                        <span className={s.badge}>要確認</span>
+                        {[...丸の説明(品目の見込み), ...品目の見込み.要確認].map((t, k) => (
+                          <div key={k}>{t}</div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </>
+          )}
 
           <h3 className={s.h3}>今は書かない欄</h3>
           <ul className={s.later}>
