@@ -5,11 +5,13 @@ import { useEffect, useState } from "react";
 import type { カード } from "@/lib/data";
 import { 判定の文, 判定の札, 札に出す判定, 見立てに出す判定, 見立ての順, 記録が薄い, type 選び } from "@/lib/fuda";
 import type { 観点 } from "../../../schema/record.ts";
-import { 再確認か, 経過日数, 年月, 表示日, 日付に } from "@/lib/hizuke";
+import { 再確認か, 経過日数, 年月, 表示日, 日付に, 今日の文字 } from "@/lib/hizuke";
 import { 手続き一覧, 既定の手続き, 品目で見る as 品目の判定, 手続きが合う as 手続きの判定, type 手続き, type 品目判定 } from "@/lib/hantei";
 
 type Props = {
   県名: string;
+  /** この県の様式で、手元で下書きできるもの（様式に書く画面へ案内する） */
+  書ける様式: string[];
   県コード: string;
   手引きの状態: string;
   改訂: { 日付: string; 内容: string[] } | null;
@@ -26,7 +28,8 @@ type Props = {
 };
 
 const 状態の説明: Record<string, string> = {
-  検品済み: "手引きは読み込み済みで、引用はすべて出典と照合できました",
+  検品済み: "手引きは読み込み済みで、引用は人が出典と照合しました",
+  照合済み: "手引きは自動で読み、引用はすべて出典の本文と機械で照合できました（人の検品はまだです）",
   未検品: "手引きは自動で読みましたが、出典と照合できていない引用があります（未検品）",
   未確認: "手引きは手元にありますが、未確認です",
   未読: "手引きはまだ読んでいません",
@@ -34,6 +37,7 @@ const 状態の説明: Record<string, string> = {
 
 export default function KenView({
   県名,
+  書ける様式,
   県コード,
   手引きの状態,
   改訂,
@@ -101,7 +105,9 @@ export default function KenView({
           (c.種別 === "電話" && c.確認日 !== null && 経過日数(c.確認日, 今日) <= 365),
       );
       if (裏付けあり) return null;
-      let 理由 = "手引きをまだ読んでいません";
+      // 県の手引きを読んでいても、この観点の記録も「載っていない」の印も無いことがある（読み落としか、別の手続きの話だけ）
+      let 理由 =
+        手引きの状態 === "未読" || 手引きの状態 === "未確認" ? "手引きをまだ読んでいません" : "手引きからは、この観点の記録が取れていません";
       if (cs.some((c) => c.種別 === "記載なし")) 理由 = "手引きを読みましたが、載っていません";
       if (使える.some((c) => c.種別 === "電話")) 理由 = "前回の電話から1年を超えました";
       else if (使える.some((c) => c.種別 === "手引き")) 理由 = "手引きの記録はありますが、出典と照合できていません";
@@ -110,6 +116,26 @@ export default function KenView({
       return { k, 理由 };
     })
     .filter((x) => x !== null);
+
+  // チェックリストを文字にしてクリップボードへ。電話を5分にするための手元の紙
+  const [写した, set写した] = useState("");
+  async function 書き写す() {
+    const 行 = [`${県名}　電話で聞くこと（${手続き}${品目 ? `・${品目}` : ""}）　${表示日(今日の文字(今日))}`, ""];
+    let n = 1;
+    for (const g of 群順) {
+      const items = チェック.filter((x) => x.k.群 === g);
+      if (items.length === 0) continue;
+      行.push(`■ ${g}`);
+      for (const { k } of items) 行.push(`${n++}. ${k.電話で聞く文}`, "   答え：", "");
+    }
+    行.push("聞いた日と窓口（課名）だけ残し、担当者の名前は書かない");
+    try {
+      await navigator.clipboard.writeText(行.join("\n"));
+      set写した(`${チェック.length}件を写しました。メモ帳などに貼り付けてください`);
+    } catch {
+      set写した("写せませんでした。この画面の文字を選んで写してください");
+    }
+  }
 
   // 補正：手続き・品目に当てはまるものを上に、当てはまらないものは薄く下に
   const 当てはまる = (c: カード) => 手続きが合う(c) && 品目で見る(c, 観点map.get(c.観点)) !== "合わない";
@@ -151,16 +177,28 @@ export default function KenView({
         </div>
       )}
       <p className="lead">
+        {県名}の手引きの要点を、観点{観点一覧.length}項目ごとに出典つきで並べ、電話で聞いた答え・受理実績と分けて置いています。道具は判断しません。判断は行政書士がします。
+      </p>
+      <p className="lead lead-sub">
         {状態の説明[手引きの状態]}
         {読んだ日
           ? `（${表示日(読んだ日)}に読みました。照合：${Object.entries(照合の内訳)
               .map(([k, v]) => `${k} ${v}`)
               .join("、")}）`
           : ""}
-        。観点{観点一覧.length}項目ごとに、手引き・受理実績・電話で聞いた答えを分けて並べています。道具は判断しません。判断は行政書士がします。
+        。
         {政令市.length > 0 &&
           `${政令市.map((s) => s.名前).join("・")}（政令市）の窓口で聞いた記録は、許可権者が違うので${県名}の記録とは分けて、下の${政令市.map((s) => `「${s.名前}（政令市）の窓口」`).join("・")}に置いています。`}
       </p>
+
+      {書ける様式.length > 0 && (
+        <p className="to-form">
+          <a href="/shoshiki/">{県名}の申請書に下書きする</a>
+          <span>
+            {書ける様式.join("・")}に、事業者の情報をこのパソコンの中だけで書き込めます（Claude にもインターネットにも送りません）
+          </span>
+        </p>
+      )}
 
       <nav className="toc-mobile" aria-label="目次">
         <a href="#checklist">電話で聞くこと</a>
@@ -258,6 +296,14 @@ export default function KenView({
             <div className="lead" style={{ margin: 0 }}>
               {手続き}のときに、手引き（出典と照合済み）・受理実績・1年以内の電話のどれも無い観点です。電話で答えが入ると消えます。
             </div>
+            {チェック.length > 0 && (
+              <div className="checklist-tools">
+                <button type="button" onClick={() => void 書き写す()}>
+                  電話の前に書き写す
+                </button>
+                <span>{写した || "聞くことを文字で写します。メモ帳や手帳に貼って、電話をしながら埋めてください"}</span>
+              </div>
+            )}
             {チェック.length === 0 && <p className="empty-all">聞くことは残っていません。</p>}
             {群順.map((g) => {
               const items = チェック.filter((x) => x.k.群 === g);

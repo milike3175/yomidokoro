@@ -28,7 +28,7 @@ export default function HajimeteIndex() {
           {一覧.map((d) => (
             <a key={d.id} className="pref has hj-card" href={`/hajimete/${encodeURIComponent(d.id)}/`}>
               <div className="name">{d.許認可名}</div>
-              <div className="state">{d.自治体名}　{d.読んだ日}に読んだ</div>
+              <div className="state">{d.自治体名}　{d.読んだ日}に読みました</div>
               <div className="counts">
                 <span className="count">
                   <span className="dot 手引き" />

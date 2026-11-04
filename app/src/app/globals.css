@@ -302,6 +302,7 @@ a.tile:hover {
 .tile.lv4 { background: var(--ai); color: var(--on-label); }
 /* 枠＝手引きの状態 */
 .tile.st-検品済み { border: 2.5px solid var(--ink); }
+.tile.st-照合済み { border: 2px solid var(--ai); }
 .tile.st-未検品 { border: 2px dashed var(--ai); }
 .tile.st-未確認 { border: 2px dotted var(--sub); }
 .tile.st-未読 { border: 1px solid var(--line); }
@@ -325,6 +326,7 @@ a.tile:hover {
 }
 .swatch.lv4 { background: var(--ai); }
 .swatch.st-検品済み { border: 2.5px solid var(--ink); background: var(--paper); }
+.swatch.st-照合済み { border: 2px solid var(--ai); background: var(--paper); }
 .swatch.st-未検品 { border: 2px dashed var(--ai); background: var(--paper); }
 .swatch.st-未確認 { border: 2px dotted var(--sub); background: var(--paper); }
 .swatch.st-未読 { border: 1px solid var(--line); background: var(--paper); }
@@ -1195,4 +1197,85 @@ a.tile:hover {
   font-size: 12px;
   color: var(--sub);
   margin-top: 4px;
+}
+
+/* 県ページ：冒頭の二文目（読み込みの状態）は小さく */
+.lead.lead-sub { font-size: 12.5px; margin-top: -8px; }
+
+/* 県ページ：この県の様式に書く画面への案内 */
+.to-form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 14px;
+  margin: 0 0 18px;
+  padding: 12px 16px;
+  border: 1px solid var(--line);
+  border-left: 4px solid var(--ai);
+  border-radius: 10px;
+  background: var(--paper);
+  font-size: 13.5px;
+}
+.to-form a { font-weight: 700; color: var(--ai); }
+.to-form span { color: var(--sub); }
+
+/* チェックリストを書き写す */
+.checklist-tools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 12px;
+  margin: 12px 0 4px;
+  font-size: 12.5px;
+  color: var(--sub);
+}
+.checklist-tools button {
+  font: inherit;
+  font-size: 13.5px;
+  padding: 6px 14px;
+  border-radius: 8px;
+  border: 1px solid var(--ai);
+  background: var(--paper);
+  color: var(--ai);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+/* トップ：使い方の三段 */
+.howto {
+  list-style: none;
+  counter-reset: howto;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 10px;
+  margin: 0 0 18px;
+  padding: 0;
+}
+.howto li {
+  counter-increment: howto;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 12px 14px;
+  font-size: 12.5px;
+  color: var(--sub);
+  line-height: 1.7;
+}
+.howto li b {
+  display: block;
+  color: var(--ink);
+  font-size: 14px;
+  margin-bottom: 4px;
+}
+.howto li b::before {
+  content: counter(howto);
+  display: inline-grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  margin-right: 8px;
+  border-radius: 50%;
+  background: var(--ai);
+  color: var(--on-label);
+  font-size: 12px;
 }
