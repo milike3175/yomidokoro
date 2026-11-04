@@ -2,7 +2,8 @@
 
 // 県ページの中身。手続き・品目の切り替え、「再確認」、チェックリストは、見た人の画面で計算する。
 import { useEffect, useState } from "react";
-import type { カード, 判定の印, 判定の種類 } from "@/lib/data";
+import type { カード } from "@/lib/data";
+import { 判定の順, 判定の文, 判定の札 } from "@/lib/fuda";
 import type { 観点 } from "../../../schema/record.ts";
 import { 再確認か, 経過日数, 年月, 表示日, 日付に } from "@/lib/hizuke";
 import { 手続き一覧, 既定の手続き, 品目で見る as 品目の判定, 手続きが合う as 手続きの判定, type 手続き, type 品目判定 } from "@/lib/hantei";
@@ -658,38 +659,7 @@ function Card({
   );
 }
 
-// ---- 揺れの印（ケンの判定） ----
-// 印を出すのは「揺れあり、要確認」「電話で補足」「手引きと一致」の三つ。「判定不能」は小さく灰色で。
-// 「対象が違う」は data.ts の時点で外してある。解消（行政書士が確かめた）は消さずに弱める
-
-const 判定の順: 判定の種類[] = ["食い違い", "補足", "一致", "判定不能"];
-
-/** 手引きのカードの側では、一致の相手は電話なので「電話と一致」と言う */
-function 判定の文(判定: 判定の種類, 種類: 判定の印["種類"], 手引きの側 = false) {
-  if (判定 === "食い違い") return "揺れあり、要確認";
-  if (判定 === "補足") return "電話で補足";
-  if (判定 === "一致") return 種類 === "電話どうし" ? "前の電話と一致" : 手引きの側 ? "電話と一致" : "手引きと一致";
-  return "判定不能";
-}
-
-/** カードに付ける札。同じ答えの組はまとめ、全部が確かめ済みのときだけ弱める */
-function 判定の札(js: 判定の印[], 手引きの側: boolean) {
-  const 札: { 判定: 判定の種類; 文: string; 解消: boolean; 理由たち: string[] }[] = [];
-  for (const 判定 of 判定の順) {
-    for (const 種類 of ["手引きと電話", "電話どうし"] as const) {
-      const 組 = js.filter((j) => j.判定 === 判定 && j.種類 === 種類);
-      if (組.length === 0) continue;
-      const 文 = 判定の文(判定, 種類, 手引きの側);
-      const 前 = 札.find((x) => x.文 === 文);
-      const 理由たち = 組.map((j) => `ケンの理由：${j.理由}`);
-      if (前) {
-        前.解消 = 前.解消 && 組.every((j) => j.解消);
-        前.理由たち.push(...理由たち);
-      } else 札.push({ 判定, 文, 解消: 組.every((j) => j.解消), 理由たち });
-    }
-  }
-  return 札;
-}
+// ---- 揺れの印（ケンの判定）。札の言葉と並べ方は @/lib/fuda（府県くらべと共用） ----
 
 type 見比べの側 = { 種別: string; 本文: string; 問い?: string; 確認日: string | null; 窓口?: string; ページ?: string; url?: string };
 

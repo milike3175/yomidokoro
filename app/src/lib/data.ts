@@ -78,7 +78,18 @@ export type 判定の印 = {
   /** 組の主（電話の答えの側）。手引きの側・古い電話の側は false。見比べを一度だけ出すのに使う */
   主: boolean;
   /** 組の相手（画面で並べて見せる分だけ写す） */
-  相手: { 種別: 種別; 本文: string; 問い?: string; 確認日: string | null; 窓口?: string; ページ?: string; url?: string };
+  相手: {
+    種別: 種別;
+    本文: string;
+    問い?: string;
+    確認日: string | null;
+    窓口?: string;
+    ページ?: string;
+    url?: string;
+    /** 相手の手続き・品目。府県くらべで、選んだ手続き・品目に相手が当てはまらない組の札を出さないのに使う */
+    対象: string[];
+    品目?: string[];
+  };
 };
 
 export type 手引きの状態 = "検品済み" | "未検品" | "未確認" | "未読";
@@ -267,6 +278,8 @@ function 全部読む() {
             ? `${c.出典.文書名 ?? c.出典.文書}　PDF ${c.出典.物理ページ}ページ目${c.出典.印字ページ ? `（印字 p.${c.出典.印字ページ}）` : ""}`
             : undefined,
           url: c.出典?.url ? `${c.出典.url}#page=${c.出典.物理ページ}` : undefined,
+          対象: c.対象,
+          品目: c.品目,
         });
         for (const x of 読む(path.join(判定dir, 判定f), 判定ファイル).判定) {
           if (x.判定 === "対象が違う") continue;
