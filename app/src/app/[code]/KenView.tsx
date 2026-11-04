@@ -130,7 +130,11 @@ export default function KenView({
     }
     行.push("聞いた日と窓口（課名）だけ残し、担当者の名前は書かない");
     try {
-      await navigator.clipboard.writeText(行.join("\n"));
+      // アプリ（desktop）ではアプリの口で書く。ブラウザでは navigator.clipboard
+      const 口 = (window as unknown as { yomidokoro?: { 書き写す?: (t: string) => Promise<boolean> } }).yomidokoro?.書き写す;
+      if (口) {
+        if (!(await 口(行.join("\n")))) throw new Error("写せない");
+      } else await navigator.clipboard.writeText(行.join("\n"));
       set写した(`${チェック.length}件を写しました。メモ帳などに貼り付けてください`);
     } catch {
       set写した("写せませんでした。この画面の文字を選んで写してください");

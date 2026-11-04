@@ -7,7 +7,7 @@
 // - Claude の API は呼ばない。鍵も扱わない。
 "use strict";
 
-const { app, BrowserWindow, Menu, dialog, ipcMain, protocol, session, shell } = require("electron");
+const { app, BrowserWindow, Menu, clipboard, dialog, ipcMain, protocol, session, shell } = require("electron");
 const fs = require("node:fs");
 const path = require("node:path");
 const os = require("node:os");
@@ -388,6 +388,12 @@ if (!app.requestSingleInstanceLock()) {
     控えの口("控えを保存", (名, 中身) => 控え.控えを保存(app.getPath("userData"), 名, 中身));
     控えの口("控えの一覧", () => 控え.控えの一覧(app.getPath("userData")));
     控えの口("控えを開く", (名) => 控え.控えを開く(app.getPath("userData"), 名));
+    // 電話で聞くことを書き写す（クリップボードに書くだけ。読む口は出さない）
+    ipcMain.handle("書き写す", (_e, t) => {
+      if (typeof t !== "string" || t.length > 20000) return false;
+      clipboard.writeText(t);
+      return true;
+    });
     控えの口("控えの置き場を開く", () => shell.openPath(控え.控えの置き場(app.getPath("userData"))));
 
     // 試し：YOMIDOKORO_SHUTOKU=30 なら、窓を出さずに一回だけ取ってきて結果を出して終わる
