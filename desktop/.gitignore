@@ -1,0 +1,15 @@
+# 書き出したもの・写したものは git に入れない
+node_modules/
+_写し/
+dist/
+out/
+release/
+*.zip
+*.exe
+*.dmg
+*.app
+*.asar
+*.blockmap
+*.docx
+*.xlsx
+*.pdf
