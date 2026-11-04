@@ -1,6 +1,6 @@
 import { はじめてのデータ, 時間の文字 } from "@/lib/hajimete";
 
-export const metadata = { title: "はじめての許認可｜許認可ローカルルールの地図" };
+export const metadata = { title: "はじめての許認可｜よみどころ" };
 
 const 照合の順 = ["一致", "一致（ページ訂正）", "近似（要目視）", "不一致"] as const;
 

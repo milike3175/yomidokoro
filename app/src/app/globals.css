@@ -136,6 +136,12 @@ select {
   color: var(--ink);
   text-decoration: none;
 }
+.site-catch {
+  font-family: var(--font-head), var(--font-body), sans-serif;
+  color: var(--sub);
+  font-size: 13px;
+  letter-spacing: 0.04em;
+}
 .site-sub {
   color: var(--sub);
   font-size: 13px;

@@ -14,7 +14,7 @@ const 見出し書体 = Zen_Kaku_Gothic_New({
 });
 
 export const metadata: Metadata = {
-  title: "許認可ローカルルールの地図（産業廃棄物収集運搬業）",
+  title: "よみどころ｜ところ変われば、書き方も変わる。（産業廃棄物収集運搬業）",
   description: "県ごとのローカルルールを、手引き・受理実績・電話で聞いた答えに分けて一覧にする、行政書士の道具",
 };
 
@@ -39,8 +39,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <header className="site-header">
           <div className="site-header-inner">
             <a href="/" className="site-title">
-              許認可ローカルルールの地図
+              よみどころ
             </a>
+            <span className="site-catch">ところ変われば、書き方も変わる。</span>
             <span className="site-sub">一本目は産業廃棄物収集運搬業の許可。はじめての許認可にも</span>
           </div>
         </header>

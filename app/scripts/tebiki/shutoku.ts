@@ -23,7 +23,7 @@ import {
   type 出典,
 } from "./kyotsu.ts";
 
-const UA = "Mozilla/5.0 (Macintosh) kyoninka-local-rules/0.1 (gyoseishoshi research; contact via site)";
+const UA = "Mozilla/5.0 (Macintosh) yomidokoro/0.1 (gyoseishoshi research; contact via site)";
 const 文書の拡張子 = /\.(pdf|docx?|xlsx?|zip|rtf)$/i;
 // 拡張子の無い URL（東京都の .../01_xxx-pdf など）。リンクの文字の「（PDF：1,662KB）」や、応答の中身で形式を決める
 const 文字の形式 = /(PDF|ＰＤＦ|ワード|Word|エクセル|Excel)\s*[：:（(]?\s*[\d,，.]+\s*[KMＫＭ]?B/i;

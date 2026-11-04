@@ -12,7 +12,7 @@ export function generateStaticParams() {
 export async function generateMetadata({ params }: { params: Promise<{ code: string }> }) {
   const { code } = await params;
   const d = データ().県ごと[code];
-  return { title: d ? `${d.県.名前}｜許認可ローカルルールの地図` : "見つかりません" };
+  return { title: d ? `${d.県.名前}｜よみどころ` : "見つかりません" };
 }
 
 export default async function KenPage({ params }: { params: Promise<{ code: string }> }) {

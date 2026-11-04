@@ -24,7 +24,7 @@ import {
   type はじめての出典,
 } from "./kyotsu.ts";
 
-const UA = "Mozilla/5.0 (Macintosh) kyoninka-local-rules/0.1 (gyoseishoshi research; contact via site)";
+const UA = "Mozilla/5.0 (Macintosh) yomidokoro/0.1 (gyoseishoshi research; contact via site)";
 const ドメインを聞くモデル = "claude-haiku-5-5";
 const 探すモデル = "claude-opus-5-5";
 const 検索1回 = 0.01; // web 検索は 1,000 回で 10 ドル

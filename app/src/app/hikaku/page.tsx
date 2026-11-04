@@ -2,7 +2,7 @@ import { データ, 手帳を読む } from "@/lib/data";
 import { 今日の文字 } from "@/lib/hizuke";
 import HikakuView, { type 行 } from "./HikakuView";
 
-export const metadata = { title: "府県くらべ｜許認可ローカルルールの地図" };
+export const metadata = { title: "府県くらべ｜よみどころ" };
 
 // 観点を一つ選ぶと、許可権者（府県と政令市）ごとの記録が一つの画面に並ぶ。
 // 行は記録が1件以上ある許可権者だけ。政令市は親の県のすぐ下に置く（許可権者が違うので行は分ける）
