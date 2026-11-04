@@ -1,6 +1,7 @@
 // app/out（公開用の書き出し、TECHO=0）と様式の対応表を、desktop/_写し/ に写す。
 // app/ の中は読むだけで、書き換えない。app/ で npm run build（TECHO=0）を済ませてから使う。
 // 手帳（TECHO=1）で書き出した out/ なら止める。
+import crypto from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 
@@ -28,14 +29,25 @@ for (const f of htmlたち(OUT)) {
   if (/class(Name)?\\?"?[:=]\\?"techo-banner/.test(t) || t.includes("自分専用の手帳（電話の記録）を読み込んで表示しています"))
     やめる(`${path.relative(OUT, f)} に手帳の帯がある。手帳版（TECHO=1）の書き出しは入れない。app/ で TECHO=0 npm run build をやり直す`);
 }
-// 様式ファイル（県の著作物）を out/ に入れていないか
+// 様式ファイル（県の著作物）を out/ に入れていないか。
+// 例外は app/data/公開する様式.yaml に sha256 で許したものだけ（みゆき承認・出典明記で再掲できるもの）。
+// ファイル名や置き場所では許さない。中身の sha256 が一覧にあるものだけ通す。
+const 一覧f = path.resolve(HERE, "..", "app", "data", "公開する様式.yaml");
+const 許すsha = new Set(
+  fs.existsSync(一覧f)
+    ? [...fs.readFileSync(一覧f, "utf8").matchAll(/^\s*-?\s*sha256:\s*([0-9a-f]{64})\s*(?:#.*)?$/gm)].map((m) => m[1])
+    : [],
+);
+const 本体の拡張子 = /\.(docx|xlsx|xlsm|xls|doc|pdf|odt|ods)$/i;
 const 様式の本体 = (function 探す(dir) {
   return fs.readdirSync(dir, { withFileTypes: true }).flatMap((e) => {
     const p = path.join(dir, e.name);
-    return e.isDirectory() ? 探す(p) : /\.(docx|xlsx|pdf)$/i.test(e.name) ? [p] : [];
+    return e.isDirectory() ? 探す(p) : 本体の拡張子.test(e.name) ? [p] : [];
   });
 })(OUT);
-if (様式の本体.length) やめる(`out/ に様式・手引きの本体がある：${様式の本体.map((p) => path.relative(OUT, p)).join(", ")}`);
+const 許さない = 様式の本体.filter((p) => !許すsha.has(crypto.createHash("sha256").update(fs.readFileSync(p)).digest("hex")));
+if (許さない.length) やめる(`out/ に一覧（app/data/公開する様式.yaml）に無い様式・手引きの本体がある：${許さない.map((p) => path.relative(OUT, p)).join(", ")}`);
+for (const p of 様式の本体) console.log(`公開する様式の一覧にあるので通す：${path.relative(OUT, p)}`);
 
 fs.rmSync(写し, { recursive: true, force: true });
 fs.mkdirSync(写し, { recursive: true });

@@ -42,6 +42,8 @@ process.on("uncaughtException", (e) => {
   try {
     dialog.showErrorBox("よみどころ：起動中にエラー", `${String(e && e.message ? e.message : e)}\n\n記録：${記録の置き場を決める()}`);
   } catch {}
+  // 窓の無いまま残ると、次に開いたときに「二つ目」として黙って閉じてしまうので、ここで終える
+  app.exit(1);
 });
 process.on("unhandledRejection", (e) => 記録("unhandledRejection", String(e && e.stack ? e.stack : e)));
 
@@ -85,6 +87,8 @@ const 種類 = {
   ".webp": "image/webp",
   ".ico": "image/x-icon",
   ".yaml": "text/plain; charset=utf-8",
+  ".docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  ".xlsx": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
 };
 
 /** yomi://app/30/?手続き=新規 → site/30/index.html。置き場の外は返さない */
@@ -262,6 +266,18 @@ if (!app.requestSingleInstanceLock()) {
   });
 
   app.whenReady().then(async () => {
+    try {
+      await 起動する();
+    } catch (e) {
+      記録("startup failed", String(e && e.stack ? e.stack : e));
+      try {
+        dialog.showErrorBox("よみどころ：起動中にエラー", `${String(e && e.message ? e.message : e)}\n\n記録：${記録の置き場を決める()}`);
+      } catch {}
+      app.exit(1);
+    }
+  });
+
+  async function 起動する() {
     記録("ready", { site: fs.existsSync(path.join(画面の置き場(), "index.html")), yaml: fs.existsSync(対応表の置き場()) });
     // カメラ・マイク・位置などの許可は全部断る
     session.defaultSession.setPermissionRequestHandler((_wc, _perm, cb) => cb(false));
@@ -284,6 +300,14 @@ if (!app.requestSingleInstanceLock()) {
     if (process.env.YOMIDOKORO_SHOT) {
       win.webContents.once("did-finish-load", () => {
         setTimeout(async () => {
+          // 試し：YOMIDOKORO_CLICK=<文字> なら、その文字を含むボタンを一つ押して、少し待ってから写す
+          if (process.env.YOMIDOKORO_CLICK) {
+            const r = await win.webContents.executeJavaScript(
+              `(() => { const t = ${JSON.stringify(process.env.YOMIDOKORO_CLICK)}; const b = [...document.querySelectorAll("button")].find((x) => x.textContent.includes(t)); if (!b) return "button not found"; b.click(); return "clicked: " + b.textContent; })()`,
+            );
+            console.log(r);
+            await new Promise((ok) => setTimeout(ok, 3000));
+          }
           const img = await win.webContents.capturePage();
           fs.writeFileSync(process.env.YOMIDOKORO_SHOT, img.toPNG());
           console.log(`写した：${process.env.YOMIDOKORO_SHOT}（${win.webContents.getURL()}）`);
@@ -291,7 +315,7 @@ if (!app.requestSingleInstanceLock()) {
         }, 2500);
       });
     }
-  });
+  }
 
   app.on("window-all-closed", () => app.quit());
 }

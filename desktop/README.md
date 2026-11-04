@@ -56,7 +56,7 @@ npm run 書き出し:win              # Windows の持ち運び版（zip、署�
 npm run 書き出し:mac              # Mac 版（zip、署名なし）
 ```
 
-`scripts/copy-out.mjs` は、`app/out` に手帳の帯（TECHO=1 の印）や、様式・手引きの本体（docx・xlsx・pdf）があれば写さずに止める。
+`scripts/copy-out.mjs` は、`app/out` に手帳の帯（TECHO=1 の印）や、様式・手引きの本体（docx・xlsx・pdf など）があれば写さずに止める。例外は `app/data/公開する様式.yaml` に sha256 で許したもの（今は和歌山県の様式第六号だけ）。ファイル名ではなく中身の sha256 で見る。
 書き出したもの（zip・exe・app）と `_写し/` は git に入れない（`.gitignore`）。
 
 画面（`_写し/site`）と記入の対応表（`_写し/様式`）は app.asar の中に入れる。日本語のフォルダ名が asar の外に出ると、Windows の zip の展開で崩れることがあるため。
