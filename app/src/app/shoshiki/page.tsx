@@ -3,6 +3,7 @@ import path from "node:path";
 import crypto from "node:crypto";
 import { parse } from "yaml";
 import { 手帳を読む } from "@/lib/data";
+import { 公開する様式を読む } from "@/lib/kokai-yoshiki";
 import type { 様式 } from "@/lib/shoshiki";
 import ShoshikiView, { type 手元の様式 } from "./ShoshikiView";
 
@@ -52,5 +53,8 @@ function 手元の様式を読む(知っている: Set<string>): 手元の様式
 export default function ShoshikiPage() {
   const 様式たち = 対応表を読む();
   const 手元 = 手元の様式を読む(new Set(様式たち.map((s) => s.sha256)));
-  return <ShoshikiView 様式たち={様式たち} 手元={手元} 手帳版={手帳を読む} />;
+  // 公開版にも入れてよい様式（app/public/ に置いた県の様式。app/data/公開する様式.yaml で sha256 ごとに許したものだけ）
+  const 知っている = new Set(様式たち.map((s) => s.sha256));
+  const 試せる = 公開する様式を読む(APP).filter((x) => 知っている.has(x.sha256));
+  return <ShoshikiView 様式たち={様式たち} 手元={手元} 手帳版={手帳を読む} 試せる={試せる} />;
 }

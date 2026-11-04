@@ -146,6 +146,18 @@ select {
   color: var(--sub);
   font-size: 13px;
 }
+.site-nav {
+  margin-left: auto;
+  display: flex;
+  gap: 14px;
+  font-size: 13px;
+}
+.site-nav a {
+  color: var(--sub);
+}
+.site-nav a:hover {
+  color: var(--accent);
+}
 .site-footer {
   border-top: 1px solid var(--line);
   color: var(--sub);

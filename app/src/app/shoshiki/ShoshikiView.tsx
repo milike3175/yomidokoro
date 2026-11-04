@@ -1,8 +1,10 @@
 "use client";
 
 // 様式に書く画面。すべてこのブラウザの中で動く。
-// 置かれた様式ファイルも、入力した事業者の情報も、どこにも送らない（fetch しない。Claude も呼ばない）。
+// 置かれた様式ファイルも、入力した事業者の情報も、どこにも送らない（送る fetch はしない。Claude も呼ばない）。
 // 県のサイトから様式を取ってくることもしない（リンクを出すだけ。利用者が自分で保存して、ここに置く）。
+// 例外は「試す」ボタンだけ：このサイトと同じ場所に置いた様式（app/public/、公開する様式.yaml で sha256 ごとに許したもの）を
+// 同じオリジンから読み込む（GET。何も送らない）。読み込んだ中身の sha256 が一覧と違えば使わない。
 
 import { useMemo, useRef, useState } from "react";
 import {
@@ -15,6 +17,7 @@ import {
   type 値,
   type 欄の結果,
 } from "@/lib/shoshiki";
+import type { 公開する様式 } from "@/lib/kokai-yoshiki";
 import s from "./shoshiki.module.css";
 
 export type 手元の様式 = { 県: string; ファイル名: string; sha256: string; 中身: string | null };
@@ -95,7 +98,17 @@ async function docxを作る(置: 置いた様式, 様: 様式, 値たち: 値):
   return { ok: true, blob, 結果: r.結果 };
 }
 
-export default function ShoshikiView({ 様式たち, 手元, 手帳版 }: { 様式たち: 様式[]; 手元: 手元の様式[]; 手帳版: boolean }) {
+export default function ShoshikiView({
+  様式たち,
+  手元,
+  手帳版,
+  試せる,
+}: {
+  様式たち: 様式[];
+  手元: 手元の様式[];
+  手帳版: boolean;
+  試せる: 公開する様式[];
+}) {
   const 表 = useMemo(() => new Map(様式たち.map((x) => [x.sha256, x])), [様式たち]);
   const [置, set置] = useState<置いた様式 | null>(null);
   const [値たち, set値たち] = useState<値>({});
@@ -116,6 +129,34 @@ export default function ShoshikiView({ 様式たち, 手元, 手帳版 }: { 様�
     const sha256 = await sha256を出す(バイト);
     set置({ ファイル名, sha256, バイト, 様: 表.get(sha256) ?? null });
     set知らせ("");
+  }
+
+  /** このサイトに置いた様式を、同じオリジンから読み込んで置く（外へは出ない） */
+  async function 試しの様式を置く(x: 公開する様式) {
+    const url = new URL(x.場所, location.origin);
+    if (url.origin !== location.origin) {
+      set知らせ("このサイトの外の場所は読まない");
+      return;
+    }
+    try {
+      const r = await fetch(url, { credentials: "omit", cache: "no-store" });
+      if (!r.ok) {
+        set知らせ(`様式を読み込めなかった（${r.status}）`);
+        return;
+      }
+      const バイト = new Uint8Array(await r.arrayBuffer());
+      if (!globalThis.crypto?.subtle) {
+        set知らせ("この開き方では様式を見分けられない。https のページか、このパソコンの 127.0.0.1 で開き直す");
+        return;
+      }
+      if ((await sha256を出す(バイト)) !== x.sha256) {
+        set知らせ("読み込んだ様式の中身が、載せた様式と違う。使わない");
+        return;
+      }
+      await 置く(x.場所.split("/").pop() ?? "様式.docx", バイト);
+    } catch {
+      set知らせ("様式を読み込めなかった");
+    }
   }
 
   async function ファイルを受ける(f: File | undefined) {
@@ -197,6 +238,32 @@ export default function ShoshikiView({ 様式たち, 手元, 手帳版 }: { 様�
         県の公式の様式ファイルに、事業者の情報を書き込む。書き込みはこのブラウザの中だけで行い、様式も事業者の情報もどこにも送らない（Claude にも送らない）。
         様式の欄の空白だけを同じ字数の値に置き換えるので、書式・改行・枠はそのまま残る。最後は必ず Word で開いて、行政書士が確かめる。
       </p>
+
+      {試せる.length > 0 && (
+        <div className={s.trial}>
+          <p className={s.note}>まず試すなら：県の様式の写しを、このサイトに一つだけ置いてある。押すとこのサイトから読み込む（外へは何も送らない）。架空の会社で書いてみる</p>
+          {試せる.map((x) => (
+            <div key={x.sha256}>
+              <div className={s.buttons}>
+                <button type="button" className={s.primary} data-testid={`試す-${x.sha256.slice(0, 8)}`} onClick={() => void 試しの様式を置く(x)}>
+                  {x.県名}の{x.呼び名}で試す
+                </button>
+              </div>
+              <p className={s.source} data-testid="出典">
+                出典：{x.県名}「{x.出典の名前}」（
+                <a href={x.入口} target="_blank" rel="noopener noreferrer">
+                  {x.入口}
+                </a>
+                、{x.取得日.replace(/^(\d{4})-0?(\d+)-0?(\d+)$/, "$1年$2月$3日")}取得）。
+                <a href={x.規約} target="_blank" rel="noopener noreferrer">
+                  {x.規約の名前}
+                </a>
+                に基づき、中身を変えずに掲載している。
+              </p>
+            </div>
+          ))}
+        </div>
+      )}
 
       <h2>1．様式を県のページから取ってくる</h2>
       <p className={s.note}>道具は県のサイトから様式を取ってこない。下のページを開いて、様式ファイルを自分で保存する。</p>

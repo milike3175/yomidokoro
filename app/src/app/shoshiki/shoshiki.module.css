@@ -173,3 +173,17 @@
   color: var(--paper);
   font-weight: 700;
 }
+
+.trial {
+  margin: 4px 0 18px;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--paper);
+}
+.source {
+  color: var(--sub);
+  font-size: 12.5px;
+  margin: 8px 0 0;
+  word-break: break-all;
+}

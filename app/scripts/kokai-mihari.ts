@@ -15,6 +15,8 @@
 //   3. 鍵の形：sk-ant- で始まる文字列など。見つけても中身は出さず「どのファイルの何行目」だけ出す
 //   4. 公開しない予定のメモ：下の一覧。追跡に入ったら止める（警告どまりのものは印を付けてある）
 //   5. 見本/<許認可>/_判定/ の組：電話が見本の電話の記録で、相手が手引きか見本の電話であること（画面に理由が出るため）
+//   6. 様式・手引きの本体（docx・xlsx・pdf など。県の著作物）：app/data/公開する様式.yaml に sha256 があるものだけ通す。
+//      ファイル名や置き場所では許さない（中身が一つでも違えば止める）
 //
 // 守ること
 //   - 手帳の文も鍵も、画面には一切出さない。出すのはファイル名と行番号だけ
@@ -22,7 +24,9 @@
 import fs from "node:fs";
 import path from "node:path";
 import { execFileSync } from "node:child_process";
+import crypto from "node:crypto";
 import { parse } from "yaml";
+import { 公開する様式を読む, 本体の拡張子 } from "../src/lib/kokai-yoshiki.ts";
 
 // ---------------- 公開しない予定のメモ（追跡に入ったら知らせる） ----------------
 // 止める：push を止める。警告：知らせるだけで止めない（公開してよいかをあとで決めるもの）
@@ -301,12 +305,17 @@ if (blobs.length) {
   }
 }
 
+const 許す様式 = new Set(公開する様式を読む(APP).map((x) => x.sha256));
 const 調べ済み = new Set<string>();
 for (const t of 対象たち) {
   const key = `${t.場所}\0${t.blob}`;
   if (調べ済み.has(key)) continue;
   調べ済み.add(key);
   const buf = 中身.get(t.blob);
+  // 6. 様式・手引きの本体：一覧の sha256 と同じものだけ通す（文字でないので、下の調べより先に見る）
+  if (buf && 本体の拡張子.test(t.場所) && !許す様式.has(crypto.createHash("sha256").update(buf).digest("hex"))) {
+    記す(止める理由, `${t.場所}（${t.出どころ}）：様式・手引きの本体（県の著作物）。app/data/公開する様式.yaml に sha256 が無いので上げない`);
+  }
   if (!buf || buf.length > 5 * 1024 * 1024 || buf.includes(0)) continue; // 画像などの文字でないもの
   const text = NFC(buf.toString("utf8"));
   const 行たち = text.split("\n");

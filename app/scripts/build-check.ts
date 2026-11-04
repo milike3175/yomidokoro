@@ -4,9 +4,13 @@
 // 揺れの判定（ケン）の理由も見る：
 //   - 手帳/<許認可>/_判定/ の理由の一行が out/ に出てきたら失敗（見本の電話どうしの組の理由だけは外す）
 //   - 見本/<許認可>/_判定/ の組が、見本の電話と公開の手引きの記録だけでできているかを確かめる（ほかの電話の組があれば失敗）
+// 様式・手引きの本体（docx・xlsx・pdf など。県の著作物）も見る：
+//   - out/ に入ってよいのは app/data/公開する様式.yaml に sha256 がある様式だけ。ほかがあれば失敗にする
 import fs from "node:fs";
 import path from "node:path";
+import crypto from "node:crypto";
 import { parse } from "yaml";
+import { 公開する様式を読む, 本体の拡張子 } from "../src/lib/kokai-yoshiki.ts";
 
 const APP = path.resolve(import.meta.dirname, "..");
 const OUT = path.join(APP, "out");
@@ -18,6 +22,18 @@ function ファイルたち(dir: string, ext: RegExp): string[] {
     const p = path.join(dir, e.name);
     return e.isDirectory() ? ファイルたち(p, ext) : ext.test(e.name) ? [p] : [];
   });
+}
+
+// ---- 様式・手引きの本体：一覧（sha256）に無いものが out/ にあれば止める ----
+const 許す様式 = new Set(公開する様式を読む(APP).map((x) => x.sha256));
+const 本体たち = ファイルたち(OUT, 本体の拡張子);
+const 許さない本体 = 本体たち.filter((f) => !許す様式.has(crypto.createHash("sha256").update(fs.readFileSync(f)).digest("hex")));
+if (許さない本体.length) {
+  for (const f of 許さない本体) console.error(`[止めました] 書き出しに様式・手引きの本体が入っています（公開する様式.yaml に無い）：${path.relative(APP, f)}`);
+  console.error("県の様式を公開版に入れるときは、利用規約を確かめ、みゆきの承認を取ってから app/data/公開する様式.yaml に sha256 を書いてください。");
+  fs.rmSync(OUT, { recursive: true, force: true });
+  console.error("out/ を消しました。");
+  process.exit(1);
 }
 
 const MIHON = path.join(APP, "data", "見本");
@@ -167,4 +183,5 @@ if (漏れ) {
 console.log(
   `見張り：手帳の判定の理由 ${判定の見張る語.size}か所を out/ で探した。混ざっていない${判定の外した ? `（見本の電話だけの組の ${判定の外した}件は外した）` : ""}。見本の判定の理由 ${見本の理由.size}件のうち ${画面に出た見本の理由.size}件が画面に出ている`,
 );
+console.log(`見張り：様式・手引きの本体 ${本体たち.length}件が out/ にある。どれも公開する様式.yaml の sha256 と同じ（許してよいもの ${許す様式.size}件）`);
 console.log(`見張り：手帳の文 ${見張る文.length}件を out/ で探した。混ざっていない${外した ? `（公開データにも出てくる ${外した}件は外した）` : ""}${見本の元.size ? `（見本の元の記録の ${見本の元.size}件は出てよい）` : ""}`);

@@ -43,6 +43,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             </a>
             <span className="site-catch">ところ変われば、書き方も変わる。</span>
             <span className="site-sub">一本目は産業廃棄物収集運搬業の許可。はじめての許認可にも</span>
+            <nav className="site-nav" aria-label="画面">
+              <a href="/">全国の地図</a>
+              <a href="/shoshiki/">様式に書く（試し）</a>
+            </nav>
           </div>
         </header>
         <main>{children}</main>
