@@ -294,23 +294,120 @@ client = new Anthropic();
 
 const 使った = { 入力: 0, 出力: 0, 確入力: 0, 確出力: 0 };
 
+// 端末で見ているときは、Claude が書いた所から順に、読める形で出す（観点・問い・答えなど）。
+// 録画で「Claude が整えていく」様子をそのまま見せるため。演出ではなく、届いた速さのまま出す。
+// Claude Code や Skill から呼ぶとき（端末でないとき）は出さない。
+const 少しずつ出す = Boolean(process.stdout.isTTY) && !process.argv.includes("--静か");
+const 見せる鍵: Record<string, string> = {
+  許可権者コード: "許可権者",
+  窓口: "窓口",
+  日付: "日付",
+  観点: "観点",
+  問い: "問い",
+  答え: "答え",
+  直し方: "直し方",
+  既存との関係: "これまでの記録と",
+};
+
+/** 少しずつ届く JSON の文字列から、見せる鍵の値だけを届いたそばから書き出す */
+function 流れを見せる() {
+  let 文 = "";
+  let i = 0;
+  let 中 = false; // 見せる値の中にいるか
+  let 逃し = ""; // \ の後ろ
+  let 見出し = ""; // 値の一文字目が来たら出す（空の値は見出しごと出さない）
+  const 書く = (t: string) => {
+    if (見出し) process.stdout.write(見出し);
+    見出し = "";
+    process.stdout.write(t);
+  };
+  return (かけら: string) => {
+    文 += かけら;
+    while (i < 文.length) {
+      if (!中) {
+        if (文[i] !== '"') {
+          i++;
+          continue;
+        }
+        // 引用符の組を一つ読む。閉じがまだ届いていなければ待つ
+        let j = i + 1;
+        while (j < 文.length && 文[j] !== '"') j += 文[j] === "\\" ? 2 : 1;
+        if (j >= 文.length) return;
+        let k = j + 1;
+        while (k < 文.length && /\s/.test(文[k])) k++;
+        if (k >= 文.length) return;
+        if (文[k] !== ":") {
+          i = j + 1; // 鍵ではなく値（配列の中の文字など）。読み飛ばす
+          continue;
+        }
+        const 鍵 = 文.slice(i + 1, j);
+        k++;
+        while (k < 文.length && /\s/.test(文[k])) k++;
+        if (k >= 文.length) return;
+        if (文[k] === '"' && 見せる鍵[鍵]) {
+          見出し = `${鍵 === "観点" ? "\n" : ""}  ${見せる鍵[鍵]}：`;
+          i = k + 1;
+          中 = true;
+          continue;
+        }
+        i = k; // 見せない値は、次の回で値として読み飛ばす
+        continue;
+      }
+      const c = 文[i];
+      if (逃し) {
+        逃し += c;
+        if (逃し[1] === "u") {
+          if (逃し.length < 6) {
+            i++;
+            continue;
+          }
+          書く(String.fromCharCode(parseInt(逃し.slice(2), 16)));
+        } else 書く(逃し[1] === "n" ? " " : 逃し[1] === "t" ? " " : 逃し[1]);
+        逃し = "";
+      } else if (c === "\\") 逃し = c;
+      else if (c === '"') {
+        if (!見出し) process.stdout.write("\n");
+        見出し = "";
+        中 = false;
+      } else 書く(c);
+      i++;
+    }
+  };
+}
+
 async function 整える(追記: string): Promise<整えた> {
-  const msg = await client.messages.parse({
+  const params = {
     model: 整えるモデル,
     max_tokens: 4000,
     system,
     messages: [
       {
-        role: "user",
+        role: "user" as const,
         content: `次のメモを整えてください。\n\n<メモ>\n${元の文字}\n</メモ>${追記}`,
       },
     ],
     output_config: { format: zodOutputFormat(整えた形) },
-  });
+  };
+  if (!少しずつ出す) {
+    const msg = await client.messages.parse(params);
+    使った.入力 += msg.usage.input_tokens;
+    使った.出力 += msg.usage.output_tokens;
+    if (!msg.parsed_output) 止める("Claude の返事を読み取れなかった。もう一度試してほしい。");
+    return msg.parsed_output!;
+  }
+  const 見せる = 流れを見せる();
+  const stream = client.messages.stream(params);
+  stream.on("text", (t) => 見せる(t));
+  const msg = await stream.finalMessage();
+  process.stdout.write("\n");
   使った.入力 += msg.usage.input_tokens;
   使った.出力 += msg.usage.output_tokens;
-  if (!msg.parsed_output) 止める("Claude の返事を読み取れなかった。もう一度試してほしい。");
-  return msg.parsed_output!;
+  const 本文 = msg.content.map((b) => (b.type === "text" ? b.text : "")).join("");
+  try {
+    return 整えた形.parse(JSON.parse(本文));
+  } catch {
+    return 止める("Claude の返事を読み取れなかった。もう一度試してほしい。");
+  }
 }
 
 function 料金の行() {
