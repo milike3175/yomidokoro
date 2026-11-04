@@ -4,22 +4,22 @@
   --bg: #f4f0e6; /* 生成りの紙 */
   --paper: #fbf9f3;
   --paper-2: #f0ebdf;
-  --ink: #2b2a28; /* 墨 */
+  --ink: #3a3936; /* 墨（少しやわらかく） */
   --sub: #6e6a62;
   --faint: #a59f94;
   --line: #ddd6c8;
-  --accent: #276e66; /* ティール（Mi.Like の差し色を、細い字でも読める濃さに） */
+  --accent: #336f7e; /* 青みのティール（Mi.Like の差し色を、細い字でも読める濃さに） */
   --shadow: 0 1px 2px rgba(60, 50, 30, 0.06), 0 2px 8px rgba(60, 50, 30, 0.05);
 
   /* 出典種別 */
-  --ai: #276e66; /* ティール：手引き */
-  --ai-bg: #e4f0ee;
+  --ai: #336f7e; /* 青みのティール：手引き */
+  --ai-bg: #e6eff2;
   --rokusho: #66702e; /* 鶯茶：受理実績（ティール・柿・えんじ・山吹・鼠のどれとも離した、くすんだオリーブ） */
   --rokusho-bg: #ebeedd;
-  --kaki: #b0623a; /* 柿：電話 */
+  --kaki: #965a3a; /* 柿：電話（淡い地の上で小さい字が読める濃さ） */
   --kaki-bg: #f7ede4;
   --kaki-band: #efdccb;
-  --nezumi: #7a7670; /* 鼠：同業者 */
+  --nezumi: #66645e; /* 鼠：同業者 */
   --nezumi-bg: #eeece8;
   --enji: #8e3b4b; /* えんじ：補正 */
   --enji-bg: #f5e8ea;
@@ -39,15 +39,15 @@
     --bg: #1c1b19;
     --paper: #252320;
     --paper-2: #2c2a26;
-    --ink: #e9e4da;
+    --ink: #dedad0;
     --sub: #aaa398;
     --faint: #7a746b;
     --line: #3d3a35;
-    --accent: #93cfc6;
+    --accent: #9cc9d6;
     --shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
 
-    --ai: #7fc4ba;
-    --ai-bg: #1f302e;
+    --ai: #86bfcd;
+    --ai-bg: #1f2c31;
     --rokusho: #b3bd74;
     --rokusho-bg: #2a2d1f;
     --kaki: #d98f64;
@@ -185,11 +185,12 @@ h2 {
   font-weight: 700;
   letter-spacing: 0.05em;
 }
-.label.手引き { background: var(--ai); color: var(--on-label); }
-.label.受理実績 { background: var(--rokusho); color: var(--on-label); }
-.label.電話 { background: var(--kaki); color: var(--on-label); }
-.label.同業者 { background: var(--nezumi); color: var(--on-label); }
-.label.補正 { background: var(--enji); color: var(--on-label); }
+/* 出典の札は、淡い地にその色の字と細い枠（濃い塗りに白い字はやめた。2026-11-04） */
+.label.手引き { background: var(--ai-bg); color: var(--ai); border-color: color-mix(in srgb, var(--ai) 55%, transparent); }
+.label.受理実績 { background: var(--rokusho-bg); color: var(--rokusho); border-color: color-mix(in srgb, var(--rokusho) 55%, transparent); }
+.label.電話 { background: var(--kaki-bg); color: var(--kaki); border-color: color-mix(in srgb, var(--kaki) 55%, transparent); }
+.label.同業者 { background: var(--nezumi-bg); color: var(--nezumi); border-color: color-mix(in srgb, var(--nezumi) 55%, transparent); }
+.label.補正 { background: var(--enji-bg); color: var(--enji); border-color: color-mix(in srgb, var(--enji) 55%, transparent); }
 .label.未分類 { background: transparent; color: var(--sub); border: 1px solid var(--line); }
 .label.分かりにくい { background: transparent; color: var(--enji); border: 1px dashed var(--enji); }
 .label.記載なし { background: transparent; color: var(--sub); border: 1px dashed var(--nashi); }
@@ -282,14 +283,14 @@ h2 {
 }
 a.tile:hover {
   transform: translateY(-1px);
-  box-shadow: 0 3px 10px rgba(39, 110, 102, 0.18);
+  box-shadow: 0 3px 10px rgba(51, 111, 126, 0.18);
 }
 /* 濃さ＝記録の件数 */
 .tile.lv0 { background: var(--paper-2); color: var(--sub); }
 .tile.lv1 { background: color-mix(in srgb, var(--ai) 18%, var(--paper)); }
 .tile.lv2 { background: color-mix(in srgb, var(--ai) 36%, var(--paper)); }
 /* lv3 の地は白い字だと読みにくい（4.5 に届かない）ので、明るい画面では墨の字にする */
-.tile.lv3 { background: color-mix(in srgb, var(--ai) 60%, var(--paper)); color: var(--ink); }
+.tile.lv3 { background: color-mix(in srgb, var(--ai) 55%, var(--paper)); color: var(--ink); }
 .tile.lv4 { background: var(--ai); color: var(--on-label); }
 /* 枠＝手引きの状態 */
 .tile.st-検品済み { border: 2.5px solid var(--ink); }
@@ -307,7 +308,7 @@ a.tile:hover {
 .swatch.lv0 { background: var(--paper-2); }
 .swatch.lv1 { background: color-mix(in srgb, var(--ai) 18%, var(--paper)); }
 .swatch.lv2 { background: color-mix(in srgb, var(--ai) 36%, var(--paper)); }
-.swatch.lv3 { background: color-mix(in srgb, var(--ai) 60%, var(--paper)); }
+.swatch.lv3 { background: color-mix(in srgb, var(--ai) 55%, var(--paper)); }
 /* 暗い画面の lv3：暗い字で 4.5 以上になるよう地を少し濃くする */
 @media (prefers-color-scheme: dark) {
   .tile.lv3,
@@ -1074,11 +1075,11 @@ a.tile:hover {
 .hj-ng b { color: var(--shu); }
 .hj-ng ul { margin: 6px 0 0; padding-left: 1.2em; word-break: break-all; }
 
-/* 揺れの印（ケンの判定）。揺れは二重線、補足・一致は細い枠、判定不能は小さく灰色。確かめ済みは弱める */
+/* 揺れの印（ケンの判定）。札は手引き・電話のどちらの色とも違う中立の墨。揺れは朱の二重線、補足は墨の細い枠、一致は薄墨の細い枠、判定不能は小さく灰色。確かめ済みは弱める */
 .label.判定 { background: transparent; font-weight: 700; }
 .label.判定.食い違い { color: var(--shu); border: 3px double var(--shu); padding: 3px 8px; }
-.label.判定.補足 { color: var(--accent); border: 1px solid var(--accent); }
-.label.判定.一致 { color: var(--sub); border: 1px solid var(--line); }
+.label.判定.補足 { color: var(--ink); border: 1px solid var(--ink); }
+.label.判定.一致 { color: var(--ink); border: 1px solid var(--sub); font-weight: 500; }
 .label.判定.判定不能 { color: var(--faint); border: 1px solid transparent; font-weight: 400; font-size: 10.5px; padding: 4px 4px; }
 .label.判定.解消 { opacity: 0.55; border-style: dotted; }
 .card.yure { border: 3px double var(--shu); }
