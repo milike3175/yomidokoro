@@ -233,6 +233,14 @@ export default function ShoshikiView({
 
   // 下書きを作る様式：選んだ県の対応表（様式ファイルは作成のときに用意する）
   const 選んだ様たち = 様式たち.filter((x) => 選んだ県.has(x.県コード));
+  /** 県ごとにまとめた様式（一つの県に申請書と事業計画の概要など、いくつもあることがある） */
+  const 県の組たち = useMemo(() => {
+    const m = new Map<string, 様式[]>();
+    for (const x of 様式たち) m.set(x.県コード, [...(m.get(x.県コード) ?? []), x]);
+    return [...m.values()];
+  }, [様式たち]);
+  const 県名たち = (a: 様式[]) => [...new Set(a.map((x) => x.県名))].join("・");
+  const 様式の短い名 = (x: 様式) => x.名前.replace(/[（(].*$/, "");
   // 入力欄は、選んだ県の欄を id で合わせたもの（和歌山も山形も 申請日・住所・氏名… は同じ id）。
   // まだ県を選んでいないときも、下書きできる県全部の欄を出して、すぐ入れられるようにする
   const 様: 様式 | null = useMemo(() => {
@@ -346,21 +354,22 @@ export default function ShoshikiView({
       return;
     }
     set作成中(true);
-    set知らせ(`${選んだ様たち.map((x) => x.県名).join("・")}の下書きを作っています…`);
+    set知らせ(`${県名たち(選んだ様たち)}の下書きを作っています…`);
     const 文たち: string[] = [];
     const 日 = 今日();
     let 作った = 0;
     for (const x of 選んだ様たち) {
+      const 呼び名 = 様式たち.filter((y) => y.県コード === x.県コード).length > 1 ? `${x.県名}の${様式の短い名(x)}` : x.県名;
       const 用意 = await 様式を用意する(x);
       if (!用意.置) {
-        文たち.push(`${x.県名}：${用意.理由}`);
+        文たち.push(`${呼び名}：${用意.理由}`);
         set手で置くを開く(true);
         continue;
       }
       const 型x = 型たち.find((t) => t.sha256 === x.sha256) ?? null;
       const r = await docxを作る(用意.置, x, 値たち, 中身, 型x);
       if (!r.ok) {
-        文たち.push(`${x.県名}：書きませんでした（${r.理由}）`);
+        文たち.push(`${呼び名}：書きませんでした（${r.理由}）`);
         continue;
       }
       const 確 = r.結果.filter((y) => y.状態 === "要確認").length;
@@ -369,14 +378,14 @@ export default function ShoshikiView({
       const 口 = 下書きの口();
       if (口) {
         const w = await 口.保存(名, new Uint8Array(await r.blob.arrayBuffer()));
-        文たち.push(w.ok ? `${x.県名}：「${w.ファイル名}」（要確認 ${確}件）` : `${x.県名}：保存できませんでした（${w.理由}）`);
+        文たち.push(w.ok ? `${呼び名}：「${w.ファイル名}」（要確認 ${確}件）` : `${呼び名}：保存できませんでした（${w.理由}）`);
         if (w.ok) {
           set下書きの置き場(w.置き場);
           作った++;
         }
       } else {
         保存させる(r.blob, 名);
-        文たち.push(`${x.県名}：「${名}」（要確認 ${確}件）`);
+        文たち.push(`${呼び名}：「${名}」（要確認 ${確}件）`);
         作った++;
       }
     }
@@ -831,12 +840,12 @@ export default function ShoshikiView({
           )}
 
           <h2>3．申請する都道府県</h2>
-          <p className={s.note}>いくつでも選べます。選んだ県の数だけ、下書きができます（今、下書きできるのは{様式たち.map((x) => x.県名).join("・")}です）。</p>
+          <p className={s.note}>いくつでも選べます。選んだ県の数だけ、下書きができます（今、下書きできるのは{県名たち(様式たち)}です）。</p>
           <ul className={`${s.list} ${s.kenList}`} data-testid="申請する県">
-            {様式たち.map((x) => {
-              const ある = 置たち.some((p) => p.sha256 === x.sha256);
+            {県の組たち.map((組) => {
+              const x = 組[0];
               return (
-                <li key={x.sha256} data-testid={`県の様式-${x.県コード}`} className={x.県コード === 来た県 ? s.hereItem : undefined}>
+                <li key={x.県コード} data-testid={`県の様式-${x.県コード}`} className={x.県コード === 来た県 ? s.hereItem : undefined}>
                   <label className={s.kenPick}>
                     <input
                       type="checkbox"
@@ -852,22 +861,28 @@ export default function ShoshikiView({
                       }
                     />
                     <strong>{x.県名}</strong>
-                    <span>{x.名前}</span>
+                    {組.length === 1 && <span>{x.名前}</span>}
                   </label>
-                  <span className={s.faint}>
-                    {ある ? (
-                      "様式はこのパソコンにあります"
-                    ) : x.自動で取れない || !取れる ? (
-                      <>
-                        <a href={x.入口} target="_blank" rel="noopener noreferrer">
-                          県のページ
-                        </a>
-                        から様式を保存して、下の「様式を手で置く」から置いてください{x.自動で取れない ? `（${x.自動で取れない}）` : ""}
-                      </>
-                    ) : (
-                      "作成のときに県のサイトから取ってきます"
-                    )}
-                  </span>
+                  {組.map((y) => {
+                    const ある = 置たち.some((p) => p.sha256 === y.sha256);
+                    return (
+                      <span key={y.sha256} className={s.faint} style={組.length > 1 ? { display: "block" } : undefined}>
+                        {組.length > 1 && <>{y.名前}：</>}
+                        {ある ? (
+                          "様式はこのパソコンにあります"
+                        ) : y.自動で取れない || !取れる ? (
+                          <>
+                            <a href={y.入口} target="_blank" rel="noopener noreferrer">
+                              県のページ
+                            </a>
+                            から様式を保存して、下の「様式を手で置く」から置いてください{y.自動で取れない ? `（${y.自動で取れない}）` : ""}
+                          </>
+                        ) : (
+                          "作成のときに県のサイトから取ってきます"
+                        )}
+                      </span>
+                    );
+                  })}
                 </li>
               );
             })}
@@ -894,7 +909,7 @@ export default function ShoshikiView({
               {作成中
                 ? "作っています…"
                 : 選んだ様たち.length
-                  ? `${選んだ様たち.map((x) => x.県名).join("・")}の下書きを作成する`
+                  ? `${県名たち(選んだ様たち)}の下書きを作成する`
                   : "申請する都道府県を選んでください"}
             </button>
             {下書きの口() && (
@@ -997,7 +1012,7 @@ export default function ShoshikiView({
         </div>
       )}
 
-      <h3 className={s.h3}>県から取ってくる（下書きできる県：{様式たち.map((x) => x.県名).join("・")}）</h3>
+      <h3 className={s.h3}>県から取ってくる（下書きできる県：{県名たち(様式たち)}）</h3>
       <p className={s.note}>
         {取れる
           ? "アプリでは、ボタンを押すと県のサイトから様式を取ってきて、このパソコンに置きます（県の公開ページから取るだけで、事業者の情報は送りません）。"
@@ -1087,7 +1102,7 @@ export default function ShoshikiView({
                 ) : (
                   <span>
                     {x.ファイル名}（sha256 {x.sha256.slice(0, 16)}…）<strong className={s.warn}>
-                      　この様式は、まだ下書きできません。下書きできるのは、対応表を作って人の目で確かめた様式（今は{様式たち.map((y) => y.県名).join("・")}）だけです。県が様式を改めたときも、ここに出ます
+                      　この様式は、まだ下書きできません。下書きできるのは、対応表を作って人の目で確かめた様式（今は{県名たち(様式たち)}）だけです。県が様式を改めたときも、ここに出ます
                     </strong>
                   </span>
                 )}

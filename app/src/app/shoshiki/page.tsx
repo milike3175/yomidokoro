@@ -41,7 +41,9 @@ function 対応表を読む(): 様式[] {
       if (!/^[0-9a-f]{64}$/.test(d?.sha256 ?? "")) throw new Error(`様式の対応表 ${f}：sha256 が無い`);
       if (!Array.isArray(d.欄) || typeof d.箱の数 !== "number") throw new Error(`様式の対応表 ${f}：欄・箱の数が無い`);
       return d;
-    });
+    })
+    // 同じ県の中では申請書を先に（事業計画の概要などはその後ろ）
+    .sort((a, b) => a.県コード.localeCompare(b.県コード) || Number(!a.名前.includes("申請書")) - Number(!b.名前.includes("申請書")));
 }
 
 /**
