@@ -198,6 +198,12 @@ export default function ShoshikiView({
     const 口 = アプリの控えの口();
     setアプリ(口);
     void 一覧を読み直す(口);
+    // 事業者の控え（電話帳）から来たとき（/shoshiki/?控え=ファイル名）：その控えを読み込む
+    const 控え名 = new URLSearchParams(window.location.search).get("控え");
+    if (口 && 控え名) {
+      set選んだ控え(控え名);
+      void 口.開く(控え名).then((r) => (r.ok ? 控えの文を受ける(r.中身) : set控えの知らせ(`読めませんでした：${r.理由}`)));
+    }
     set取れる(!!アプリの口()?.様式を取ってくる);
     void 取ってきた様式を置く();
     // eslint-disable-next-line react-hooks/exhaustive-deps
