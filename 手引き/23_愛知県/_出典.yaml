@@ -1,0 +1,88 @@
+許可権者:
+  コード: "23"
+  名前: 愛知県
+取り寄せ:
+  - url: https://www.pref.aichi.jp/uploaded/life/667389_3083493_misc.pdf
+  - url: https://www.pref.aichi.jp/uploaded/attachment/560336.pdf
+ファイル:
+  - ファイル名: 560336.pdf
+    url: https://www.pref.aichi.jp/uploaded/attachment/560336.pdf
+    sha256: ed371600a3243a0351cb1d1cbfab6b2422715baaab355b363742557805b1721f
+    取得日: 2026-11-04
+    サイズ: 178748
+    最終更新: Mon, 31 Mar 2025 15:03:52 GMT
+    ページ数: 4
+    文字にした日: 2026-11-04
+  - ファイル名: 631239.pdf
+    url: null
+    sha256: 542912067d1ae0c13c74d83da05c16d757194f4f30515d5e8a335a003b114071
+    取得日: 2026-11-04
+    サイズ: 134376
+    最終更新: null
+    ページ数: 3
+    文字にした日: 2026-11-04
+  - ファイル名: 631240.pdf
+    url: null
+    sha256: dc3ac9d72fe3996c4bf7b035d89efa17a1f7df3a019bd7bbed2cddda8bbf663a
+    取得日: 2026-11-04
+    サイズ: 94617
+    最終更新: null
+    ページ数: 2
+    文字にした日: 2026-11-04
+  - ファイル名: 631241.pdf
+    url: null
+    sha256: 74f9322073a98148ddefd77290e9531ae7c6df3fdbdaaea02c6a693ec353d6f1
+    取得日: 2026-11-04
+    サイズ: 91966
+    最終更新: null
+    ページ数: 2
+    文字にした日: 2026-11-04
+  - ファイル名: 631242.pdf
+    url: null
+    sha256: 47476d2e1febdee92573c9b15dd59740a2c9b5118baa0ab6c69cc7e52b6c0bfa
+    取得日: 2026-11-04
+    サイズ: 88819
+    最終更新: null
+    ページ数: 2
+    文字にした日: 2026-11-04
+  - ファイル名: 667389_3083490_misc.docx
+    url: null
+    sha256: 6ef88a929e74414d87cd824d905a72be14cadf3a167305b776d4f9aabfaeea60
+    取得日: 2026-11-04
+    サイズ: 20791
+    最終更新: null
+    ページ数: 1
+    文字にした日: 2026-11-04
+  - ファイル名: 667389_3083493_misc.pdf
+    url: https://www.pref.aichi.jp/uploaded/life/667389_3083493_misc.pdf
+    sha256: 1f608470e2cbc4d4223a0b3bc780c3ee310dcea7cbe0c3b5399d6dd084456b34
+    取得日: 2026-11-04
+    サイズ: 166898
+    最終更新: Tue, 03 Nov 2026 18:18:33 GMT
+    ページ数: 4
+    文字にした日: 2026-11-04
+  - ファイル名: 667389_3083494_misc.pdf
+    url: null
+    sha256: a754248f699f9ac39761663ec562116be05a8c1d47e2823a8a00471558c866c7
+    取得日: 2026-11-04
+    サイズ: 189281
+    最終更新: null
+    ページ数: 6
+    文字にした日: 2026-11-04
+  - ファイル名: 667389_3083495_misc.docx
+    url: null
+    sha256: 7818c70a663b2ba38616a1f6c130b32e250cbf508f8ab9951f31c4babf7f83a8
+    取得日: 2026-11-04
+    サイズ: 42429
+    最終更新: null
+    ページ数: 1
+    文字にした日: 2026-11-04
+鮮度確認日: 2026-11-04
+入口: https://www.pref.aichi.jp/soshiki/junkan/shuun-yosiki.html
+様式の取り寄せ:
+  - url: https://www.pref.aichi.jp/uploaded/life/667389_3083490_misc.docx
+    名前: 産業廃棄物収集運搬業許可申請書（様式第六号）
+    注: 2026-11-04 取得。県のサイトは自動の取得を断る（2026-11-05 確認）
+  - url: https://www.pref.aichi.jp/uploaded/life/667389_3083495_misc.docx
+    名前: 事業計画の概要（様式第六号の二）
+    注: 2026-11-04 取得。まだ対応表は無い

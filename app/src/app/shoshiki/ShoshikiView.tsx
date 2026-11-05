@@ -267,6 +267,8 @@ export default function ShoshikiView({
   async function 様式を用意する(x: 様式): Promise<{ 置: 置いた様式 } | { 置: null; 理由: string }> {
     const ある = 置たち.find((p) => p.sha256 === x.sha256);
     if (ある) return { 置: ある };
+    if (x.自動で取れない)
+      return { 置: null, 理由: `${x.自動で取れない}。県のページ（${x.入口}）から様式を保存して、下の「様式を手で置く」から置いてください` };
     const 口 = アプリの口();
     if (!口?.様式を取ってくる || !口.取ってきた様式)
       return { 置: null, 理由: "様式がまだありません。県のページから様式を保存して、下の「様式を手で置く」から置いてください" };
@@ -853,7 +855,18 @@ export default function ShoshikiView({
                     <span>{x.名前}</span>
                   </label>
                   <span className={s.faint}>
-                    {ある ? "様式はこのパソコンにあります" : 取れる ? "作成のときに県のサイトから取ってきます" : "様式を下の「様式を手で置く」から置いてください"}
+                    {ある ? (
+                      "様式はこのパソコンにあります"
+                    ) : x.自動で取れない || !取れる ? (
+                      <>
+                        <a href={x.入口} target="_blank" rel="noopener noreferrer">
+                          県のページ
+                        </a>
+                        から様式を保存して、下の「様式を手で置く」から置いてください{x.自動で取れない ? `（${x.自動で取れない}）` : ""}
+                      </>
+                    ) : (
+                      "作成のときに県のサイトから取ってきます"
+                    )}
                   </span>
                 </li>
               );
@@ -997,7 +1010,7 @@ export default function ShoshikiView({
               {x.県名}の産業廃棄物収集運搬業のページ
             </a>
             　{x.名前}（ファイル名 {x.ファイル名}）
-            {取れる && (
+            {取れる && !x.自動で取れない && (
               <button type="button" className={s.small} data-testid={`県から取る-${x.県コード}`} onClick={() => void 県から取る(x)}>
                 {置たち.some((y) => y.sha256 === x.sha256) ? "取り直す" : "県のサイトから取ってくる"}
               </button>
