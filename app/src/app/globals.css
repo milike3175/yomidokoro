@@ -1307,3 +1307,36 @@ a.tile:hover {
   .ken-print .kp-line { display: block; margin-top: 2px; border-bottom: 1px solid #888; height: 16pt; font-size: 8pt; color: #444; }
   .ken-print .kp-foot { margin-top: 12px; font-size: 8pt; color: #333; }
 }
+
+/* トップの「事業者さんの名簿」のカード */
+.meibo-card {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 6px 18px;
+  margin: 6px 0 18px;
+  padding: 16px 20px;
+  border: 1px solid color-mix(in srgb, var(--ai) 35%, var(--line));
+  border-radius: 14px;
+  background: var(--ai-bg);
+  color: var(--ink);
+  text-decoration: none;
+  box-shadow: var(--shadow);
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+.meibo-card:hover { transform: translateY(-1px); }
+.meibo-card-title { font-size: 17px; font-weight: 700; color: var(--ai); letter-spacing: 0.04em; }
+.meibo-card-body { font-size: 14px; color: var(--sub); min-width: 0; }
+.meibo-card-go {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--paper);
+  background: var(--ai);
+  border-radius: 999px;
+  padding: 7px 18px;
+  white-space: nowrap;
+}
+@media (max-width: 720px) {
+  .meibo-card { grid-template-columns: 1fr; }
+  .meibo-card-go { justify-self: start; }
+}

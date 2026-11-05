@@ -44,7 +44,7 @@ export default function JigyoshaView() {
   async function 読む(口: 控えの口の型) {
     const 一覧 = await 口.一覧();
     if (!Array.isArray(一覧)) {
-      set知らせ(`控えの一覧を読めませんでした：${一覧.理由}`);
+      set知らせ(`名簿を読めませんでした：${一覧.理由}`);
       return;
     }
     // 一覧は新しい順。会社（氏名）ごとに、いちばん新しい控えを出す
@@ -58,7 +58,7 @@ export default function JigyoshaView() {
         continue;
       }
       const v = k.控え.値;
-      const 会社 = (v["氏名"] ?? "").trim() || "（名前の無い控え）";
+      const 会社 = (v["氏名"] ?? "").trim() || "（会社名の無いもの）";
       const 前 = 会社ごと.get(会社);
       if (前) {
         前.ほか++;
@@ -78,21 +78,21 @@ export default function JigyoshaView() {
     }
     const 並び = [...会社ごと.values()].sort((a, b) => (a.ふりがな || a.会社).localeCompare(b.ふりがな || b.会社, "ja"));
     set行たち(並び);
-    set知らせ(読めない ? `よみどころの控えの形でないファイルが ${読めない}件あったので、出していません` : "");
+    set知らせ(読めない ? `名簿のフォルダに、よみどころの形でないファイルが ${読めない}件あったので、出していません` : "");
   }
 
   return (
     <>
-      <h1>事業者の控え</h1>
+      <h1>事業者さんの名簿</h1>
       <p className={s.note}>
-        様式に書く画面で「事業者の控えを保存」を押した事業者が、会社ごとに並びます。「この事業者で下書きする」を押すと、会社の情報と品目が入った状態で様式に書く画面が開きます。
-        控えはこのパソコンの中にだけあります。Claude にもインターネットにも送りません。
+        様式に書く画面で「名簿に入れる」を押した事業者さんが、会社ごとに並びます。「この事業者で下書きする」を押すと、会社の情報と品目が入った状態で様式に書く画面が開きます。
+        名簿はこのパソコンの中にだけあります。Claude にもインターネットにも送りません。
       </p>
 
       {アプリ === null && (
         <p className={s.note} data-testid="ブラウザの控え">
-          ブラウザで開いているときは、控えはダウンロードしたファイル（控え_会社名_日付.json）として手元にあります。
-          <a href="/shoshiki/">様式に書く画面</a>の「控えを読み込む」で、そのファイルを選んでください。一覧で並べられるのは、デスクトップ版（アプリ）だけです。
+          ブラウザで開いているときは、名簿に入れた事業者さんは、ダウンロードしたファイル（控え_会社名_日付.json）として手元にあります。
+          <a href="/shoshiki/">様式に書く画面</a>の「名簿のファイルから読み込む」で、そのファイルを選んでください。名簿として並べられるのは、デスクトップ版（アプリ）だけです。
         </p>
       )}
 
@@ -100,14 +100,14 @@ export default function JigyoshaView() {
         <>
           <p>
             <button type="button" className={s.small} onClick={() => void アプリ.置き場を開く()}>
-              控えの置き場を開く
+              名簿のフォルダを開く
             </button>
-            　<a href="/shoshiki/">新しい事業者を入れる（様式に書く画面へ）</a>
+            　<a href="/shoshiki/">新しい事業者さんを入れる（様式に書く画面へ）</a>
           </p>
           {知らせ && <p className={s.placed}>{知らせ}</p>}
           {行たち.length === 0 ? (
             <p className={s.note} data-testid="控えなし">
-              まだ控えがありません。<a href="/shoshiki/">様式に書く画面</a>で事業者の情報を入れて、「事業者の控えを保存」を押すと、ここに並びます。
+              まだ誰も入っていません。<a href="/shoshiki/">様式に書く画面</a>で事業者さんの情報を入れて、「名簿に入れる」を押すと、ここに並びます。
             </p>
           ) : (
             <table className={s.book} data-testid="控えの一覧">
@@ -135,7 +135,7 @@ export default function JigyoshaView() {
                     <td>{x.品目.length ? x.品目.join("、") : "なし"}</td>
                     <td>
                       {x.保存日}
-                      {x.ほか > 0 && <div className={s.kana}>前の控え {x.ほか}件</div>}
+                      {x.ほか > 0 && <div className={s.kana}>前に入れた分 {x.ほか}件</div>}
                     </td>
                     <td>
                       <a href={`/shoshiki/?控え=${encodeURIComponent(x.ファイル名)}`} data-testid="この事業者で下書きする">

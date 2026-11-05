@@ -1,4 +1,5 @@
 import { データ } from "@/lib/data";
+import MeiboCard from "./MeiboCard";
 import { 配置, 列数, 行数 } from "@/lib/tilemap";
 
 const 種別順 = ["手引き", "受理実績", "電話", "同業者", "補正"] as const;
@@ -58,10 +59,7 @@ export default function Home() {
           <span>県の様式に、事業者の情報をこのパソコンの中だけで書き込みます（今は和歌山・山形・奈良。いくつかの県を選べば、県ごとに一つずつ下書きができます）</span>
         </li>
       </ol>
-      <p className="hk-entry">
-        <a href="/jigyosha/">事業者の控え</a>
-        <span className="hint">申請書に書いた事業者が、電話帳のように会社ごとに並びます。押すと、その会社の情報が入った状態で様式に書けます（このパソコンの中だけ）</span>
-      </p>
+      <MeiboCard />
       <p className="hk-entry">
         <a href="/hajimete/">はじめての許認可</a>
         <span className="hint">許認可の名前と自治体から、公式の手引きを探して読み、要点を出典つきで出します（建設業許可・罹災証明書など）</span>

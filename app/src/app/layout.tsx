@@ -45,7 +45,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <nav className="site-nav" aria-label="画面">
               <a href="/">全国の地図</a>
               <a href="/shoshiki/">様式に書く（試し）</a>
-              <a href="/jigyosha/">事業者の控え</a>
+              <a href="/jigyosha/">事業者さんの名簿</a>
             </nav>
           </div>
         </header>

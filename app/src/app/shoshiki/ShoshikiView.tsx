@@ -371,11 +371,11 @@ export default function ShoshikiView({
       }
       await 一覧を読み直す();
       set選んだ控え(r.ファイル名);
-      set控えの知らせ(`事業者の控えを「${r.ファイル名}」として保存しました（このパソコンの中だけ。置き場：${r.置き場}）。次は下の一覧から選んで読み込めます`);
+      set控えの知らせ(`「${名}」を名簿に入れました（このパソコンの中だけ）。次からは、事業者さんの名簿か下の一覧から選べば欄が埋まります`);
       return;
     }
     保存させる(new Blob([文], { type: "application/json" }), ファイル名);
-    set控えの知らせ("事業者の控えを保存しました（このパソコンの中だけ）。次はこのファイルを読み込めば、同じ値で書けます");
+    set控えの知らせ("名簿のファイルを保存しました（このパソコンの中だけ）。次はこのファイルを読み込めば、同じ値で書けます");
   }
 
   async function アプリの控えを読む() {
@@ -403,8 +403,8 @@ export default function ShoshikiView({
     set中身(r.控え.申請 ?? { ...空の中身, 品目: [] });
     const 違う = 様 && r.控え.様式.sha256 !== 様.sha256;
     set控えの知らせ(
-      `控え（${r.控え.保存日} 保存）を読み込みました。` +
-        (違う ? `この控えは別の様式（${r.控え.様式.名前}）で保存したものです。同じ id の欄だけ入れました。確かめてください` : ""),
+      `名簿から読み込みました（${r.控え.保存日} に入れた分）。` +
+        (違う ? `別の様式（${r.控え.様式.名前}）で入れた分です。同じ欄だけ入れました。確かめてください` : ""),
     );
   }
 
@@ -952,18 +952,18 @@ export default function ShoshikiView({
         </>
       )}
 
-      <h2>事業者の控え</h2>
+      <h2>事業者さんの名簿</h2>
       <p className={s.note}>
-        入れた値を、このパソコンにファイル（JSON）で保存します。ブラウザには溜めません。次に同じ事業者の申請書を作るときは、様式を置いてから控えを読み込んでください。
+        入れた事業者さんの情報と品目を、このパソコンの中に残します。次に同じ事業者さんの申請書を作るときは、名簿から選ぶだけで欄が埋まります。
       </p>
       {アプリ && (
         <p className={s.note}>
-          アプリでは、控えをこのパソコンの決まった置き場（よみどころ専用のフォルダ）に保存し、一覧から選んで読み込みます。
+          アプリでは、よみどころ専用のフォルダに残し、<a href="/jigyosha/">事業者さんの名簿</a>に会社ごとに並びます。
         </p>
       )}
       <div className={s.buttons}>
         <button type="button" disabled={!様} data-testid="控えを保存" onClick={() => void 控えを保存()}>
-          控えを保存する
+          名簿に入れる
         </button>
         {アプリ && (
           <>
@@ -972,9 +972,9 @@ export default function ShoshikiView({
               onChange={(e) => set選んだ控え(e.target.value)}
               disabled={控えの一覧.length === 0}
               data-testid="控えの一覧"
-              aria-label="保存した控え"
+              aria-label="名簿に入れた事業者さん"
             >
-              {控えの一覧.length === 0 && <option value="">保存した控えはまだありません</option>}
+              {控えの一覧.length === 0 && <option value="">名簿にはまだ誰も入っていません</option>}
               {控えの一覧.map((x) => (
                 <option key={x.ファイル名} value={x.ファイル名}>
                   {x.ファイル名}
@@ -982,15 +982,15 @@ export default function ShoshikiView({
               ))}
             </select>
             <button type="button" disabled={!選んだ控え} data-testid="控えを一覧から読む" onClick={() => void アプリの控えを読む()}>
-              選んだ控えを読み込む
+              選んだ事業者さんを読み込む
             </button>
             <button type="button" data-testid="控えの置き場を開く" onClick={() => void アプリ.置き場を開く()}>
-              置き場を開く
+              名簿のフォルダを開く
             </button>
           </>
         )}
         <button type="button" data-testid="控えを読む" onClick={() => 控えの口.current?.click()}>
-          {アプリ ? "ほかの場所のファイルから読み込む" : "控えを読み込む"}
+          {アプリ ? "ほかの場所のファイルから読み込む" : "名簿のファイルから読み込む"}
         </button>
         <input
           ref={控えの口}
