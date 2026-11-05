@@ -387,7 +387,7 @@ if (!app.requestSingleInstanceLock()) {
           return f(...a);
         } catch (e) {
           記録(`${名前} failed`, String(e && e.code ? e.code : "error"));
-          return { ok: false, 理由: "このパソコンの控えの置き場に書けませんでした" };
+          return { ok: false, 理由: 名前.startsWith("下書き") ? "このパソコンの下書きの置き場（書類/よみどころ_下書き）に書けませんでした" : "このパソコンの控えの置き場に書けませんでした" };
         }
       });
     控えの口("控えを保存", (名, 中身) => 控え.控えを保存(app.getPath("userData"), 名, 中身));
