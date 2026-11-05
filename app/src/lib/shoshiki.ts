@@ -1436,8 +1436,27 @@ export async function docxに書く(
 /** 書く場所。字の中の {id} は値（{住所.〒}・{住所.本体} は住所を郵便番号と残りに分けたもの）、{品目} は品目の行たち */
 export type 書く場所 =
   | { 見出し: string; 種類: "箱"; 箱: number; 元: string; 字: string; 幅: number }
-  | { 見出し: string; 種類: "後ろ"; 箱: number; 元: string; 字: string; /** 狭いマスなので英数字を半角のまま書く */ 半角?: boolean }
-  | { 見出し: string; 種類: "段落"; 段落: number; 確かめ: { 箱: number; 字: string }; 行: string[]; 注?: string }
+  | {
+      見出し: string;
+      種類: "後ろ";
+      箱: number;
+      元: string;
+      字: string;
+      /** 狭いマスなので英数字を半角のまま書く */
+      半角?: boolean;
+      /** 改行して次の行にも書く（同じ run の中で w:br。愛知の氏名の欄の、名称の下の代表者など） */
+      次の行?: { 頭: string; 字: string };
+    }
+  | {
+      見出し: string;
+      種類: "段落";
+      段落: number;
+      確かめ: { 箱: number; 字: string };
+      行: string[];
+      注?: string;
+      /** 小さい字（7pt）で書く行の番号（0 から）。高さが決まったマスで、ふりがなを一行に収める（愛知の第2面） */
+      小さく?: number[];
+    }
   /** 面の終わりの空の段落の高さをほぼ無くす（書き足した行で表が伸びても、空の段落が次のページへ押し出されて白紙ができないように） */
   | { 見出し: string; 種類: "詰める"; 段落: number; 確かめ: { 箱: number; 字: string } };
 
@@ -1450,6 +1469,16 @@ export type 品目の文の欄 = {
   水銀使用製品の文: string; // 水銀使用製品産業廃棄物を含む。
   締めの文: string; // これらのうち、特別管理産業廃棄物であるものを除く。
   要確認?: string[];
+  /**
+   * 品目ごとに区分の「含む／除く」を括弧で書く形（愛知の注意事項 1ページ目の4・5）。
+   * あれば 含むの文・水銀使用製品の文 は使わず、締めの文の {数} {水銀使用製品} を差す
+   */
+  品目ごと?: {
+    区分たち: { 区分: "石綿" | "水銀含有ばいじん等" | "自動車等破砕物"; 品目: string[]; 含む: string; 除く: string }[];
+    括弧: [string, string];
+    内の区切り: string;
+    水銀使用製品: { 含む: string; 除く: string };
+  };
 };
 
 const 段落の形 = /<w:p\b[^>]*\/>|<w:p\b[^>]*>[\s\S]*?<\/w:p>/g;
@@ -1473,6 +1502,29 @@ export function 品目を文で書き出す(様: 様式, 中身0: 申請の中�
   const 行: string[] = [];
   if (中身.積替保管 === "有") 要確認.push(`積替保管「有」：${様.県名}の記載例は「積替え保管を行うもの」を分けて書いています。道具では「行わないもの」だけを書くので、行うものは行政書士が書き足してください`);
   行.push(欄.見出しの文);
+  if (欄.品目ごと) {
+    const g = 欄.品目ごと;
+    const 品 = 選.map((x) => {
+      const 付け: string[] = [];
+      for (const k of g.区分たち) {
+        if (!k.品目.includes(x.id)) continue;
+        if (k.区分 === "自動車等破砕物") {
+          付け.push(k.除く);
+          continue;
+        }
+        const v = x[k.区分];
+        付け.push(v === "両方" || v === "だけ" ? k.含む : k.除く);
+        if (v === "だけ") 要確認.push(`${名(x)}：${k.含む.replace(/を含む$/, "")}「だけ」を選びました。${様.県名}の注意事項は「含む」「除く」の書き方だけです。書き方を確かめてください`);
+      }
+      return 付け.length ? `${名(x)}${g.括弧[0]}${付け.join(g.内の区切り)}${g.括弧[1]}` : 名(x);
+    });
+    行.push(品.join(欄.区切り));
+    if (選.some((x) => g.区分たち.some((k) => k.区分 === "自動車等破砕物" && k.品目.includes(x.id))))
+      要確認.push(`自動車等破砕物は、道具の入力欄が無いので「除く」と書きました。扱うときは「含む」に書き直してください（${様.県名}の注意事項）`);
+    const 数 = 全角に(String(選.length));
+    行.push(型に差す(欄.締めの文, { 数, 水銀使用製品: 選.some((x) => x.水銀使用製品) ? g.水銀使用製品.含む : g.水銀使用製品.除く }));
+    return { 行たち: 行, あふれ: [], 石綿の番号: "", 水銀含有ばいじん等の番号: "", 丸: [], 表の行: [], 表のあふれ: [], 要確認 };
+  }
   行.push(選.map(名).join(欄.区切り));
   const 含む = (k: "石綿" | "水銀含有ばいじん等", 区分: string) => {
     const xs = 選.filter((x) => x[k] === "両方" || x[k] === "だけ");
@@ -1530,7 +1582,9 @@ function 段落で記入する(本文: string, 様: 様式, 値たち: 値, 中�
       const m = 箱たち[w.箱];
       const 頭 = m[0].slice(0, m[0].indexOf(">") + 1);
       const 新しい頭 = /xml:space="preserve"/.test(頭) ? 頭 : 頭.replace(/^<w:t/, '<w:t xml:space="preserve"');
-      変えたち.push({ 始め: m.index!, 終わり: m.index! + m[0].length, 字: `${新しい頭}${esc(字)}</w:t>` });
+      const 次 = w.種類 === "後ろ" && w.次の行 ? 差す(w.次の行.字) : "";
+      const 次の字 = w.種類 === "後ろ" && w.次の行 && 次.replace(/\u3000/g, "") ? `<w:br/><w:t xml:space="preserve">${esc(w.次の行.頭 + 次)}</w:t>` : "";
+      変えたち.push({ 始め: m.index!, 終わり: m.index! + m[0].length, 字: `${新しい頭}${esc(字)}</w:t>${次の字}` });
       結果.push({ id: w.見出し, 見出し: w.見出し, 状態: 説明.length ? "要確認" : "書いた", 説明 });
       continue;
     }
@@ -1557,12 +1611,23 @@ function 段落で記入する(本文: string, 様: 様式, 値たち: 値, 中�
     if (箱の字(w.確かめ.箱) !== w.確かめ.字) return { ok: false, 理由: `${w.見出し}：見出しの字が様式と違います（${w.確かめ.箱}番目の箱）。書きません` };
     const p = 段たち[w.段落];
     if (!p || /<w:t[\s>]/.test(p[0]) || /<w:r[\s>]/.test(p[0])) return { ok: false, 理由: `${w.見出し}：書く所（${w.段落}番目の段落）が空ではありません。別の版の様式かもしれないので書きません` };
-    const 行たち = w.行.flatMap((t) => (t === "{品目}" ? (品?.行たち ?? []) : [差す(t)])).filter((t) => t !== "");
+    const 行と大きさ = w.行
+      .flatMap((t, i) => (t === "{品目}" ? (品?.行たち ?? []) : [差す(t)]).map((x) => ({ t: x, 小: !!w.小さく?.includes(i) })))
+      .filter((x) => x.t !== "");
+    const 行たち = 行と大きさ.map((x) => x.t);
     if (行たち.length === 0) {
       結果.push({ id: w.見出し, 見出し: w.見出し, 状態: "空", 説明: [] });
       continue;
     }
-    const run = `<w:r><w:rPr><w:rFonts w:hint="eastAsia"/></w:rPr>${行たち.map((t) => `<w:t xml:space="preserve">${esc(t)}</w:t>`).join("<w:br/>")}</w:r>`;
+    // 小さい字の行が無いときは、前からの形（run 1つ）のまま。あるときは行ごとに run を分ける
+    const run = 行と大きさ.some((x) => x.小)
+      ? 行と大きさ
+          .map(
+            (x, i) =>
+              `<w:r><w:rPr><w:rFonts w:hint="eastAsia"/>${x.小 ? '<w:sz w:val="14"/><w:szCs w:val="14"/>' : ""}</w:rPr>${i ? "<w:br/>" : ""}<w:t xml:space="preserve">${esc(x.t)}</w:t></w:r>`,
+          )
+          .join("")
+      : `<w:r><w:rPr><w:rFonts w:hint="eastAsia"/></w:rPr>${行たち.map((t) => `<w:t xml:space="preserve">${esc(t)}</w:t>`).join("<w:br/>")}</w:r>`;
     const 元 = p[0];
     const 新 = 元.endsWith("/>") ? `${元.slice(0, -2)}>${run}</w:p>` : `${元.slice(0, -6)}${run}</w:p>`;
     変えたち.push({ 始め: p.index!, 終わり: p.index! + 元.length, 字: 新 });
