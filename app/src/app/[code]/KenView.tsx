@@ -141,9 +141,9 @@ export default function KenView({
       if (口) {
         if (!(await 口(行.join("\n")))) throw new Error("写せない");
       } else await navigator.clipboard.writeText(行.join("\n"));
-      set写した(`${チェック.length}件を写しました。メモ帳などに貼り付けてください`);
+      set写した(`${チェック.length}件をコピーしました。Notion の議事録やメモ帳に貼り付けてください`);
     } catch {
-      set写した("写せませんでした。この画面の文字を選んで写してください");
+      set写した("コピーできませんでした。この画面の文字を選んでコピーしてください");
     }
   }
 
@@ -358,9 +358,9 @@ export default function KenView({
             {チェック.length > 0 && (
               <div className="checklist-tools">
                 <button type="button" onClick={() => void 書き写す()}>
-                  電話の前に書き写す
+                  聞くことをコピーする
                 </button>
-                <span>{写した || "聞くことを文字で写します。メモ帳や手帳に貼って、電話をしながら埋めてください"}</span>
+                <span>{写した || "押すと、聞くことの一覧がコピーされます。Notion の議事録やメモ帳に貼り付けて、電話をしながら答えを書き込めます"}</span>
               </div>
             )}
             {チェック.length === 0 && <p className="empty-all">聞くことは残っていません。</p>}
