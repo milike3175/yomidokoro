@@ -1279,3 +1279,28 @@ a.tile:hover {
   color: var(--on-label);
   font-size: 12px;
 }
+
+/* ---- 県ページの印刷用（画面では出さない） ---- */
+.print-entry { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin: 6px 0 12px; }
+.print-entry button { font: inherit; font-size: 14px; padding: 6px 12px; border: 1px solid var(--line, #ccc); border-radius: 6px; background: var(--card, #fff); color: inherit; cursor: pointer; }
+.print-entry .hint { font-size: 12px; color: var(--sub); }
+.ken-print { display: none; }
+@media print {
+  @page { size: A4; margin: 14mm 12mm; }
+  body { background: #fff !important; color: #000 !important; }
+  .techo-banner, .site-header, .site-footer { display: none !important; }
+  main > *:not(.ken-print) { display: none !important; }
+  main { padding: 0 !important; margin: 0 !important; max-width: none !important; }
+  .ken-print { display: block; font-size: 10pt; line-height: 1.5; color: #000; }
+  .ken-print h1 { font-size: 14pt; margin: 0 0 4px; }
+  .ken-print .kp-meta { font-size: 8.5pt; margin: 0 0 2px; color: #333; }
+  .ken-print h2 { font-size: 11pt; margin: 10px 0 4px; padding-bottom: 2px; border-bottom: 1px solid #000; break-after: avoid; }
+  .ken-print .kp-item { break-inside: avoid; margin: 0 0 6px; }
+  .ken-print h3 { font-size: 10pt; margin: 0 0 1px; display: flex; align-items: center; gap: 6px; break-after: avoid; }
+  .ken-print .kp-check { display: inline-block; width: 9pt; height: 9pt; border: 1px solid #000; flex: none; }
+  .ken-print .kp-rec { margin: 0 0 1px 15pt; }
+  .ken-print .kp-src { font-size: 8pt; color: #444; margin-left: 4px; }
+  .ken-print .kp-ask { margin: 0 0 1px 15pt; }
+  .ken-print .kp-line { display: block; margin-top: 2px; border-bottom: 1px solid #888; height: 16pt; font-size: 8pt; color: #444; }
+  .ken-print .kp-foot { margin-top: 12px; font-size: 8pt; color: #333; }
+}

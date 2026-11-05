@@ -141,6 +141,29 @@ export default function KenView({
     }
   }
 
+  // 印刷用：選んだ手続き・品目に当てはまる記録だけを、観点ごとに出典ページつきで並べる
+  const 印刷の出典 = (c: カード) => {
+    if (c.種別 === "手引き" && c.出典)
+      return `${c.出典.文書名 ?? c.出典.文書}　PDF ${c.出典.物理ページ}ページ目${c.出典.印字ページ ? `（印字 p.${c.出典.印字ページ}）` : ""}`;
+    if (c.種別 === "電話") return `電話　${c.確認日 ? 表示日(c.確認日) : ""}${c.窓口 ? `　${c.窓口}` : ""}${c.見本 ? "（見本）" : ""}`;
+    if (c.種別 === "受理実績") return `受理実績　${c.受理年 ?? ""}年`;
+    if (c.種別 === "補正") return `補正　${c.年 ?? ""}年`;
+    return c.種別;
+  };
+  const 印刷の観点 = 観点一覧
+    .filter((k) => k.id !== "未分類")
+    .map((k) => ({
+      k,
+      cs: 観点の記録(k.id).filter(
+        (c) =>
+          c.種別 !== "記載なし" &&
+          手続きが合う(c) &&
+          品目で見る(c, k) !== "合わない" &&
+          (c.種別 !== "手引き" || !!c.出典?.照合.startsWith("一致")),
+      ),
+      聞く: チェック.some((x) => x.k.id === k.id),
+    }));
+
   // 補正：手続き・品目に当てはまるものを上に、当てはまらないものは薄く下に
   const 当てはまる = (c: カード) => 手続きが合う(c) && 品目で見る(c, 観点map.get(c.観点)) !== "合わない";
   const 補正 = 全カード.filter((c) => c.種別 === "補正");
@@ -193,6 +216,16 @@ export default function KenView({
         。
         {政令市.length > 0 &&
           `${政令市.map((s) => s.名前).join("・")}（政令市）の窓口で聞いた記録は、許可権者が違うので${県名}の記録とは分けて、下の${政令市.map((s) => `「${s.名前}（政令市）の窓口」`).join("・")}に置いています。`}
+      </p>
+
+      <p className="print-entry">
+        <button type="button" onClick={() => window.print()}>
+          印刷用の一覧を印刷する
+        </button>
+        <span className="hint">
+          {手続き}
+          {品目 ? `・${品目}` : ""}のときの要点と出典ページ、電話で聞くことを紙にまとめます（下で手続き・品目を選び直すと変わります）
+        </span>
       </p>
 
       {書ける様式.length > 0 && (
@@ -542,6 +575,48 @@ export default function KenView({
           )}
         </div>
       </div>
+
+      {/* 印刷のときだけ出る。画面では隠す（globals.css の .ken-print） */}
+      <section className="ken-print" aria-hidden="true">
+        <h1>
+          {県名}　産業廃棄物収集運搬業　要点と出典
+        </h1>
+        <p className="kp-meta">
+          {手続き}
+          {品目 ? `・${品目}` : ""}　印刷した日 {表示日(今日の文字(今日))}　{状態の説明[手引きの状態]}
+        </p>
+        <p className="kp-meta">ページは PDF の何枚目か。申請の前に、必ず手引きと窓口で確かめてください。道具は判断しません。</p>
+        {群順.map((g) => {
+          const ks = 印刷の観点.filter((x) => x.k.群 === g && (x.cs.length > 0 || x.聞く));
+          if (ks.length === 0) return null;
+          return (
+            <div key={g} className="kp-group">
+              <h2>{g}</h2>
+              {ks.map(({ k, cs, 聞く }) => (
+                <div key={k.id} className="kp-item">
+                  <h3>
+                    <span className="kp-check" />
+                    {k.表示名}
+                  </h3>
+                  {cs.map((c, i) => (
+                    <p key={i} className="kp-rec">
+                      {c.本文}
+                      <span className="kp-src">［{印刷の出典(c)}］</span>
+                    </p>
+                  ))}
+                  {聞く && (
+                    <p className="kp-ask">
+                      電話で聞く：{k.電話で聞く文}
+                      <span className="kp-line">答え</span>
+                    </p>
+                  )}
+                </div>
+              ))}
+            </div>
+          );
+        })}
+        <p className="kp-foot">聞いた日と窓口（課名）だけを残し、担当者の名前は書かない。よみどころ</p>
+      </section>
     </>
   );
 }
