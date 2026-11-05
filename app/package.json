@@ -13,6 +13,7 @@
     "照合": "node scripts/tebiki/shogo.ts",
     "拾い直す": "node scripts/tebiki/hiroinaoshi.ts",
     "下書きを試す": "node scripts/shitagaki-tameshi.ts",
+    "様式を診断": "node scripts/yoshiki/shindan.ts",
     "鮮度": "node scripts/tebiki/sendo.ts",
     "探す": "node scripts/hajimete/sagasu.ts",
     "はじめて読む": "node scripts/hajimete/yomu.ts",
