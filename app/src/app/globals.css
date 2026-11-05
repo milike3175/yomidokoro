@@ -1340,3 +1340,8 @@ a.tile:hover {
   .meibo-card { grid-template-columns: 1fr; }
   .meibo-card-go { justify-self: start; }
 }
+
+/* 事業者さんの状況で変わること（手引きに書いてあっても毎回確かめる問い） */
+.checklist details.jokyo { border-top: 1px dashed var(--line); }
+.checklist .jokyo-lead { margin: 2px 0 6px; font-size: 13px; color: var(--sub); line-height: 1.7; }
+.checklist .jokyo-hit { font-weight: 600; color: var(--ai); }

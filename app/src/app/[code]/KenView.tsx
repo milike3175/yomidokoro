@@ -123,6 +123,20 @@ export default function KenView({
     })
     .filter((x) => x !== null);
 
+  // 事業者さんの状況で変わること：手引きに書いてあっても、排出事業者・運搬先が未定などで答えが変わるので、いつも電話で確かめる問い。
+  // 手引きの記録（照合一致）は「手引きには」として添える。決まっていないときの書き方らしい記載があれば、そう添える
+  const 未定に触れる = /特定でき|未定|決まっていな|決まらな|定まっていな/;
+  const 状況 = 観点一覧
+    .filter((k) => !!k.状況で変わる問い)
+    .map((k) => {
+      const 手引き = 観点の記録(k.id).filter(
+        (c) => c.種別 === "手引き" && !!c.出典?.照合.startsWith("一致") && 手続きが合う(c) && 品目で見る(c, k) !== "合わない",
+      );
+      const 触れる = 手引き.find((c) => 未定に触れる.test(`${c.本文}${c.出典?.引用 ?? ""}`));
+      return { k, 手引き: 触れる ?? 手引き[0] ?? null, 触れる: !!触れる };
+    });
+  const 聞く数 = チェック.length + 状況.length;
+
   // チェックリストを文字にしてクリップボードへ。電話を5分にするための手元の紙
   const [写した, set写した] = useState("");
   async function 書き写す() {
@@ -134,6 +148,14 @@ export default function KenView({
       行.push(`■ ${g}`);
       for (const { k } of items) 行.push(`${n++}. ${k.電話で聞く文}`, "   答え：", "");
     }
+    if (状況.length) {
+      行.push("■ 事業者さんの状況で変わること（手引きに書いてあっても確かめる）");
+      for (const { k, 手引き, 触れる } of 状況) {
+        行.push(`${n++}. ${k.状況で変わる問い}`);
+        if (手引き?.出典) 行.push(`   手引きには：${手引き.本文}（PDF ${手引き.出典.物理ページ}ページ目）${触れる ? "　決まっていないときの書き方らしい記載あり" : ""}`);
+        行.push("   答え：", "");
+      }
+    }
     行.push("聞いた日と窓口（課名）だけ残し、担当者の名前は書かない");
     try {
       // アプリ（desktop）ではアプリの口で書く。ブラウザでは navigator.clipboard
@@ -141,7 +163,7 @@ export default function KenView({
       if (口) {
         if (!(await 口(行.join("\n")))) throw new Error("写せない");
       } else await navigator.clipboard.writeText(行.join("\n"));
-      set写した(`${チェック.length}件をコピーしました。Notion の議事録やメモ帳に貼り付けてください`);
+      set写した(`${聞く数}件をコピーしました。Notion の議事録やメモ帳に貼り付けてください`);
     } catch {
       set写した("コピーできませんでした。この画面の文字を選んでコピーしてください");
     }
@@ -319,7 +341,7 @@ export default function KenView({
             <ol>
               <li>
                 <a href="#checklist">
-                  電話で聞くこと<span className="num">{チェック.length}</span>
+                  電話で聞くこと<span className="num">{聞く数}</span>
                 </a>
               </li>
               <li>
@@ -350,12 +372,12 @@ export default function KenView({
         <div>
           <section className="checklist" id="checklist">
             <h2>
-              電話で聞くことのチェックリスト<span className="cnt">{チェック.length}件</span>
+              電話で聞くことのチェックリスト<span className="cnt">{聞く数}件</span>
             </h2>
             <div className="lead" style={{ margin: 0 }}>
-              {手続き}のときに、手引き（出典と照合済み）・受理実績・1年以内の電話のどれも無い観点です。電話で答えが入ると消えます。
+              {手続き}のときに、手引き（出典と照合済み）・受理実績・1年以内の電話のどれも無い観点です。電話で答えが入ると消えます。下の「事業者さんの状況で変わること」は、手引きに書いてあっても毎回確かめる問いです。
             </div>
-            {チェック.length > 0 && (
+            {聞く数 > 0 && (
               <div className="checklist-tools">
                 <button type="button" onClick={() => void 書き写す()}>
                   聞くことをコピーする
@@ -363,7 +385,7 @@ export default function KenView({
                 <span>{写した || "押すと、聞くことの一覧がコピーされます。Notion の議事録やメモ帳に貼り付けて、電話をしながら答えを書き込めます"}</span>
               </div>
             )}
-            {チェック.length === 0 && <p className="empty-all">聞くことは残っていません。</p>}
+            {聞く数 === 0 && <p className="empty-all">聞くことは残っていません。</p>}
             {群順.map((g) => {
               const items = チェック.filter((x) => x.k.群 === g);
               if (items.length === 0) return null;
@@ -390,6 +412,35 @@ export default function KenView({
                 </details>
               );
             })}
+            {状況.length > 0 && (
+              <details className="jokyo" data-testid="状況で変わること" open>
+                <summary>
+                  <Chevron />
+                  事業者さんの状況で変わること
+                  <span className="n">{状況.length}件</span>
+                </summary>
+                <p className="jokyo-lead">
+                  手引きに記載例があっても、排出事業者や運搬先がまだ決まっていないときの書き方は、手引きだけでは分からないことが多いところです。事業者さんの状況に合わせて確かめてください。
+                </p>
+                <ol>
+                  {状況.map(({ k, 手引き, 触れる }) => (
+                    <li key={k.id}>
+                      <span className="ask">{k.状況で変わる問い}</span>
+                      <span className="why">
+                        <a href={`#${k.番号}`}>
+                          {k.番号} {k.表示名}
+                        </a>
+                        　
+                        {手引き?.出典
+                          ? `手引きには：${手引き.本文}（PDF ${手引き.出典.物理ページ}ページ目）`
+                          : "手引きからは、この観点の記録が取れていません"}
+                        {触れる && <strong className="jokyo-hit">　手引きに、決まっていないときの書き方らしい記載があります。念のための確かめです</strong>}
+                      </span>
+                    </li>
+                  ))}
+                </ol>
+              </details>
+            )}
           </section>
 
           <section className="hosei" id="hosei">
@@ -629,6 +680,12 @@ export default function KenView({
                   {聞く && (
                     <p className="kp-ask">
                       電話で聞く：{k.電話で聞く文}
+                      <span className="kp-line">答え</span>
+                    </p>
+                  )}
+                  {k.状況で変わる問い && (
+                    <p className="kp-ask">
+                      状況で変わるので確かめる：{k.状況で変わる問い}
                       <span className="kp-line">答え</span>
                     </p>
                   )}

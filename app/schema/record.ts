@@ -41,6 +41,8 @@ export const 観点ファイル = z.object({
         表示名: z.string().min(1),
         手引きで探すもの: z.string().min(1),
         電話で聞く文: z.string().min(1),
+        /** 手引きに書いてあっても、事業者さんの状況（排出事業者・運搬先が未定など）で答えが変わるので、いつも電話で確かめる問い */
+        状況で変わる問い: z.string().min(1).optional(),
         品目で変わる: z.boolean(),
       }),
     )
