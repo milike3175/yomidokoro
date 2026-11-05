@@ -215,3 +215,24 @@ export function 鍵を読む() {
   }
   if (!process.env.ANTHROPIC_API_KEY) 止める("ANTHROPIC_API_KEY が見つからない。app/.env に入っているか、みゆきに確かめてもらってほしい。");
 }
+
+/**
+ * Claude が返した観点の名前を、観点.yaml の id に合わせる。合わせられなければ null。
+ * 返事では「排出事業者（排出事業者の書き方）」のように説明が付いたり、「事前審査・事前協議・予約」のように表示名で来たりする。
+ * 合わないものを黙って捨てると、答えがあったのに「記載なし」になる（2026-11-05 に207観点で起きていた）。
+ */
+export function 観点を合わせる(名前: string, 観点: { id: string; 表示名: string }[]): string | null {
+  const n = NFC(名前).trim();
+  const 外す = n.replace(/\s*[（(][^（）()]*[）)]\s*$/, "").trim();
+  for (const c of [n, 外す]) {
+    const k = 観点.find((k) => k.id === c) ?? 観点.find((k) => NFC(k.表示名) === c);
+    if (k) return k.id;
+  }
+  // 括弧の中だけが表示名のとき（「排出事業者の書き方（排出事業者）」など）
+  const 中 = /[（(]([^（）()]*)[）)]\s*$/.exec(n)?.[1]?.trim();
+  if (中) {
+    const k = 観点.find((k) => k.id === 中) ?? 観点.find((k) => NFC(k.表示名) === 中);
+    if (k) return k.id;
+  }
+  return null;
+}

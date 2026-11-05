@@ -20,6 +20,7 @@ import {
   出す,
   止める,
   今日の文字,
+  観点を合わせる,
   県を探す,
   手引きフォルダ,
   公開側フォルダ,
@@ -202,15 +203,19 @@ async function main() {
 
   // ---- 手引き.yaml の形にする ----
   const 今日 = 今日の文字();
-  const 観点ids = new Set(観点.map((k) => k.id));
   const 文書名 = new Set(読む文書.map((f) => f.ファイル名));
   const 記録: 手引きデータ["記録"] = [];
   const 記載なし: 手引きデータ["記載なし"] = [];
   const 観点候補: 手引きデータ["観点候補"] = [];
   const 見た観点 = new Set<string>();
-  for (const { 返事 } of 返事たち) {
-    for (const r of 返事.結果) {
-      if (!観点ids.has(r.観点)) continue;
+  for (const { 群, 返事 } of 返事たち) {
+    for (const r0 of 返事.結果) {
+      const id = 観点を合わせる(r0.観点, 観点);
+      if (!id) {
+        出す(`  群「${群}」：知らない観点の名前「${r0.観点}」が返ってきた。この答えは使わない`);
+        continue;
+      }
+      const r = { ...r0, 観点: id };
       見た観点.add(r.観点);
       const 使える = r.記録.filter((x) => 文書名.has(NFC(x.文書)) && x.引用.trim().length >= 4);
       if (r.記載 === "なし" || 使える.length === 0) {
