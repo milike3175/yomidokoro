@@ -132,6 +132,8 @@ export const 手引きファイル = z.object({
         確認日,
         対象,
         品目: 品目.optional(),
+        /** 人が手引きを見て足した記録（正解付けで Claude の取りこぼしを見つけたとき）。読み直しても消さない */
+        足した: z.literal("行政書士").optional(),
       }),
     )
     .default([]),

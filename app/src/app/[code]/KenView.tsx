@@ -615,6 +615,7 @@ function Card({
             </span>
           ))}
           {照合の札 && <span className={`label ${照合の札.cls}`}>{照合の札.文}</span>}
+          {c.足した && <span className="note">Claude が拾えず、{c.足した}が手引きを見て足した記録</span>}
           {c.改訂 && <span className="note">手引きの改訂を検知。読み直すまで再確認</span>}
           {分かりにくい && <span className="label 分かりにくい">手引きが分かりにくい所</span>}
           {品目 === "合う" && !薄く && <span className="label 当てはまる">{選んだ品目}に当てはまる</span>}

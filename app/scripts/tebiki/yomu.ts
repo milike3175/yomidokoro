@@ -281,6 +281,18 @@ async function main() {
     観点候補,
   };
 
+  // 人が足した記録は、読み直しても引き継ぐ（その観点の「記載なし」は外す）
+  {
+    const 前f = path.join(公開側フォルダ(県.コード, 県.名前), "手引き.yaml");
+    if (fs.existsSync(前f)) {
+      const 前 = 手引きファイル.parse(parse(fs.readFileSync(前f, "utf8")));
+      for (const r of 前.記録.filter((r) => r.足した && !data.記録.some((e) => e.id === r.id))) {
+        data.記録.push(r);
+        data.記載なし = data.記載なし.filter((n) => n.観点 !== r.観点);
+      }
+    }
+  }
+
   // ---- ケンの照合（AI を使わない） ----
   const { 数, 気になる } = 全部照らす(dir, data);
   手引きファイル.parse(data);
