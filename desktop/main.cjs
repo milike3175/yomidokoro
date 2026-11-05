@@ -404,9 +404,9 @@ if (!app.requestSingleInstanceLock()) {
     控えの口("下書きを保存", (名, バイト) => 下書き.下書きを保存(app.getPath("documents"), 名, バイト));
     控えの口("下書きの置き場を開く", () => shell.openPath(下書き.下書きの置き場(app.getPath("documents"))));
     // 県のサイトから様式を取ってくる（目録にある県だけ。ふつうの GET を一回。依頼者の情報は送らない）
-    ipcMain.handle("様式を取ってくる", async (_e, コード) => {
+    ipcMain.handle("様式を取ってくる", async (_e, コード, sha256) => {
       try {
-        const r = await 様式を取ってくる(String(コード ?? ""), app.getPath("userData"), 対応表の置き場());
+        const r = await 様式を取ってくる(String(コード ?? ""), app.getPath("userData"), 対応表の置き場(), sha256 ? String(sha256) : undefined);
         return r.ok ? { ok: true, 名前: r.名前, 対応表と一致: r.対応表と一致 } : { ok: false, 理由: r.理由, 入口: r.入口 };
       } catch (e) {
         記録("様式を取ってくる failed", String(e && e.code ? e.code : "error"));

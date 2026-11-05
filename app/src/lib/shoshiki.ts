@@ -179,6 +179,8 @@ export type 品目の並べ方 = {
     区分のつなぎ: string;
     /** 水銀使用製品産業廃棄物を品目に付けず、最後に1行で書くときの字。null なら書かない */
     水銀使用製品の行: string | null;
+    /** 「両方」の品目で「含む」の行を「除く」の行より先に書く県（山形の記載例 p28）。省略すると除くが先（和歌山） */
+    含むが先?: boolean;
   };
   /** 事業計画の概要の文に差し込む品目の並び */
   文: {
@@ -498,6 +500,40 @@ export function 品目の名たち(様: 様式, 中身0: 申請の中身 | undef
   return r;
 }
 
+/**
+ * 事業計画の概要の品目の表に一行ずつ書くときの行（鍵つき）。並びと字の形は 品目の並べ方.品目表。
+ * 鍵は品目ごとの聞き取り（型.品目ごとの運搬.<鍵>.<項目>）の鍵。「両方」で「除く」「含む」の二行に分かれた品目は同じ鍵（同じ聞き取りが二行に入る。行ごとに違うなら行政書士が直す）。
+ * 水銀使用製品産業廃棄物の行の鍵は "水銀使用製品"
+ */
+export function 品目表の行たち(様: 様式, 中身0: 申請の中身 | undefined): { 鍵: string; 名: string }[] {
+  const 中身 = 中身を整える(中身0, 様);
+  const 並 = 並べ方(様);
+  const 表 = new Map(品目たち.map((h) => [h.id, h]));
+  const 形 = 並.品目表;
+  const r: { 鍵: string; 名: string }[] = [];
+  for (const x of 中身.品目) {
+    const h = 表.get(x.id)!;
+    const 名 = { 名前: h.名前, 表の名前: h.表の名前 ?? h.名前 };
+    const a = x.石綿 ?? "含まない";
+    const m = x.水銀含有ばいじん等 ?? "含まない";
+    if (a === "含まない" && m === "含まない") {
+      r.push({ 鍵: x.id, 名: 型に差す(形.含まない, 名) });
+      continue;
+    }
+    const 除くの行: { 鍵: string; 名: string }[] = [];
+    if (a !== "だけ" && m !== "だけ") {
+      const 除く = [a === "両方" ? 並.区分の名.石綿 : "", m === "両方" ? 並.区分の名.水銀含有ばいじん等 : ""].filter(Boolean);
+      除くの行.push({ 鍵: x.id, 名: 型に差す(形.除く, { ...名, 区分たち: 除く.join(形.区分のつなぎ) }) });
+    }
+    const 含むの行: { 鍵: string; 名: string }[] = [];
+    if (含むか(a)) 含むの行.push({ 鍵: x.id, 名: 型に差す(形.含む, { ...名, 区分: 並.区分の名.石綿 }) });
+    if (含むか(m)) 含むの行.push({ 鍵: x.id, 名: 型に差す(形.含む, { ...名, 区分: 並.区分の名.水銀含有ばいじん等 }) });
+    r.push(...(形.含むが先 ? [...含むの行, ...除くの行] : [...除くの行, ...含むの行]));
+  }
+  if (中身.品目.some((x) => x.水銀使用製品) && 形.水銀使用製品の行) r.push({ 鍵: "水銀使用製品", 名: 形.水銀使用製品の行 });
+  return r;
+}
+
 /** 型の行の条件に使う、控えから分かること */
 export function 中身の印(様: 様式, 中身0: 申請の中身 | undefined): Record<string, boolean> {
   const 中身 = 中身を整える(中身0, 様);
@@ -668,6 +704,30 @@ export function 使う口(型: 書き方の型, 値たち: 値, 印?: Record<str
     (x.行 ?? []).forEach((c) => 見る(c, 次));
   };
   for (const k of 型.欄) 欄の行(k, 値たち).forEach((x) => 見る(x, new Set()));
+  return r;
+}
+
+/**
+ * 様式の対応表そのものが使う差し込み口（型の行で使わなくても、品目の表・車両の表などの行に書く値）。
+ * 書く場所の字の中の {型.<id>…} と {品目表.N.<項目>} を見る。画面で、その口の入力欄を出すため
+ */
+export function 様式が使う口(様: 様式, 型: 書き方の型): Set<string> {
+  const r = new Set<string>();
+  const 字たち: string[] = [];
+  for (const w of 様.書く場所 ?? []) {
+    for (const v of Object.values(w as Record<string, unknown>)) {
+      if (typeof v === "string") 字たち.push(v);
+      else if (Array.isArray(v)) {
+        for (const t of v) if (typeof t === "string") 字たち.push(t);
+      } else if (v && typeof v === "object" && typeof (v as { 字?: unknown }).字 === "string") 字たち.push((v as { 字: string }).字);
+    }
+  }
+  const 項目たち = new Set<string>();
+  for (const t of 字たち) {
+    for (const m of t.matchAll(/\{型\.([^.{}]+)/g)) r.add(m[1]);
+    for (const m of t.matchAll(/\{品目表\.\d+\.([^{}]+)\}/g)) 項目たち.add(m[1]);
+  }
+  if (項目たち.size) for (const d of 型.差し込み口) if (d.種類 === "品目ごと" && (d.項目 ?? []).some((k) => 項目たち.has(k.id))) r.add(d.id);
   return r;
 }
 
@@ -902,7 +962,7 @@ type 差し替え = { 箱: number; 文字: string };
 
 /** 値の入っていない欄は触らない。入っている欄だけ、w:t の文字を差し替える */
 export function 記入する(本文: string, 様: 様式, 値たち: 値, 中身0?: 申請の中身, 型?: 書き方の型 | null): 記入の結果 {
-  if (様.方式 === "段落") return 段落で記入する(本文, 様, 値たち, 中身0);
+  if (様.方式 === "段落") return 段落で記入する(本文, 様, 値たち, 中身0, 型);
   const 箱たち = [...本文.matchAll(箱の形)];
   if (箱たち.length !== 様.箱の数) {
     return { ok: false, 理由: `本文の文字の箱の数が ${箱たち.length}（この様式なら ${様.箱の数}）です。別の版の様式かもしれないので書きません` };
@@ -1543,7 +1603,7 @@ export function 品目を文で書き出す(様: 様式, 中身0: 申請の中�
 }
 
 /** 段落の方式で書く */
-function 段落で記入する(本文: string, 様: 様式, 値たち: 値, 中身0?: 申請の中身): 記入の結果 {
+function 段落で記入する(本文: string, 様: 様式, 値たち: 値, 中身0?: 申請の中身, 型?: 書き方の型 | null): 記入の結果 {
   const 箱たち = [...本文.matchAll(箱の形)];
   if (箱たち.length !== 様.箱の数) {
     return { ok: false, 理由: `本文の文字の箱の数が ${箱たち.length}（この様式なら ${様.箱の数}）です。別の版の様式かもしれないので書きません` };
@@ -1567,6 +1627,12 @@ function 段落で記入する(本文: string, 様: 様式, 値たち: 値, 中�
     const 名前 = new Map(品目たち.map((h) => [h.id, h.名前]));
     中身を整える(中身0, 様).品目.forEach((x, i) => (v[`品目.${i + 1}`] = 名前.get(x.id) ?? x.id));
   }
+  // 事業計画の概要の品目の表（一行に一品目。県の並べ方で行が分かれる）：{品目表.N} と、品目ごとの聞き取り {品目表.N.運搬量}・{品目表.N.性状}・{品目表.N.排出元}・{品目表.N.運搬先}…
+  品目表の行たち(様, 中身0).forEach((x, i) => {
+    v[`品目表.${i + 1}`] = x.名;
+    const 頭 = `型.品目ごとの運搬.${x.鍵}.`;
+    for (const [k, val] of Object.entries(値たち)) if (k.startsWith(頭)) v[`品目表.${i + 1}.${k.slice(頭.length)}`] = 全角に((val ?? "").trim());
+  });
   const 差す = (t: string) => t.replace(/\{([^{}]+)\}/g, (_m, k: string) => v[k] ?? "");
 
   type 変え = { 始め: number; 終わり: number; 字: string };
@@ -1642,6 +1708,49 @@ function 段落で記入する(本文: string, 様: 様式, 値たち: 値, 中�
     変えたち.push({ 始め: p.index!, 終わり: p.index! + 元.length, 字: 新 });
     const 説明 = [...(w.注 ? [w.注] : []), ...(w.行.includes("{品目}") ? (品?.要確認 ?? []) : [])];
     結果.push({ id: w.見出し, 見出し: w.見出し, 状態: 説明.length ? "要確認" : "書いた", 説明 });
+  }
+
+  // ---- 事業計画の概要などの文（書き方の型。品目を選んだときだけ書く）：見出しの箱の後ろに並ぶ空の段落に、一行ずつ書く（山形の別紙など） ----
+  if (型 && 様.文の欄 && 中身を整える(中身0, 様).品目.length > 0) {
+    if (型.sha256 !== 様.sha256) return { ok: false, 理由: "書き方の型が、この様式のものではありません。書きません" };
+    const 組んだ = 型を組む(型, 様, 値たち, 中身0);
+    const 段の番号 = (箱: number) => 段たち.findIndex((p) => p.index! <= 箱たち[箱].index! && 箱たち[箱].index! < p.index! + p[0].length);
+    for (const f of 様.文の欄) {
+      const g = 組んだ.find((x) => x.id === f.id);
+      if (!g) continue;
+      if (f.箱 !== undefined || f.次の箱 === undefined || f.次の字 === undefined) return { ok: false, 理由: `${f.見出し}：段落の方式では、見出しの箱と次の箱で文の欄を指します。書きません` };
+      if (箱の字(f.見出しの箱) !== f.見出しの字) return { ok: false, 理由: `${f.見出し}：見出しの字が様式と違います（${f.見出しの箱}番目の箱）。書きません` };
+      if (箱の字(f.次の箱) !== f.次の字) return { ok: false, 理由: `${f.見出し}：次の見出しの字が様式と違います（${f.次の箱}番目の箱）。書きません` };
+      const 頭 = 段の番号(f.見出しの箱);
+      const 尻 = 段の番号(f.次の箱);
+      if (頭 < 0 || 尻 < 0 || 尻 <= 頭) return { ok: false, 理由: `${f.見出し}：見出しの段落が見つかりません。書きません` };
+      const 間 = 段たち.slice(頭 + 1, 尻);
+      if (間.length !== f.空の段落 || 間.some((p) => /<w:t[\s>]/.test(p[0]) || /<w:r[\s>]/.test(p[0]))) {
+        return { ok: false, 理由: `${f.見出し}：文を書く空の段落が${f.空の段落}つ並んでいません（${間.length}つ）。別の版の様式かもしれないので書きません` };
+      }
+      g.行たち.forEach((t, k) => {
+        if (t === "" || k >= f.書く行) return;
+        const p = 間[k];
+        const run = `<w:r><w:rPr><w:rFonts w:hint="eastAsia"/></w:rPr><w:t xml:space="preserve">${esc(t)}</w:t></w:r>`;
+        const 元 = p[0];
+        const 新 = 元.endsWith("/>") ? `${元.slice(0, -2)}>${run}</w:p>` : `${元.slice(0, -6)}${run}</w:p>`;
+        変えたち.push({ 始め: p.index!, 終わり: p.index! + 元.length, 字: 新 });
+      });
+      結果.push({
+        id: `文.${f.id}`,
+        見出し: f.見出し,
+        状態: "要確認",
+        説明: [
+          `${型.県名}の記載例に沿った型の文です。事業者の実際に合わせて行政書士が直してください`,
+          ...(() => {
+            const k = 型.欄.find((x) => x.id === f.id);
+            const 形 = k && 選んだ形(k, 値たち);
+            return 形 ? [`書き方の形：${形.見出し}`] : [];
+          })(),
+          ...g.要確認,
+        ],
+      });
+    }
   }
 
   // 後ろから差し替える（位置がずれないように）。重なりは無いはず。あれば書かない

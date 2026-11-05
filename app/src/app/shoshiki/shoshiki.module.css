@@ -324,3 +324,7 @@ div.preview {
   text-decoration: none;
 }
 .bookNew span { color: var(--sub); font-size: 13.5px; }
+
+/* 申請する都道府県：地方ごとのまとまり */
+.region { margin-bottom: 0.6rem; }
+.region .h3 { margin: 0.6rem 0 0.2rem; }

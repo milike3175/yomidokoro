@@ -19,7 +19,8 @@ function 型を読む(): 書き方の型[] {
   if (!fs.existsSync(型の置き場)) return [];
   return fs
     .readdirSync(型の置き場)
-    .filter((f) => /\.ya?ml$/.test(f))
+    // 頭が _ のファイル（_共通の差し込み口.yaml）は型ではない
+    .filter((f) => /\.ya?ml$/.test(f) && !f.startsWith("_"))
     .sort()
     .map((f) => {
       const d = parse(fs.readFileSync(path.join(型の置き場, f), "utf8")) as 書き方の型;

@@ -22,10 +22,13 @@ import {
   選んだ形,
   欄の行,
   使う口,
+  様式が使う口,
   品目の名たち,
   中身の印,
   積替保管ありの注,
   type 書き方の型,
+  type 差し込み口,
+  type 型の欄,
   type 含み,
   空の中身,
   控えを作る,
@@ -87,10 +90,27 @@ type 下書きの口の型 = {
   置き場を開く: () => Promise<unknown>;
 };
 type アプリの様式の口 = {
-  様式を取ってくる?: (県コード: string) => Promise<{ ok: true; 名前: string; 対応表と一致: boolean } | { ok: false; 理由: string; 入口: string }>;
+  様式を取ってくる?: (県コード: string, sha256?: string) => Promise<{ ok: true; 名前: string; 対応表と一致: boolean } | { ok: false; 理由: string; 入口: string }>;
   取ってきた様式?: () => Promise<手元の様式[]>;
   下書き?: 下書きの口の型;
 };
+/** 都道府県を地方ごとにまとめる（47並ぶと長いので。2026-11-05 みゆき「地方ごとに分けてすっきりさせて」）。県コードの順 */
+const 地方の表: { 地方: string; 頭: number; 尻: number }[] = [
+  { 地方: "北海道", 頭: 1, 尻: 1 },
+  { 地方: "東北", 頭: 2, 尻: 7 },
+  { 地方: "関東", 頭: 8, 尻: 14 },
+  { 地方: "中部", 頭: 15, 尻: 23 },
+  { 地方: "近畿", 頭: 24, 尻: 30 },
+  { 地方: "中国", 頭: 31, 尻: 35 },
+  { 地方: "四国", 頭: 36, 尻: 39 },
+  { 地方: "九州・沖縄", 頭: 40, 尻: 47 },
+];
+function 地方ごと(組たち: 様式[][]): { 地方: string; 組たち: 様式[][] }[] {
+  return 地方の表
+    .map((r) => ({ 地方: r.地方, 組たち: 組たち.filter((g) => { const n = Number(g[0].県コード); return n >= r.頭 && n <= r.尻; }) }))
+    .filter((r) => r.組たち.length > 0);
+}
+
 function アプリの口(): アプリの様式の口 | null {
   if (typeof window === "undefined") return null;
   return (window as unknown as { yomidokoro?: アプリの様式の口 }).yomidokoro ?? null;
@@ -217,7 +237,7 @@ export default function ShoshikiView({
     const 口 = アプリの口();
     if (!口?.様式を取ってくる) return;
     set取りの知らせ(`${x.県名}の様式を県のサイトから取ってきています…`);
-    const r = await 口.様式を取ってくる(x.県コード);
+    const r = await 口.様式を取ってくる(x.県コード, x.sha256);
     if (!r.ok) {
       set取りの知らせ(`${x.県名}：${r.理由}。県のページから手で保存して、下に置いてください${r.入口 ? `（${r.入口}）` : ""}`);
       return;
@@ -253,9 +273,31 @@ export default function ShoshikiView({
     return { ...元, 欄, 書かない };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [選んだ県, 様式たち]);
-  // 書き方の型（事業計画の概要の文）は、型のある様式（今は和歌山）を選んだときだけ
-  const 型の様 = 選んだ様たち.find((x) => 型たち.some((t) => t.sha256 === x.sha256)) ?? null;
-  const 型 = (型の様 && 型たち.find((t) => t.sha256 === 型の様.sha256)) || null;
+  // 書き方の型（事業計画の概要の文）：型のある様式を選んだ分だけ（和歌山の申請書、山形の事業計画の概要…）。
+  // 空きの id は県で共通（_共通の差し込み口.yaml）なので、同じ id の欄・口は一つにまとめて出す
+  const 型の組たち = 選んだ様たち.flatMap((x) => {
+    const t = 型たち.find((k) => k.sha256 === x.sha256);
+    return t ? [{ 様: x, 型: t }] : [];
+  });
+  const 型の様 = 型の組たち[0]?.様 ?? null;
+  const 型 = 型の組たち[0]?.型 ?? null;
+  // 同じ id が二つの型にあるときは、書き方の形を持つ方・項目の多い方を残す（和歌山の全体計画の形の選びが、山形と一緒に選んでも消えないように）
+  const 型の欄たち: { 型: 書き方の型; 欄: 型の欄 }[] = [];
+  for (const g of 型の組たち)
+    for (const k of g.型.欄) {
+      const i = 型の欄たち.findIndex((y) => y.欄.id === k.id);
+      if (i < 0) 型の欄たち.push({ 型: g.型, 欄: k });
+      else if (!型の欄たち[i].欄.形?.length && k.形?.length) 型の欄たち[i] = { 型: g.型, 欄: k };
+    }
+  const 差し込み口たち: 差し込み口[] = [];
+  for (const g of 型の組たち)
+    for (const d of g.型.差し込み口) {
+      const i = 差し込み口たち.findIndex((y) => y.id === d.id);
+      if (i < 0) 差し込み口たち.push(d);
+      else if ((d.項目?.length ?? 0) > (差し込み口たち[i].項目?.length ?? 0)) 差し込み口たち[i] = d;
+    }
+  /** まとめた口で くり返し の組を数えるための型（口の一覧だけ差し替える） */
+  const まとめた型: 書き方の型 | null = 型 ? { ...型, 差し込み口: 差し込み口たち } : null;
 
   async function 置く(ファイル名: string, バイト: Uint8Array, 選ぶ = true): Promise<置いた様式 | null> {
     // 様式を見分ける計算（sha256）は、https か 127.0.0.1 で開いたときだけブラウザが使わせてくれる
@@ -280,7 +322,7 @@ export default function ShoshikiView({
     const 口 = アプリの口();
     if (!口?.様式を取ってくる || !口.取ってきた様式)
       return { 置: null, 理由: "様式がまだありません。県のページから様式を保存して、下の「様式を手で置く」から置いてください" };
-    const r = await 口.様式を取ってくる(x.県コード);
+    const r = await 口.様式を取ってくる(x.県コード, x.sha256);
     if (!r.ok) return { 置: null, 理由: `県のサイトから様式を取れませんでした（${r.理由}）。県のページから手で保存して、下の「様式を手で置く」から置いてください` };
     if (!r.対応表と一致) return { 置: null, 理由: "取ってきた様式が、道具の知っている様式と違います（県が様式を改めたのかもしれません）。まだ書けません" };
     const t = (await 口.取ってきた様式()).find((y) => y.sha256 === x.sha256 && y.中身);
@@ -468,8 +510,20 @@ export default function ShoshikiView({
     set中身((c) => ({ ...c, 品目: c.品目.map((x): 品目の選び => (x.id === id ? { ...x, 水銀使用製品: !x.水銀使用製品 } : x)) }));
   const 含みを選ぶ = (id: string, k: "石綿" | "水銀含有ばいじん等", v: 含み) =>
     set中身((c) => ({ ...c, 品目: c.品目.map((x): 品目の選び => (x.id === id ? { ...x, [k]: v === "含まない" ? undefined : v } : x)) }));
-  const 型の見込み = useMemo(() => (型の様 && 型 ? 型を組む(型, 型の様, 値たち, 中身) : []), [型の様, 型, 値たち, 中身]);
-  const 使う = useMemo(() => (型 && 型の様 ? 使う口(型, 値たち, 中身の印(型の様, 中身)) : new Set<string>()), [型, 型の様, 値たち, 中身]);
+  const 型の見込み = useMemo(
+    () => 型の組たち.flatMap((g) => 型を組む(g.型, g.様, 値たち, 中身).map((r) => ({ ...r, 型: g.型 }))),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [選んだ県, 型たち, 値たち, 中身],
+  );
+  const 使う = useMemo(() => {
+    const r = new Set<string>();
+    for (const g of 型の組たち) {
+      for (const id of 使う口(g.型, 値たち, 中身の印(g.様, 中身))) r.add(id);
+      for (const id of 様式が使う口(g.様, g.型)) r.add(id);
+    }
+    return r;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [選んだ県, 型たち, 値たち, 中身]);
   const 品目の名 = useMemo(() => (型の様 ? 品目の名たち(型の様, 中身) : []), [型の様, 中身]);
 
   return (
@@ -682,15 +736,16 @@ export default function ShoshikiView({
             </>
           )}
 
-          {型の様?.文の欄 && 型 && (
+          {型の組たち.length > 0 && 型 && まとめた型 && (
             <>
-              <h3 className={s.h3}>事業計画の概要・環境保全措置の文（{型.県名}の記載例の書き方の型）</h3>
+              <h3 className={s.h3}>事業計画の概要・環境保全措置の文（{型の組たち.map((g) => g.型.県名).join("・")}の記載例の書き方の型）</h3>
               <p className={s.note}>
-                型の文は{型.県名}の記載例と手引きから前もって作ったものです。下の欄に入れた事業者の中身を、このブラウザの中で差し込みます（どこにも送りません）。
+                型の文は{型の組たち.map((g) => g.型.県名).join("・")}の記載例と手引きから前もって作ったものです。下の欄に入れた事業者の中身を、このブラウザの中で差し込みます（どこにも送りません）。
                 空けた所は様式に「【要確認：…】」と残します。品目を選んだときだけ書きます。型の文は記載例の会社の例なので、事業者の実際に合わせて行政書士が直してください。
               </p>
               <div className={s.form}>
-                {型.欄
+                {型の欄たち
+                  .map((y) => y.欄)
                   .filter((k) => (k.形?.length ?? 0) > 1)
                   .map((k) => {
                     const 今 = 選んだ形(k, 値たち);
@@ -718,7 +773,7 @@ export default function ShoshikiView({
                       </div>
                     );
                   })}
-                {型.差し込み口
+                {差し込み口たち
                   .filter((d) => d.種類 !== "自動" && 使う.has(d.id))
                   .map((d) =>
                     d.種類 === "品目ごと" ? (
@@ -766,7 +821,7 @@ export default function ShoshikiView({
                       <div key={d.id} className={s.row}>
                         <div className={s.label}>{d.見出し}</div>
                         <div>
-                          {Array.from({ length: Math.min(d.最大 ?? 10, Math.max(1, ...入っている組(型, d.id, 値たち).map((n) => n + 1))) }, (_, j) => j + 1).map((n) => (
+                          {Array.from({ length: Math.min(d.最大 ?? 10, Math.max(1, ...入っている組(まとめた型, d.id, 値たち).map((n) => n + 1))) }, (_, j) => j + 1).map((n) => (
                             <div key={n} className={s.kumi}>
                               <span className={s.faint}>{n}</span>
                               {(d.項目 ?? []).map((k) => (
@@ -789,8 +844,8 @@ export default function ShoshikiView({
                   )}
                 {中身.品目.length > 0 &&
                   型の見込み.map((g) => (
-                    <div key={g.id} className={s.row}>
-                      <div className={s.label}>{g.見出し}</div>
+                    <div key={`${g.型.sha256}-${g.id}`} className={s.row}>
+                      <div className={s.label}>{型の組たち.length > 1 ? `${g.型.県名}：${g.見出し}` : g.見出し}</div>
                       <div data-testid={`型の見込み-${g.id}`}>
                         <div className={s.preview}>
                           {g.行たち.map((t, k) => (
@@ -811,7 +866,7 @@ export default function ShoshikiView({
                           <summary>この欄の型の文と出典</summary>
                           <ul className={s.list}>
                             {(() => {
-                              const k = 型.欄.find((x) => x.id === g.id);
+                              const k = g.型.欄.find((x) => x.id === g.id);
                               return k ? 欄の行(k, 値たち) : [];
                             })()
                               .flatMap((r) => (r.くり返し ? [r, ...(r.行 ?? [])] : [r]))
@@ -841,52 +896,59 @@ export default function ShoshikiView({
 
           <h2>3．申請する都道府県</h2>
           <p className={s.note}>いくつでも選べます。選んだ県の数だけ、下書きができます（今、下書きできるのは{県名たち(様式たち)}です）。</p>
-          <ul className={`${s.list} ${s.kenList}`} data-testid="申請する県">
-            {県の組たち.map((組) => {
-              const x = 組[0];
-              return (
-                <li key={x.県コード} data-testid={`県の様式-${x.県コード}`} className={x.県コード === 来た県 ? s.hereItem : undefined}>
-                  <label className={s.kenPick}>
-                    <input
-                      type="checkbox"
-                      data-testid={`県を選ぶ-${x.県コード}`}
-                      checked={選んだ県.has(x.県コード)}
-                      onChange={() =>
-                        set選んだ県((m) => {
-                          const n = new Set(m);
-                          if (n.has(x.県コード)) n.delete(x.県コード);
-                          else n.add(x.県コード);
-                          return n;
-                        })
-                      }
-                    />
-                    <strong>{x.県名}</strong>
-                    {組.length === 1 && <span>{x.名前}</span>}
-                  </label>
-                  {組.map((y) => {
-                    const ある = 置たち.some((p) => p.sha256 === y.sha256);
-                    return (
-                      <span key={y.sha256} className={s.faint} style={組.length > 1 ? { display: "block" } : undefined}>
-                        {組.length > 1 && <>{y.名前}：</>}
-                        {ある ? (
-                          "様式はこのパソコンにあります"
-                        ) : y.自動で取れない || !取れる ? (
-                          <>
-                            <a href={y.入口} target="_blank" rel="noopener noreferrer">
-                              県のページ
-                            </a>
-                            から様式を保存して、下の「様式を手で置く」から置いてください{y.自動で取れない ? `（${y.自動で取れない}）` : ""}
-                          </>
-                        ) : (
-                          "作成のときに県のサイトから取ってきます"
-                        )}
-                      </span>
-                    );
-                  })}
-                </li>
-              );
-            })}
-          </ul>
+          <div data-testid="申請する県">
+            {地方ごと(県の組たち).map(({ 地方, 組たち }) => (
+              <div key={地方} className={s.region}>
+                <h3 className={s.h3}>{地方}</h3>
+                <ul className={`${s.list} ${s.kenList}`}>
+                {組たち.map((組) => {
+                  const x = 組[0];
+                  return (
+                    <li key={x.県コード} data-testid={`県の様式-${x.県コード}`} className={x.県コード === 来た県 ? s.hereItem : undefined}>
+                      <label className={s.kenPick}>
+                        <input
+                          type="checkbox"
+                          data-testid={`県を選ぶ-${x.県コード}`}
+                          checked={選んだ県.has(x.県コード)}
+                          onChange={() =>
+                            set選んだ県((m) => {
+                              const n = new Set(m);
+                              if (n.has(x.県コード)) n.delete(x.県コード);
+                              else n.add(x.県コード);
+                              return n;
+                            })
+                          }
+                        />
+                        <strong>{x.県名}</strong>
+                        {組.length === 1 && <span>{x.名前}</span>}
+                      </label>
+                      {組.map((y) => {
+                        const ある = 置たち.some((p) => p.sha256 === y.sha256);
+                        return (
+                          <span key={y.sha256} className={s.faint} style={組.length > 1 ? { display: "block" } : undefined}>
+                            {組.length > 1 && <>{y.名前}：</>}
+                            {ある ? (
+                              "様式はこのパソコンにあります"
+                            ) : y.自動で取れない || !取れる ? (
+                              <>
+                                <a href={y.入口} target="_blank" rel="noopener noreferrer">
+                                  県のページ
+                                </a>
+                                から様式を保存して、下の「様式を手で置く」から置いてください{y.自動で取れない ? `（${y.自動で取れない}）` : ""}
+                              </>
+                            ) : (
+                              "作成のときに県のサイトから取ってきます"
+                            )}
+                          </span>
+                        );
+                      })}
+                    </li>
+                  );
+                })}
+                </ul>
+              </div>
+            ))}
+          </div>
 
           {様.書かない.length > 0 && <h3 className={s.h3}>今は書かない欄</h3>}
           <ul className={s.later}>
