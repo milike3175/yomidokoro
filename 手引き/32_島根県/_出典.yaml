@@ -1,0 +1,116 @@
+許可権者: { コード: "32", 名前: 島根県 }
+許認可: 産廃収集運搬
+入口: https://www.pref.shimane.lg.jp/infra/kankyo/haiki/sangyo_haikibutsu/form.html
+担当: 環境生活部 廃棄物対策課
+手引き: 一冊ものの手引きは無い（代替）。収集運搬業の添付書類一覧と記載例
+取得日: 2026-11-03
+取り寄せ:
+  - { url: "https://www.pref.shimane.lg.jp/infra/kankyo/haiki/sangyo_haikibutsu/form.data/R504syuuntenpu.pdf", 名前: 収集運搬業 添付書類一覧, 役割: 添付書類一覧, 版: "R5.4（ファイル名、推測）" }
+  - { url: "https://www.pref.shimane.lg.jp/infra/kankyo/haiki/sangyo_haikibutsu/form.data/syuunkisairei.pdf", 名前: 収集運搬業 記載例, 役割: 記載例 }
+利用規約: 独自規約・要許諾型（https://www.pref.shimane.lg.jp/cl.html）。引用は可。本体は手元だけに置く
+ファイル:
+  - ファイル名: R504syuuntenpu.pdf
+    名前: 収集運搬業 添付書類一覧
+    役割: 添付書類一覧
+    版: R5.4（ファイル名、推測）
+    url: https://www.pref.shimane.lg.jp/infra/kankyo/haiki/sangyo_haikibutsu/form.data/R504syuuntenpu.pdf
+    sha256: 9f519689225d3ebdb12d7fe4e3ead5c6f0dca2cfe61d69c9134935ae2cd37353
+    取得日: 2026-11-03
+    サイズ: 160760
+    最終更新: Tue, 11 Apr 2023 00:43:18 GMT
+    ページ数: 2
+    文字にした日: 2026-11-03
+  - ファイル名: syuunkisairei.pdf
+    名前: 収集運搬業 記載例
+    役割: 記載例
+    url: https://www.pref.shimane.lg.jp/infra/kankyo/haiki/sangyo_haikibutsu/form.data/syuunkisairei.pdf
+    sha256: 75c0fddd2ebf05dd044a8c42357b2f248f53f2153b14e502e0218ab53a337383
+    取得日: 2026-11-03
+    サイズ: 635381
+    最終更新: Tue, 05 Sep 2023 05:58:46 GMT
+    ページ数: 14
+    文字にした日: 2026-11-03
+入口の文書一覧:
+  確認日: 2026-11-03
+  リンク:
+    - 名前: 手数料等はこちら（８KB）
+      url: https://www.pref.shimane.lg.jp/infra/kankyo/haiki/sangyo_haikibutsu/form.data/tesuuryou_toka.pdf
+    - 名前: ※変更（廃止）の内容ごとに必要となる添付書類一覧（PDF111KB）
+      url: https://www.pref.shimane.lg.jp/infra/kankyo/haiki/sangyo_haikibutsu/form.data/R503tenpuitirann_syuunhenko.pdf
+    - 名前: ※変更届を提出する際の留意事項（PDF60KB）
+      url: https://www.pref.shimane.lg.jp/infra/kankyo/haiki/sangyo_haikibutsu/form.data/hp-henkouryuijikou.pdf
+    - 名前: ワード版(40KB)
+      url: https://www.pref.shimane.lg.jp/infra/kankyo/haiki/sangyo_haikibutsu/form.data/henkouyoushiki.doc
+    - 名前: PDF版(39KB)
+      url: https://www.pref.shimane.lg.jp/infra/kankyo/haiki/sangyo_haikibutsu/form.data/henkouyoushiki.pdf
+    - 名前: ワード版(27KB)
+      url: https://www.pref.shimane.lg.jp/infra/kankyo/haiki/sangyo_haikibutsu/form.data/form_ken_44.doc
+    - 名前: 記載例(33KB)
+      url: https://www.pref.shimane.lg.jp/infra/kankyo/haiki/sangyo_haikibutsu/form.data/44kisairei.doc
+    - 名前: 記載例：PDF版(620KB)
+      url: https://www.pref.shimane.lg.jp/infra/kankyo/haiki/sangyo_haikibutsu/form.data/syuunkisairei.pdf
+    - 名前: ワード版(86KB)
+      url: https://www.pref.shimane.lg.jp/infra/kankyo/haiki/sangyo_haikibutsu/form.data/200424yousiki6.doc
+    - 名前: PDF版(129KB)
+      url: https://www.pref.shimane.lg.jp/infra/kankyo/haiki/sangyo_haikibutsu/form.data/180910yousiki6.pdf
+    - 名前: PDF版(157KB)
+      url: https://www.pref.shimane.lg.jp/infra/kankyo/haiki/sangyo_haikibutsu/form.data/R504syuuntenpu.pdf
+    - 名前: ワード版(84KB)
+      url: https://www.pref.shimane.lg.jp/infra/kankyo/haiki/sangyo_haikibutsu/form.data/1jigyoukeikakunogaiyo.doc
+    - 名前: PDF版(57KB)
+      url: https://www.pref.shimane.lg.jp/infra/kankyo/haiki/sangyo_haikibutsu/form.data/1jigyoukeikakunogiyou.pdf
+    - 名前: ワード版(42KB)
+      url: https://www.pref.shimane.lg.jp/infra/kankyo/haiki/sangyo_haikibutsu/form.data/2sikinnotyoutatuhouhou.doc
+    - 名前: PDF版(23KB)
+      url: https://www.pref.shimane.lg.jp/infra/kankyo/haiki/sangyo_haikibutsu/form.data/2sikinnotyoutatuhouhou.pdf
+    - 名前: ワード版(46KB)
+      url: https://www.pref.shimane.lg.jp/infra/kankyo/haiki/sangyo_haikibutsu/form.data/3sisannnikannsurutyousyo.doc
+    - 名前: PDF版(19KB)
+      url: https://www.pref.shimane.lg.jp/infra/kankyo/haiki/sangyo_haikibutsu/form.data/3sisannikannsurutyousyo.pdf
+    - 名前: ワード版(26KB)
+      url: https://www.pref.shimane.lg.jp/infra/kankyo/haiki/sangyo_haikibutsu/form.data/R301seiyakusyo.doc
+    - 名前: PDF版(17KB)
+      url: https://www.pref.shimane.lg.jp/infra/kankyo/haiki/sangyo_haikibutsu/form.data/R301seiyakusyo.pdf
+    - 名前: ワード版(32KB)
+      url: https://www.pref.shimane.lg.jp/infra/kankyo/haiki/sangyo_haikibutsu/form.data/R507yousiki3-22_1_.doc
+    - 名前: PDF版(43KB)
+      url: https://www.pref.shimane.lg.jp/infra/kankyo/haiki/sangyo_haikibutsu/form.data/R507yousiki3-22_1_.pdf
+    - 名前: ワード版(28KB)
+      url: https://www.pref.shimane.lg.jp/infra/kankyo/haiki/sangyo_haikibutsu/form.data/R301yousiki3-21.doc
+    - 名前: PDF版(28KB)
+      url: https://www.pref.shimane.lg.jp/infra/kankyo/haiki/sangyo_haikibutsu/form.data/R301yousiki3-21.pdf
+    - 名前: ワード版(34KB)
+      url: https://www.pref.shimane.lg.jp/infra/kankyo/haiki/sangyo_haikibutsu/form.data/R301yousiki3-23.doc
+    - 名前: PDF版(42KB)
+      url: https://www.pref.shimane.lg.jp/infra/kankyo/haiki/sangyo_haikibutsu/form.data/R301yousiki3-23.pdf
+    - 名前: ワード版(30KB)
+      url: https://www.pref.shimane.lg.jp/infra/kankyo/haiki/sangyo_haikibutsu/form.data/R301yousiki3-24.doc
+    - 名前: PDF版(41KB)
+      url: https://www.pref.shimane.lg.jp/infra/kankyo/haiki/sangyo_haikibutsu/form.data/R301yousiki3-24.pdf
+    - 名前: 記載例：PDF版(257KB)
+      url: https://www.pref.shimane.lg.jp/infra/kankyo/haiki/sangyo_haikibutsu/form.data/R301rei_syuunhenko.pdf
+    - 名前: ワード版(89KB)
+      url: https://www.pref.shimane.lg.jp/infra/kankyo/haiki/sangyo_haikibutsu/form.data/180910yousiki10.doc
+    - 名前: PDF版(130KB)
+      url: https://www.pref.shimane.lg.jp/infra/kankyo/haiki/sangyo_haikibutsu/form.data/180910yousiki10.pdf
+    - 名前: ワード版(32KB)
+      url: https://www.pref.shimane.lg.jp/infra/kankyo/haiki/sangyo_haikibutsu/form.data/R507yousiki3-22_2.doc
+    - 名前: PDF版(44KB)
+      url: https://www.pref.shimane.lg.jp/infra/kankyo/haiki/sangyo_haikibutsu/form.data/R507yousiki3-22_2.pdf
+    - 名前: ワード版(29KB)
+      url: https://www.pref.shimane.lg.jp/infra/kankyo/haiki/sangyo_haikibutsu/form.data/tokuhenkouyoushiki.doc
+    - 名前: PDF版(56KB)
+      url: https://www.pref.shimane.lg.jp/infra/kankyo/haiki/sangyo_haikibutsu/form.data/tokuhenkouyoushiki.pdf
+    - 名前: ワード版(85KB)
+      url: https://www.pref.shimane.lg.jp/infra/kankyo/haiki/sangyo_haikibutsu/form.data/yousiki12.doc
+    - 名前: PDF版(168KB)
+      url: https://www.pref.shimane.lg.jp/infra/kankyo/haiki/sangyo_haikibutsu/form.data/yousiki12.pdf
+    - 名前: PDF版(222KB)
+      url: https://www.pref.shimane.lg.jp/infra/kankyo/haiki/sangyo_haikibutsu/form.data/R301rei_tokkansyuun.pdf
+    - 名前: ワード版(87KB)
+      url: https://www.pref.shimane.lg.jp/infra/kankyo/haiki/sangyo_haikibutsu/form.data/yousiki16.doc
+    - 名前: PDF版(170KB)
+      url: https://www.pref.shimane.lg.jp/infra/kankyo/haiki/sangyo_haikibutsu/form.data/yousiki16.pdf
+    - 名前: PDF版(221KB)
+      url: https://www.pref.shimane.lg.jp/infra/kankyo/haiki/sangyo_haikibutsu/form.data/R301rei_tokkanhenko.pdf
+鮮度確認日: 2026-11-03

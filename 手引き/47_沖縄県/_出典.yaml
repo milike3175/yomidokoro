@@ -1,0 +1,59 @@
+許可権者: { コード: "47", 名前: 沖縄県 }
+許認可: 産廃収集運搬
+入口: https://www.pref.okinawa.lg.jp/kurashikankyo/gomirecycle/1004144/1022358/1004163.html
+担当: 環境部 環境整備課
+手引き: 許可申請の手引き1冊（ファイル名で20260331）と必要書類リスト（新規・更新・変更許可）
+取得日: 2026-11-03
+取り寄せ:
+  - { url: "https://www.pref.okinawa.lg.jp/_res/projects/default_project/_page_/001/004/163/tebiki_shuun_20260331.pdf", 名前: 許可申請の手引き, 役割: 実質の手引き }
+  - { url: "https://www.pref.okinawa.lg.jp/_res/projects/default_project/_page_/001/004/163/r8syuun_checklist_after.pdf", 名前: 必要書類リスト（新規申請・更新申請・変更許可申請）, 役割: 手引きの補足 }
+利用規約: 独自規約・要許諾型、改変も禁止（https://www.pref.okinawa.jp/about/1018114.html）。引用は可。本体は手元だけに置く
+ファイル:
+  - ファイル名: r8syuun_checklist_after.pdf
+    名前: 必要書類リスト（新規申請・更新申請・変更許可申請）
+    役割: 手引きの補足
+    url: https://www.pref.okinawa.lg.jp/_res/projects/default_project/_page_/001/004/163/r8syuun_checklist_after.pdf
+    sha256: d775ddc97e2330e18515d0c3ad2ea170ad519fd60065521c063f00cfcba89d4a
+    取得日: 2026-11-03
+    サイズ: 204570
+    最終更新: Thu, 09 Apr 2026 06:50:49 GMT
+    ページ数: 3
+    文字にした日: 2026-11-03
+  - ファイル名: tebiki_shuun_20260331.pdf
+    名前: 許可申請の手引き
+    役割: 実質の手引き
+    url: https://www.pref.okinawa.lg.jp/_res/projects/default_project/_page_/001/004/163/tebiki_shuun_20260331.pdf
+    sha256: 82d12ebeaa176a57f23d2cd65a76b176ad4d9ebb133769f2eb561b15ca2b25d8
+    取得日: 2026-11-03
+    サイズ: 983049
+    最終更新: Tue, 31 Mar 2026 10:25:50 GMT
+    ページ数: 39
+    文字にした日: 2026-11-03
+入口の文書一覧:
+  確認日: 2026-11-03
+  リンク:
+    - 名前: 必要書類リスト（新規申請・更新申請・変更許可申請） （PDF 199.8KB）
+      url: https://www.pref.okinawa.lg.jp/_res/projects/default_project/_page_/001/004/163/r8syuun_checklist_after.pdf
+    - 名前: 必要書類リスト（変更届出・廃止届出） （PDF 214.0KB）
+      url: https://www.pref.okinawa.lg.jp/_res/projects/default_project/_page_/001/004/163/r8list_todokede_shuun_20260331.pdf
+    - 名前: 許可申請の手引き （PDF 960.0KB）
+      url: https://www.pref.okinawa.lg.jp/_res/projects/default_project/_page_/001/004/163/tebiki_shuun_20260331.pdf
+    - 名前: 必要書類リスト（新規申請・更新申請・変更許可申請） （PDF 216.1KB）
+      url: https://www.pref.okinawa.lg.jp/_res/projects/default_project/_page_/001/004/163/r8tokkanshuun_checklist_after.pdf
+    - 名前: 必要書類リスト（変更届出・廃止届出） （PDF 397.0KB）
+      url: https://www.pref.okinawa.lg.jp/_res/projects/default_project/_page_/001/004/163/list_todokede_tokkanshuun_20260331.pdf
+    - 名前: 許可申請の手引き （PDF 901.5KB）
+      url: https://www.pref.okinawa.lg.jp/_res/projects/default_project/_page_/001/004/163/tebiki_tokkanshuun_20260331.pdf
+    - 名前: 必要書類リスト（新規申請・更新申請・変更許可申請） （PDF 176.9KB）
+      url: https://www.pref.okinawa.lg.jp/_res/projects/default_project/_page_/001/004/163/r8syobun_checklist_after.pdf
+    - 名前: 必要書類リスト（変更届出・廃止届出） （PDF 346.2KB）
+      url: https://www.pref.okinawa.lg.jp/_res/projects/default_project/_page_/001/004/163/list_todokede_shobun_20260331.pdf
+    - 名前: 許可申請の手引き （PDF 930.6KB）
+      url: https://www.pref.okinawa.lg.jp/_res/projects/default_project/_page_/001/004/163/tebiki_shobun_20260331.pdf
+    - 名前: 必要書類リスト（新規申請・変更許可申請） （PDF 265.3KB）
+      url: https://www.pref.okinawa.lg.jp/_res/projects/default_project/_page_/001/004/163/list_shisetsu_20260331.pdf
+    - 名前: 必要書類リスト（変更届出・廃止届出） （PDF 351.8KB）
+      url: https://www.pref.okinawa.lg.jp/_res/projects/default_project/_page_/001/004/163/list_todokede_shisetsu_20260331.pdf
+    - 名前: 許可申請の手引き （PDF 729.1KB）
+      url: https://www.pref.okinawa.lg.jp/_res/projects/default_project/_page_/001/004/163/tebiki_shisetsu_20260331.pdf
+鮮度確認日: 2026-11-03

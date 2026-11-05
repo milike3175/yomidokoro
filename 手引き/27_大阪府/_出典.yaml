@@ -1,0 +1,225 @@
+許可権者: { コード: "27", 名前: 大阪府 }
+許認可: 産廃収集運搬
+入口: https://www.pref.osaka.lg.jp/o120060/sangyohaiki/tetuduki/shorigyoukyokasinsei.html
+担当: 環境農林水産部 循環型社会推進室 産業廃棄物指導課
+手引き: 大阪府・大阪市・堺市など府内政令市との共同の手引き（表紙で令和8年4月）
+文書:
+  - { 名前: 許可の手引き, 版: 令和8年4月, 役割: 実質の手引き }
+# 取り寄せ：npm run 取得 が公式URLから取ってくるもの。
+# 「手引き＋様式集」（kyokanotebiki_youshikishu.pdf）は手引きと中身が重なるので取らない。
+# 記入例は様式ごとに分かれていて URL が未確認なので、まだ入れていない。
+取り寄せ:
+  - { url: "https://www.pref.osaka.lg.jp/documents/621/kyokanotebiki.pdf", 名前: 許可の手引き, 役割: 実質の手引き, 版: 令和8年4月 }
+利用規約: 独自規約・要許諾型（https://www.pref.osaka.lg.jp/koho/information/use.html）。引用は可。本体は手元だけに置く
+ファイル:
+  - ファイル名: kyokanotebiki.pdf
+    名前: 許可の手引き
+    役割: 実質の手引き
+    版: 令和8年4月
+    url: https://www.pref.osaka.lg.jp/documents/621/kyokanotebiki.pdf
+    sha256: 3e4c92b8108ca05d90ee3e84081fe04cc0132efd554f08454b8133b1d66b2dc6
+    取得日: 2026-11-02
+    サイズ: 2752011
+    最終更新: Wed, 01 Apr 2026 00:01:18 GMT
+    ページ数: 79
+    文字にした日: 2026-11-02
+入口の文書一覧:
+  確認日: 2026-11-02
+  リンク:
+    - 名前: 手続きの案内（PDF：116KB）
+      url: https://www.pref.osaka.lg.jp/documents/621/r8denshishuunouhp.pdf
+    - 名前: よくある質問（エクセル：29KB）
+      url: https://www.pref.osaka.lg.jp/documents/621/yokuarushitsumon_1.xlsx
+    - 名前: 許可の手引き＋様式集（PDF：2,819KB）
+      url: https://www.pref.osaka.lg.jp/documents/621/kyokanotebiki_youshikishu.pdf
+    - 名前: 許可の手引き（PDF：2,688KB）
+      url: https://www.pref.osaka.lg.jp/documents/621/kyokanotebiki.pdf
+    - 名前: 様式集（PDF：391KB）
+      url: https://www.pref.osaka.lg.jp/documents/621/youshikishu.pdf
+    - 名前: 様式集（ワード：158KB）
+      url: https://www.pref.osaka.lg.jp/documents/621/youshikishu.docx
+    - 名前: 法人用申請チェックシート（PDF：104KB）
+      url: https://www.pref.osaka.lg.jp/documents/621/hojinshinseichecksheet_1.pdf
+    - 名前: 個人事業主用申請チェックシート（PDF：94KB）
+      url: https://www.pref.osaka.lg.jp/documents/621/kojinshinseichecksheet_1.pdf
+    - 名前: 誓約書（ワード：22KB）
+      url: https://www.pref.osaka.lg.jp/documents/621/syuuryouseiyaku_2.docx
+    - 名前: 法人用変更届チェックシート（PDF：73KB）
+      url: https://www.pref.osaka.lg.jp/documents/621/hojintodokechecksheet.pdf
+    - 名前: 個人事業主用変更届チェックシート（PDF：138KB）
+      url: https://www.pref.osaka.lg.jp/documents/621/kojintodokedechecksheet.pdf
+    - 名前: 様式第六号（ワード：31KB）
+      url: https://www.pref.osaka.lg.jp/documents/621/p79_youshiki-06.docx
+    - 名前: 様式第六号（PDF：213KB）
+      url: https://www.pref.osaka.lg.jp/documents/621/p79_youshiki-06.pdf
+    - 名前: 様式第六号 記入例（PDF：191KB）
+      url: https://www.pref.osaka.lg.jp/documents/621/kinyu-rei_a.pdf
+    - 名前: 様式第十二号（ワード：43KB）
+      url: https://www.pref.osaka.lg.jp/documents/621/p80_youshiki-12.docx
+    - 名前: 様式第十二号（PDF：198KB）
+      url: https://www.pref.osaka.lg.jp/documents/621/p80_youshiki-12.pdf
+    - 名前: 様式第十号（ワード：33KB）
+      url: https://www.pref.osaka.lg.jp/documents/621/p83_youshiki-10.docx
+    - 名前: 様式第十号（PDF：145KB）
+      url: https://www.pref.osaka.lg.jp/documents/621/p83_youshiki-10.pdf
+    - 名前: 様式第十号 記入例（PDF：191KB）
+      url: https://www.pref.osaka.lg.jp/documents/621/kinyu-rei_u.pdf
+    - 名前: 様式第十六号（ワード：32KB）
+      url: https://www.pref.osaka.lg.jp/documents/621/p84_youshiki-16.docx
+    - 名前: 様式第十六号（PDF：132KB）
+      url: https://www.pref.osaka.lg.jp/documents/621/p84_youshiki-16.pdf
+    - 名前: 様式第十一号（ワード：25KB）
+      url: https://www.pref.osaka.lg.jp/documents/621/p87_youshiki-11.docx
+    - 名前: 様式第十一号（PDF：116KB）
+      url: https://www.pref.osaka.lg.jp/documents/621/p87_youshiki-11.pdf
+    - 名前: 様式第十一号 記入例（PDF：129KB）
+      url: https://www.pref.osaka.lg.jp/documents/621/kinyu-rei_o.pdf
+    - 名前: 様式第十七号（ワード：29KB）
+      url: https://www.pref.osaka.lg.jp/documents/621/p88_youshiki-17.docx
+    - 名前: 様式第十七号（PDF：120KB）
+      url: https://www.pref.osaka.lg.jp/documents/621/p88_youshiki-17.pdf
+    - 名前: 様式第六号の二 第1面（ワード：27KB）
+      url: https://www.pref.osaka.lg.jp/documents/621/p89_youshiki-06-2_01.docx
+    - 名前: 様式第六号の二 第1面（PDF：107KB）
+      url: https://www.pref.osaka.lg.jp/documents/621/p89_youshiki-06-2_01.pdf
+    - 名前: 様式第六号の二 第1面 記入例（PDF：152KB）
+      url: https://www.pref.osaka.lg.jp/documents/621/kinyu-rei_ki_.pdf
+    - 名前: 様式第六号の二 第2面（エクセル：12KB）
+      url: https://www.pref.osaka.lg.jp/documents/621/p90_youshiki-06-2_02.xlsx
+    - 名前: 様式第六号の二 第2面（PDF：83KB）
+      url: https://www.pref.osaka.lg.jp/documents/621/p90_youshiki-06-2_02.pdf
+    - 名前: 様式第六号の二 第2面 記入例（PDF：79KB）
+      url: https://www.pref.osaka.lg.jp/documents/621/kinyu-rei_ku.pdf
+    - 名前: 様式第六号の二 第4面（ワード：25KB）
+      url: https://www.pref.osaka.lg.jp/documents/621/p91_youshiki-06-2_04.docx
+    - 名前: 様式第六号の二 第4面（PDF：96KB）
+      url: https://www.pref.osaka.lg.jp/documents/621/p91_youshiki-06-2_04.pdf
+    - 名前: 様式第六号の二 第4面 記入例（PDF：95KB）
+      url: https://www.pref.osaka.lg.jp/documents/621/kinyu-rei_ke.pdf
+    - 名前: 様式第六号の二 第5面（ワード：20KB）
+      url: https://www.pref.osaka.lg.jp/documents/621/p92_youshiki-06-2_05.docx
+    - 名前: 様式第六号の二 第5面（PDF：55KB）
+      url: https://www.pref.osaka.lg.jp/documents/621/p92_youshiki-06-2_05.pdf
+    - 名前: 様式第六号の二 第5面 記入例（PDF：108KB）
+      url: https://www.pref.osaka.lg.jp/documents/621/kinyu-rei_ko.pdf
+    - 名前: 様式第六号の二 第6面（ワード：26KB）
+      url: https://www.pref.osaka.lg.jp/documents/621/p93_youshiki-06-2_06.docx
+    - 名前: 様式第六号の二 第6面（PDF：81KB）
+      url: https://www.pref.osaka.lg.jp/documents/621/p93_youshiki-06-2_06.pdf
+    - 名前: 様式第六号の二 第6面 記入例（PDF：234KB）
+      url: https://www.pref.osaka.lg.jp/documents/621/kinyu-rei_sa.pdf
+    - 名前: 様式第六号の二 第7面（ワード：23KB）
+      url: https://www.pref.osaka.lg.jp/documents/621/p94_youshiki-06-2_07.docx
+    - 名前: 様式第六号の二 第7面（PDF：69KB）
+      url: https://www.pref.osaka.lg.jp/documents/621/p94_youshiki-06-2_07.pdf
+    - 名前: 様式第六号の二 第7面 記入例（PDF：57KB）
+      url: https://www.pref.osaka.lg.jp/documents/621/kinyu-rei_shi.pdf
+    - 名前: 様式第六号の二 第8面（ワード：25KB）
+      url: https://www.pref.osaka.lg.jp/documents/621/p95_youshiki-06-2_08.docx
+    - 名前: 様式第六号の二 第8面（PDF：74KB）
+      url: https://www.pref.osaka.lg.jp/documents/621/p95_youshiki-06-2_08.pdf
+    - 名前: 様式第六号の二 第8面 記入例（PDF：73KB）
+      url: https://www.pref.osaka.lg.jp/documents/621/kinyu-rei_su.pdf
+    - 名前: 様式第六号の二 第9面（ワード：25KB）
+      url: https://www.pref.osaka.lg.jp/documents/621/p96_youshiki-06-2_09.docx
+    - 名前: 様式第六号の二 第9面（PDF：80KB）
+      url: https://www.pref.osaka.lg.jp/documents/621/p96_youshiki-06-2_09.pdf
+    - 名前: 様式第六号の二 第9面 記入例（PDF：42KB）
+      url: https://www.pref.osaka.lg.jp/documents/621/kinyu-rei_se.pdf
+    - 名前: 様式第六号の二 第10面（ワード：19KB）
+      url: https://www.pref.osaka.lg.jp/documents/621/p97_youshiki-06-2_10.docx
+    - 名前: 様式第六号の二 第10面（PDF：95KB）
+      url: https://www.pref.osaka.lg.jp/documents/621/p97_youshiki-06-2_10.pdf
+    - 名前: 様式第六号の二 第10面 記入例（PDF：58KB）
+      url: https://www.pref.osaka.lg.jp/documents/621/kinyu-rei_so.pdf
+    - 名前: 重複書類省略の申立書（ワード：24KB）
+      url: https://www.pref.osaka.lg.jp/documents/621/p99_youshiki-choufuku.docx
+    - 名前: 重複書類省略の申立書（PDF：120KB）
+      url: https://www.pref.osaka.lg.jp/documents/621/p99_youshiki-choufuku.pdf
+    - 名前: 重複書類省略の申立書 記入例（PDF：101KB）
+      url: https://www.pref.osaka.lg.jp/documents/621/kinyu-rei_ta.pdf
+    - 名前: 納税証明書等が添付できない理由書（ワード：18KB）
+      url: https://www.pref.osaka.lg.jp/documents/621/p100_youshiki-tempudekinai.docx
+    - 名前: 納税証明書等が添付できない理由書（PDF：66KB）
+      url: https://www.pref.osaka.lg.jp/documents/621/p100_youshiki-tempudekinai.pdf
+    - 名前: 納税証明書等が添付できない理由書 記入例（PDF：72KB）
+      url: https://www.pref.osaka.lg.jp/documents/621/kinyu-rei_chi.pdf
+    - 名前: 経理的基礎に関する申立書（ワード：18KB）
+      url: https://www.pref.osaka.lg.jp/documents/621/p101_youshiki-keiritekikiso.docx
+    - 名前: 経理的基礎に関する申立書（PDF：68KB）
+      url: https://www.pref.osaka.lg.jp/documents/621/p101_youshiki-keiritekikiso.pdf
+    - 名前: 経理的基礎に関する申立書 記入例（PDF：64KB）
+      url: https://www.pref.osaka.lg.jp/documents/621/kinyu-rei_tsu.pdf
+    - 名前: 役員・株主等の変更に係る新旧対照表（ワード：23KB）
+      url: https://www.pref.osaka.lg.jp/documents/621/p102_youshiki-taishouhyou.docx
+    - 名前: 役員・株主等の変更に係る新旧対照表（PDF：65KB）
+      url: https://www.pref.osaka.lg.jp/documents/621/p102_youshiki-taishouhyou.pdf
+    - 名前: 役員・株主等の変更に係る新旧対照表 記入例（PDF：52KB）
+      url: https://www.pref.osaka.lg.jp/documents/621/kinyu-rei_te.pdf
+    - 名前: 車両の貸借に関する証明書（ワード：24KB）
+      url: https://www.pref.osaka.lg.jp/documents/621/p103_youshiki-taishaku.docx
+    - 名前: 車両の貸借に関する証明書（PDF：94KB）
+      url: https://www.pref.osaka.lg.jp/documents/621/p103_youshiki-taishaku.pdf
+    - 名前: 車両の貸借に関する証明書 記入例（PDF：87KB）
+      url: https://www.pref.osaka.lg.jp/documents/621/kinyu-rei_to.pdf
+    - 名前: 委任状（ワード：18KB）
+      url: https://www.pref.osaka.lg.jp/documents/621/p104_youshiki-ininjou.docx
+    - 名前: 委任状（PDF：63KB）
+      url: https://www.pref.osaka.lg.jp/documents/621/p104_youshiki-ininjou.pdf
+    - 名前: 委任状 記入例（PDF：70KB）
+      url: https://www.pref.osaka.lg.jp/documents/621/kiny-rei_na.pdf
+    - 名前: 遅延理由書（ワード：17KB）
+      url: https://www.pref.osaka.lg.jp/documents/621/youshiki-chien.docx
+    - 名前: 遅延理由書（PDF：58KB）
+      url: https://www.pref.osaka.lg.jp/documents/621/youshiki-chien.pdf
+    - 名前: 遅延理由書 記入例（PDF：70KB）
+      url: https://www.pref.osaka.lg.jp/documents/621/kinyu-rei_chien.pdf
+    - 名前: 廃PCB等関連様式（ワード：24KB）
+      url: https://www.pref.osaka.lg.jp/documents/621/p105_youshiki-pcb.docx
+    - 名前: 廃PCB等関連様式（PDF：102KB）
+      url: https://www.pref.osaka.lg.jp/documents/621/p105_youshiki-pcb.pdf
+    - 名前: 廃PCB等関連様式 記入例（PDF：111KB）
+      url: https://www.pref.osaka.lg.jp/documents/621/kinyu-rei_nu.pdf
+    - 名前: 支払うべき市町村税がない場合の申立書（優良認定）（ワード：16KB）
+      url: https://www.pref.osaka.lg.jp/documents/621/youshiki-yuryo_moushitate.docx
+    - 名前: 支払うべき市町村税がない場合の申立書（優良認定）（PDF：294KB）
+      url: https://www.pref.osaka.lg.jp/documents/621/youshiki-yuryo_moushitate.pdf
+    - 名前: 更新申請時に修了証が提出出来ない場合の誓約書（ワード：22KB）
+      url: https://www.pref.osaka.lg.jp/documents/621/youshiki-shuryosho_seiyaku.docx
+    - 名前: 更新申請時に修了証が提出出来ない場合の誓約書（PDF：77KB）
+      url: https://www.pref.osaka.lg.jp/documents/621/youshiki-shuryosho_seiyaku.pdf
+    - 名前: 再交付申請書（ワード：20KB）
+      url: https://www.pref.osaka.lg.jp/documents/621/youshiki-saikoufu.docx
+    - 名前: 再交付申請書（PDF：56KB）
+      url: https://www.pref.osaka.lg.jp/documents/621/youshiki-saikoufu.pdf
+    - 名前: 再交付申請書 記入例（PDF：80KB）
+      url: https://www.pref.osaka.lg.jp/documents/621/kinyu-rei_ha.pdf
+    - 名前: 亡失申立書（ワード：15KB）
+      url: https://www.pref.osaka.lg.jp/documents/621/youshiki-boushitsu.docx
+    - 名前: 亡失申立書（PDF：73KB）
+      url: https://www.pref.osaka.lg.jp/documents/621/youshiki-boushitsu.pdf
+    - 名前: 亡失申立書 記入例（PDF：309KB）
+      url: https://www.pref.osaka.lg.jp/documents/621/kinyu-rei_hi.pdf
+    - 名前: 法人成申立書（ワード：19KB）
+      url: https://www.pref.osaka.lg.jp/documents/621/youshiki-houjinnari.docx
+    - 名前: 法人成申立書（PDF：63KB）
+      url: https://www.pref.osaka.lg.jp/documents/621/youshiki-houjinnari.pdf
+    - 名前: 法人成申立書 記入例（PDF：140KB）
+      url: https://www.pref.osaka.lg.jp/documents/621/kinyu-rei_fu.pdf
+    - 名前: 許可申請等取下げ願い（ワード：17KB）
+      url: https://www.pref.osaka.lg.jp/documents/621/youshiki-torisage.docx
+    - 名前: 許可申請等取下げ願い（PDF：25KB）
+      url: https://www.pref.osaka.lg.jp/documents/621/youshiki-torisage.pdf
+    - 名前: 欠格要件該当届（ワード：27KB）
+      url: https://www.pref.osaka.lg.jp/documents/621/youshiki-kekkaku.docx
+    - 名前: 欠格要件該当届（PDF：131KB）
+      url: https://www.pref.osaka.lg.jp/documents/621/youshiki-kekkaku.pdf
+    - 名前: 欠格要件該当届 記入例（PDF：149KB）
+      url: https://www.pref.osaka.lg.jp/documents/621/kinyu-rei_ho.pdf
+    - 名前: 二以上の事業者による産業廃棄物の処理に係る特例認定の手引き（ワード：46KB）
+      url: https://www.pref.osaka.lg.jp/documents/621/niijounojigyousyaninnteitebiki.docx
+    - 名前: 様式集（ワード：66KB）
+      url: https://www.pref.osaka.lg.jp/documents/621/youshikisyu.docx
+    - 名前: 大阪府咲洲庁舎（PDF：359KB）
+      url: https://www.pref.osaka.lg.jp/documents/621/access_2.pdf
+鮮度確認日: 2026-11-03

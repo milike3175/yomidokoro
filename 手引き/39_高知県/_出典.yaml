@@ -1,0 +1,55 @@
+許可権者: { コード: "39", 名前: 高知県 }
+許認可: 産廃収集運搬
+入口: https://www.pref.kochi.lg.jp/doc/2013051700469/
+担当: 林業振興・環境部 環境対策課
+手引き: 一冊ものの手引きは無い（代替）。記入例と提出書類一覧
+取得日: 2026-11-03
+取り寄せ:
+  - { url: "https://www.pref.kochi.lg.jp/doc/2013051700469/file_contents/5-1_kinyuurei0112.pdf", 名前: 記入例, 役割: 記載例 }
+  - { url: "https://www.pref.kochi.lg.jp/doc/2013051700469/file_contents/6_teisyutusyoruiitiran0104.pdf", 名前: 提出書類一覧, 役割: 添付書類一覧 }
+利用規約: 独自規約・要許諾型（https://www.pref.kochi.lg.jp/reference/policy.html）。引用は可。本体は手元だけに置く
+ファイル:
+  - ファイル名: 5-1_kinyuurei0112.pdf
+    名前: 記入例
+    役割: 記載例
+    url: https://www.pref.kochi.lg.jp/doc/2013051700469/file_contents/5-1_kinyuurei0112.pdf
+    sha256: a6ecfc9dfaa8a0aaad9f33a19c5679719f20f76397c9d1a3de9bfbd523c7f478
+    取得日: 2026-11-03
+    サイズ: 235608
+    最終更新: Tue, 06 Feb 2024 03:15:33 GMT
+    ページ数: 17
+    文字にした日: 2026-11-03
+  - ファイル名: 6_teisyutusyoruiitiran0104.pdf
+    名前: 提出書類一覧
+    役割: 添付書類一覧
+    url: https://www.pref.kochi.lg.jp/doc/2013051700469/file_contents/6_teisyutusyoruiitiran0104.pdf
+    sha256: 4ef809d1118c5a7593f8e6b235b94268eeb6e2545a4725b19f55c54d77b9a42b
+    取得日: 2026-11-03
+    サイズ: 291301
+    最終更新: Tue, 06 Feb 2024 03:15:33 GMT
+    ページ数: 7
+    文字にした日: 2026-11-03
+入口の文書一覧:
+  確認日: 2026-11-03
+  リンク:
+    - 名前: 申請書[PDF：61.7KB]
+      url: https://www.pref.kochi.lg.jp/doc/2013051700469/file_contents/1-1_hutuusinseisyo2910.pdf
+    - 名前: 添付書類[DOC：143KB]
+      url: https://www.pref.kochi.lg.jp/doc/2013051700469/file_contents/2_tenpusyorui0112.doc
+    - 名前: 申請書[DOC：94.5KB]
+      url: https://www.pref.kochi.lg.jp/doc/2013051700469/file_contents/1_hutuusinseisyo0212.doc
+    - 名前: 添付書類[PDF：172KB]
+      url: https://www.pref.kochi.lg.jp/doc/2013051700469/file_contents/2-1_tenpusyorui0112.pdf
+    - 名前: 申立書[DOC：12.5KB]
+      url: https://www.pref.kochi.lg.jp/doc/2013051700469/file_contents/3_mousitatesyo.doc
+    - 名前: 申立書[PDF：57KB]
+      url: https://www.pref.kochi.lg.jp/doc/2013051700469/file_contents/3-1_mousitatesyo.pdf
+    - 名前: （参考）原本証明の方法について[PDF：144KB]
+      url: https://www.pref.kochi.lg.jp/doc/2013051700469/file_contents/4_gennponsyoumei.pdf
+    - 名前: 記入例[DOC：246KB]
+      url: https://www.pref.kochi.lg.jp/doc/2013051700469/file_contents/5_kinyuurei0112.doc
+    - 名前: 記入例[PDF：222KB]
+      url: https://www.pref.kochi.lg.jp/doc/2013051700469/file_contents/5-1_kinyuurei0112.pdf
+    - 名前: 提出書類一覧[PDF：284KB]
+      url: https://www.pref.kochi.lg.jp/doc/2013051700469/file_contents/6_teisyutusyoruiitiran0104.pdf
+鮮度確認日: 2026-11-03

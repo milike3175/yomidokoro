@@ -1,0 +1,29 @@
+MIT License
+
+Copyright (c) 2026 Mi.Like合同会社
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+---
+
+このリポジトリのうち、観点・記録の YAML（app/data/ 以下の観点・記録・様式の対応表・書き方の型）は
+CC BY 4.0（https://creativecommons.org/licenses/by/4.0/）でも利用できます。表示：Mi.Like合同会社。
+
+各都道府県の手引き・様式は各都道府県の著作物です。本体はこのリポジトリに置いていません
+（出典と利用規約は 手引き/<県>/_出典.yaml と画面に記載）。

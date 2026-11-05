@@ -1,0 +1,107 @@
+許可権者: { コード: "06", 名前: 山形県 }
+許認可: 産廃収集運搬
+入口: https://www.pref.yamagata.jp/050010/kurashi/kankyo/haikibutsu/shorigyousha/horigyotetsuduki2020.html
+担当: 環境エネルギー部 循環型社会推進課
+手引き: 収集運搬業の手引き（全文。記載方法・記載例・チェック表の分冊を1つにしたもの）
+取得日: 2026-11-03
+取り寄せ:
+  - { url: "https://www.pref.yamagata.jp/documents/17440/shuun_tebiki_all.pdf", 名前: 収集運搬業許可申請の手引き（全文）, 役割: 実質の手引き, 版: "令和8年1月（検索のみ）" }
+利用規約: 独自規約・要許諾型（https://www.pref.yamagata.jp/kensei/shoukai/aboutthissite/mensekijikou.html）。引用は可。本体は手元だけに置く
+# 申請書の様式（npm run 取得 -- 06 --様式だけ で 様式/ に取ってくる。本体は上げない）。入口の文書一覧から（2026-11-05 ジョブズ）
+様式の取り寄せ:
+  - { url: "https://www.pref.yamagata.jp/documents/17440/yo6-r060226.docx", 名前: 産業廃棄物収集運搬業許可申請書（様式第6号） }
+  - { url: "https://www.pref.yamagata.jp/documents/17440/keikakuh29.docx", 名前: 事業計画の概要を記載した書類（収集運搬業）, 注: 2026-11-05 取得。申請書とは別の Word }
+ファイル:
+  - ファイル名: shuun_tebiki_all.pdf
+    名前: 収集運搬業許可申請の手引き（全文）
+    役割: 実質の手引き
+    版: 令和8年1月（検索のみ）
+    url: https://www.pref.yamagata.jp/documents/17440/shuun_tebiki_all.pdf
+    sha256: 1e76846aa1d4aa5da8bf440b9731fe0c4ac06a7e6fa5e16a8ae395caa65e06ea
+    取得日: 2026-11-03
+    サイズ: 3305893
+    最終更新: Wed, 14 Jan 2026 00:45:07 GMT
+    ページ数: 61
+    文字にした日: 2026-11-03
+入口の文書一覧:
+  確認日: 2026-11-03
+  リンク:
+    - 名前: 申請書等ダウンロードページ
+      url: https://www.pref.yamagata.jp/050010/kurashi/kankyo/haikibutsu/style-download.html
+    - 名前: 全文（PDF：3,229KB）
+      url: https://www.pref.yamagata.jp/documents/17440/shuun_tebiki_all.pdf
+    - 名前: 記載方法（PDF：1,341KB）
+      url: https://www.pref.yamagata.jp/documents/17440/shuun_tebiki_kisaihouhou.pdf
+    - 名前: 記載例（PDF：1,640KB）
+      url: https://www.pref.yamagata.jp/documents/17440/shuun_tebiki_kisairei.pdf
+    - 名前: チェック表（PDF：521KB）
+      url: https://www.pref.yamagata.jp/documents/17440/shuun_tebiki_check.pdf
+    - 名前: 全文（PDF：2,887KB）
+      url: https://www.pref.yamagata.jp/documents/17440/shobun_tebiki_all.pdf
+    - 名前: 記載方法（PDF：1,645KB）
+      url: https://www.pref.yamagata.jp/documents/17440/shobun_tebiki_honbun.pdf
+    - 名前: 記載例（PDF：1,015KB）
+      url: https://www.pref.yamagata.jp/documents/17440/shobun_tebiki_kisairei.pdf
+    - 名前: チェック表（PDF：520KB）
+      url: https://www.pref.yamagata.jp/documents/17440/shobun_tebiki_check.pdf
+    - 名前: 必要書類チェック表（PDF：74KB）
+      url: https://www.pref.yamagata.jp/documents/17440/check001h2907.pdf
+    - 名前: 欠格要件チェック表（PDF：218KB）
+      url: https://www.pref.yamagata.jp/documents/17440/kekkaku_check.pdf
+    - 名前: 産業廃棄物収集運搬業許可申請書（様式第6号）（ワード：23KB）
+      url: https://www.pref.yamagata.jp/documents/17440/yo6-r060226.docx
+    - 名前: 産業廃棄物処分業許可申請書（様式第8号）（ワード：21KB）
+      url: https://www.pref.yamagata.jp/documents/17440/yo8-r060226-.docx
+    - 名前: 産業廃棄物処理業の事業範囲変更許可申請書（様式第10号）（ワード：21KB）
+      url: https://www.pref.yamagata.jp/documents/17440/yo10-r060226.docx
+    - 名前: 収集運搬業（ワード：27KB）
+      url: https://www.pref.yamagata.jp/documents/17440/keikakuh29.docx
+    - 名前: 処分業（ワード：16KB）
+      url: https://www.pref.yamagata.jp/documents/17440/keikaku-sho.docx
+    - 名前: 保管場所の概要（ワード：21KB）
+      url: https://www.pref.yamagata.jp/documents/17440/hokangaiyo.docx
+    - 名前: 写真（ワード：27KB）
+      url: https://www.pref.yamagata.jp/documents/17440/carh29.docx
+    - 名前: 容器等の写真（ワード：19KB）
+      url: https://www.pref.yamagata.jp/documents/17440/youkih29.docx
+    - 名前: 処分後の産業廃棄物の処理方法を記載した書類（ワード：22KB）
+      url: https://www.pref.yamagata.jp/documents/17440/shobungo.docx
+    - 名前: 収集運搬業用（ワード：20KB）
+      url: https://www.pref.yamagata.jp/documents/17440/shikinh29.docx
+    - 名前: 処分業用（ワード：20KB）
+      url: https://www.pref.yamagata.jp/documents/17440/shikin-h2910-a.docx
+    - 名前: 誓約書（ワード：15KB）
+      url: https://www.pref.yamagata.jp/documents/17440/seiyakusho-r0602-a.docx
+    - 名前: 必要書類チェック表（PDF：64KB）
+      url: https://www.pref.yamagata.jp/documents/17440/check002h2907.pdf
+    - 名前: 資産に関する調書（銀行の残高証明書及び資産証明書）（ワード：23KB）
+      url: https://www.pref.yamagata.jp/documents/17440/shisanh29.docx
+    - 名前: 必要書類チェック表（PDF：207KB）
+      url: https://www.pref.yamagata.jp/documents/17440/check3.pdf
+    - 名前: 産業廃棄物処理業廃止・変更届出書（様式第11号）（ワード：20KB）
+      url: https://www.pref.yamagata.jp/documents/17440/11-henkoutodoker060226.docx
+    - 名前: 役員等新旧対照表（様式例）（ワード：26KB）
+      url: https://www.pref.yamagata.jp/documents/17440/yakuin-sinkyu.docx
+    - 名前: 必要書類チェック表（PDF：79KB）
+      url: https://www.pref.yamagata.jp/documents/17440/check003h2907.pdf
+    - 名前: 特別管理産業廃棄物収集運搬業許可申請書（様式第12号）（ワード：19KB）
+      url: https://www.pref.yamagata.jp/documents/17440/yo12-r060226.docx
+    - 名前: 特別管理産業廃棄物処分業許可申請書（様式第14号）（ワード：20KB）
+      url: https://www.pref.yamagata.jp/documents/17440/yo14-r060226.docx
+    - 名前: 特別管理産業廃棄物処理業の事業範囲変更許可申請書（様式第16号）（ワード：19KB）
+      url: https://www.pref.yamagata.jp/documents/17440/yo16-r060226.docx
+    - 名前: 必要書類チェック表（PDF：69KB）
+      url: https://www.pref.yamagata.jp/documents/17440/check004h2907.pdf
+    - 名前: 必要書類チェック表（PDF：211KB）
+      url: https://www.pref.yamagata.jp/documents/17440/check6.pdf
+    - 名前: 特別管理産業廃棄物処理業廃止・変更届出書（様式第17号）（ワード：19KB）
+      url: https://www.pref.yamagata.jp/documents/17440/17-henkoutodoker060226.docx
+鮮度確認日: 2026-11-03
+様式:
+  - ファイル名: yo6-r060226.docx
+    名前: 産業廃棄物収集運搬業許可申請書（様式第6号）
+    url: https://www.pref.yamagata.jp/documents/17440/yo6-r060226.docx
+    sha256: 21e4fbe4f04f31f303f9c6c1e7d12360d2aa60ffee43aff5dc4b717cc090eae4
+    取得日: 2026-11-05
+    サイズ: 22827
+    最終更新: Tue, 27 Feb 2024 05:30:08 GMT

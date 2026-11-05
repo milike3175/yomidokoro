@@ -1,0 +1,53 @@
+許可権者: { コード: "46", 名前: 鹿児島県 }
+許認可: 産廃収集運搬
+入口: https://www.pref.kagoshima.jp/ad03/kurashi-kankyo/recycle/shinsei/tujou-syuun.html
+担当: 環境林務部 廃棄物・リサイクル対策課
+手引き: （特別管理）産業廃棄物処理業に係る「許可申請・届出の手引き」1冊
+取得日: 2026-11-03
+# 版の食い違い：検索の抜粋では「令和7年3月18日改訂」、ファイル名は 2026-10-26。ファイル名の 2026-10-26 を正とする（2026-11-03 ジョブズ指示）
+# 2026-11-03 に取った本体の表紙は「令和８年11月２日改訂」（Last-Modified 2026-11-01 23:00 GMT）。ファイル名は同じまま中身が差し替わったとみられる
+版の食い違い: { 抜粋: 令和7年3月18日改訂, ファイル名: 2026-10-26, 表紙: 令和8年11月2日改訂, 正: 令和8年11月2日改訂（表紙。読んだ中身の版）, 確認日: 2026-11-03 }
+取り寄せ:
+  - { url: "https://www.pref.kagoshima.jp/ad03/kurashi-kankyo/recycle/shinsei/documents/2814_20261026165712-1.pdf", 名前: （特別管理）産業廃棄物処理業に係る「許可申請・届出の手引き」, 役割: 実質の手引き, 版: "令和8年11月2日改訂（表紙。これを正とする。ファイル名は2026-10-26のまま）" }
+利用規約: 独自規約・要許諾型（https://www.pref.kagoshima.jp/copyright.html）。引用は可。本体は手元だけに置く
+ファイル:
+  - ファイル名: 2814_20261026165712-1.pdf
+    名前: （特別管理）産業廃棄物処理業に係る「許可申請・届出の手引き」
+    役割: 実質の手引き
+    版: 令和8年11月2日改訂（表紙。これを正とする。ファイル名は2026-10-26のまま）
+    url: https://www.pref.kagoshima.jp/ad03/kurashi-kankyo/recycle/shinsei/documents/2814_20261026165712-1.pdf
+    sha256: 64b8559b99860f9e8f3ed84c9dfda0db09a9a743a8c54c3166fa796df5a2b55c
+    取得日: 2026-11-03
+    サイズ: 422183
+    最終更新: Sun, 01 Nov 2026 23:00:20 GMT
+    ページ数: 18
+    文字にした日: 2026-11-03
+入口の文書一覧:
+  確認日: 2026-11-03
+  リンク:
+    - 名前: 令和8年10月1日以降の申請手数料の納付方法（PDF：221KB）
+      url: https://www.pref.kagoshima.jp/ad03/kurashi-kankyo/recycle/shinsei/documents/2809_20261026170138-1.pdf
+    - 名前: キャッシュレス決済対応端末の設置場所及び現金収納窓口の一覧
+      url: https://www.pref.kagoshima.jp/ai01/documents/124736_20260929192244-1.xlsx
+    - 名前: 申請手数料支払い用QRコード（PDF：148KB）
+      url: https://www.pref.kagoshima.jp/ad03/kurashi-kankyo/recycle/shinsei/documents/2813_20261014132354-1.pdf
+    - 名前: （特別管理）産業廃棄物処理業に係る「許可申請・届出の手引き」（PDF：413KB）
+      url: https://www.pref.kagoshima.jp/ad03/kurashi-kankyo/recycle/shinsei/documents/2814_20261026165712-1.pdf
+    - 名前: （特別管理）産業廃棄物処理業許可申請等様式集（PDF：470KB）
+      url: https://www.pref.kagoshima.jp/ad03/kurashi-kankyo/recycle/shinsei/documents/2813_20260930123140-1.pdf
+    - 名前: 様式（ワード）（WORD：121KB）
+      url: https://www.pref.kagoshima.jp/ad03/kurashi-kankyo/recycle/shinsei/documents/2813_20200817102751-1.doc
+    - 名前: 様式（PDF：93KB）
+      url: https://www.pref.kagoshima.jp/ad03/kurashi-kankyo/recycle/shinsei/documents/2813_20200817102814-1.pdf
+    - 名前: 添付書類（WORD：186KB）
+      url: https://www.pref.kagoshima.jp/ad03/kurashi-kankyo/recycle/shinsei/documents/2813_20250822103516-1.doc
+    - 名前: 添付書類（PDF：269KB）
+      url: https://www.pref.kagoshima.jp/ad03/kurashi-kankyo/recycle/shinsei/documents/2813_20250822103549-1.pdf
+    - 名前: 利益計画書（EXCEL：34KB）
+      url: https://www.pref.kagoshima.jp/ad03/kurashi-kankyo/recycle/shinsei/documents/2813_20210119131743-1.xls
+    - 名前: 法人番号申出書（WORD：20KB）
+      url: https://www.pref.kagoshima.jp/ad03/kurashi-kankyo/recycle/shinsei/documents/2813_20261016143106-1.docx
+    - 名前: 記載例（PDF：2,863KB）
+      url: https://www.pref.kagoshima.jp/ad03/kurashi-kankyo/recycle/shinsei/documents/2813_20200817103346-1.pdf
+鮮度確認日: 2026-11-03
+# 2026-11-03 ジョブズ：読んだのは差し替え後の中身なので、表紙の令和8年11月2日改訂を正に改めた

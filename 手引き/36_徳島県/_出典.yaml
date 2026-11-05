@@ -1,0 +1,54 @@
+許可権者: { コード: "36", 名前: 徳島県 }
+許認可: 産廃収集運搬
+入口: https://www.pref.tokushima.lg.jp/jigyoshanokata/kurashi/recycling/5007711/
+担当: 生活環境部 資源循環課
+手引き: 申請の手引き1冊と記載例
+取得日: 2026-11-03
+取り寄せ:
+  - { url: "https://www.pref.tokushima.lg.jp/file/attachment/1074858.pdf", 名前: 申請の手引き, 役割: 実質の手引き, 版: "令和8年4月（掲載日から推測）" }
+  - { url: "https://www.pref.tokushima.lg.jp/file/attachment/1055994.pdf", 名前: 記載例, 役割: 記載例 }
+利用規約: 独自規約・要許諾型（https://www.pref.tokushima.lg.jp/sitepolicy/）。引用は可。本体は手元だけに置く
+ファイル:
+  - ファイル名: 1055994.pdf
+    名前: 記載例
+    役割: 記載例
+    url: https://www.pref.tokushima.lg.jp/file/attachment/1055994.pdf
+    sha256: f5e95d2b84ecf78a201189bf189493cc124b4ca1f3adeaf4ab524890a5c4fbb8
+    取得日: 2026-11-03
+    サイズ: 2023543
+    最終更新: null
+    ページ数: 14
+    文字にした日: 2026-11-03
+  - ファイル名: 1074858.pdf
+    名前: 申請の手引き
+    役割: 実質の手引き
+    版: 令和8年4月（掲載日から推測）
+    url: https://www.pref.tokushima.lg.jp/file/attachment/1074858.pdf
+    sha256: 434ae9fa26e7c730769cc75d9eab80c361198f5d09c3a84bc9596e2f92bb3aef
+    取得日: 2026-11-03
+    サイズ: 332891
+    最終更新: null
+    ページ数: 12
+    文字にした日: 2026-11-03
+入口の文書一覧:
+  確認日: 2026-11-03
+  リンク:
+    - 名前: 申請の手引き
+      url: https://www.pref.tokushima.lg.jp/file/attachment/1074858.pdf
+    - 名前: 記載例
+      url: https://www.pref.tokushima.lg.jp/file/attachment/1055994.pdf
+    - 名前: 産業廃棄物収集運搬業許可申請書（新規・更新）
+      url: https://www.pref.tokushima.lg.jp/file/attachment/1071277.rtf
+    - 名前: 特別管理産業廃棄物収集運搬業許可申請書（新規・更新）
+      url: https://www.pref.tokushima.lg.jp/file/attachment/1071278.rtf
+    - 名前: 産業廃棄物処理業の事業範囲変更許可申請書
+      url: https://www.pref.tokushima.lg.jp/file/attachment/1071279.rtf
+    - 名前: 特別管理産業廃棄物処理業の事業範囲変更許可申請書
+      url: https://www.pref.tokushima.lg.jp/file/attachment/1071280.rtf
+    - 名前: (特別管理)産業廃棄物処理業廃止・変更届出書
+      url: https://www.pref.tokushima.lg.jp/file/attachment/948299.rtf
+    - 名前: 添付書類の省略に関する申立書
+      url: https://www.pref.tokushima.lg.jp/file/attachment/859784.rtf
+    - 名前: 産業廃棄物処理業許可証再交付申立書
+      url: https://www.pref.tokushima.lg.jp/file/attachment/859743.rtf
+鮮度確認日: 2026-11-03

@@ -1,0 +1,57 @@
+許可権者: { コード: "15", 名前: 新潟県 }
+許認可: 産廃収集運搬
+入口: https://www.pref.niigata.lg.jp/sec/shigenjunkan/1356778406189.html
+担当: 環境局 資源循環推進課 産業廃棄物係
+手引き: 許可申請の手引（収集運搬業）1冊（ページのお知らせで令和8年10月21日改定）。変更届・廃止届の手引は別冊なので一緒に取る
+取得日: 2026-11-03
+取り寄せ:
+  - { url: "https://www.pref.niigata.lg.jp/uploaded/attachment/513307.pdf", 名前: 許可申請の手引（収集運搬業）, 役割: 実質の手引き }
+  - { url: "https://www.pref.niigata.lg.jp/uploaded/attachment/513312.pdf", 名前: 変更届・廃止届の手引, 役割: 実質の手引き }
+利用規約: ページにオープンデータ表示、CC BY 4.0（https://www.pref.niigata.lg.jp/site/userguide/od-kiyaku.html）。サイト全体は要許諾型。本体は手元だけに置く
+ファイル:
+  - ファイル名: 513307.pdf
+    名前: 許可申請の手引（収集運搬業）
+    役割: 実質の手引き
+    url: https://www.pref.niigata.lg.jp/uploaded/attachment/513307.pdf
+    sha256: 65fe28b974035a8f2d87aec5ca14249a001fc62b411c84f462402bac78daa658
+    取得日: 2026-11-03
+    サイズ: 627055
+    最終更新: Wed, 21 Oct 2026 02:00:03 GMT
+    ページ数: 21
+    文字にした日: 2026-11-03
+  - ファイル名: 513312.pdf
+    名前: 変更届・廃止届の手引
+    役割: 実質の手引き
+    url: https://www.pref.niigata.lg.jp/uploaded/attachment/513312.pdf
+    sha256: a12ec38f7c2b501a8f637c8b9ff993f90fdb2e649d2f7931f59d8af6a74601b8
+    取得日: 2026-11-03
+    サイズ: 370595
+    最終更新: Wed, 21 Oct 2026 02:00:03 GMT
+    ページ数: 18
+    文字にした日: 2026-11-03
+入口の文書一覧:
+  確認日: 2026-11-03
+  リンク:
+    - 名前: 000397364.pdf
+      url: https://www.env.go.jp/content/000397364.pdf
+    - 名前: 許可申請の手引（収集運搬業） [PDFファイル／613KB]
+      url: https://www.pref.niigata.lg.jp/uploaded/attachment/513307.pdf
+    - 名前: 許可申請の手引（処分業） [PDFファイル／605KB]
+      url: https://www.pref.niigata.lg.jp/uploaded/attachment/513308.pdf
+    - 名前: 様式集 [Wordファイル／944KB]
+      url: https://www.pref.niigata.lg.jp/uploaded/attachment/513309.doc
+    - 名前: 様式集 [PDFファイル／415KB]
+      url: https://www.pref.niigata.lg.jp/uploaded/attachment/513311.pdf
+    - 名前: 申請書及び届出の記入例 [PDFファイル／1MB]
+      url: https://www.pref.niigata.lg.jp/uploaded/attachment/318500.pdf
+    - 名前: 変更届・廃止届の手引 [PDFファイル／362KB]
+      url: https://www.pref.niigata.lg.jp/uploaded/attachment/513312.pdf
+    - 名前: 様式集 [Wordファイル／944KB]
+      url: https://www.pref.niigata.lg.jp/uploaded/attachment/513314.doc
+    - 名前: 様式集 [PDFファイル／415KB]
+      url: https://www.pref.niigata.lg.jp/uploaded/attachment/513315.pdf
+    - 名前: 申請書及び届出の記入例 [PDFファイル／1MB]
+      url: https://www.pref.niigata.lg.jp/uploaded/attachment/318504.pdf
+    - 名前: 【様式】（特別管理）産業廃棄物処理業許可証亡失等届出書 [Wordファイル／23KB]
+      url: https://www.pref.niigata.lg.jp/uploaded/attachment/443792.docx
+鮮度確認日: 2026-11-03

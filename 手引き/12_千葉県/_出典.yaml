@@ -1,0 +1,43 @@
+許可権者: { コード: "12", 名前: 千葉県 }
+許認可: 産廃収集運搬
+入口: https://www.pref.chiba.lg.jp/haishi/shorigyou/kyoka.html
+担当: 環境生活部 廃棄物指導課 指導企画班
+手引き: 一冊ものの手引きは無い（代替）。許可申請等の手続及び留意事項と、電子申請の手引き（積替保管を除く）
+取得日: 2026-11-03
+取り寄せ:
+  - { url: "https://www.pref.chiba.lg.jp/haishi/shorigyou/documents/sinnseitetuduki.pdf", 名前: 許可申請等の手続及び留意事項, 役割: 実質の手引き }
+  - { url: "https://www.pref.chiba.lg.jp/haishi/shorigyou/documents/densitebikisyuunnasi.pdf", 名前: 電子申請の手引き（収集運搬業（積替・保管を除く））, 役割: 手引きの補足 }
+利用規約: 独自規約・要許諾型（https://www.pref.chiba.lg.jp/homepage/about-site/link.html）。引用は可。本体は手元だけに置く
+ファイル:
+  - ファイル名: densitebikisyuunnasi.pdf
+    名前: 電子申請の手引き（収集運搬業（積替・保管を除く））
+    役割: 手引きの補足
+    url: https://www.pref.chiba.lg.jp/haishi/shorigyou/documents/densitebikisyuunnasi.pdf
+    sha256: 98e0711bb9e22f0d26bda3a24deec61d1cacac0e14b9e73230a9f5a7da97b160
+    取得日: 2026-11-03
+    サイズ: 1315749
+    最終更新: Thu, 22 May 2025 07:04:21 GMT
+    ページ数: 30
+    文字にした日: 2026-11-03
+  - ファイル名: sinnseitetuduki.pdf
+    名前: 許可申請等の手続及び留意事項
+    役割: 実質の手引き
+    url: https://www.pref.chiba.lg.jp/haishi/shorigyou/documents/sinnseitetuduki.pdf
+    sha256: 09d4e4ca236016f0bb581c07942ecd72b548e01a16aeb930aa588412b24a75b9
+    取得日: 2026-11-03
+    サイズ: 180406
+    最終更新: Thu, 22 May 2025 07:04:21 GMT
+    ページ数: 3
+    文字にした日: 2026-11-03
+入口の文書一覧:
+  確認日: 2026-11-03
+  リンク:
+    - 名前: 電子申請の手引き（収集運搬業（積替・保管を除く））（PDF：1,285KB）
+      url: https://www.pref.chiba.lg.jp/haishi/shorigyou/documents/densitebikisyuunnasi.pdf
+    - 名前: 電子申請の手引き（収集運搬業（積替・保管を含む））（PDF：959.4KB）
+      url: https://www.pref.chiba.lg.jp/haishi/shorigyou/documents/densitebikisyuunari.pdf
+    - 名前: 許可申請等の手続及び留意事項（PDF：176.2KB）
+      url: https://www.pref.chiba.lg.jp/haishi/shorigyou/documents/sinnseitetuduki.pdf
+    - 名前: 産業廃棄物収集運搬業許可申請書預かり後の手続について（PDF：176.7KB）
+      url: https://www.pref.chiba.lg.jp/haishi/shorigyou/documents/azukarigo.pdf
+鮮度確認日: 2026-11-03

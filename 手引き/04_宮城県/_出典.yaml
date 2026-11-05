@@ -1,0 +1,91 @@
+許可権者: { コード: "04", 名前: 宮城県 }
+許認可: 産廃収集運搬
+入口: https://www.pref.miyagi.jp/soshiki/haitai/syuun-index.html
+担当: 廃棄物対策課 施設班（積替え保管なしは県庁で受け付け）
+手引き: 新規・更新用と事業範囲変更用の手引きが別冊。留意点とFAQも取る
+取得日: 2026-11-03
+取り寄せ:
+  - { url: "https://www.pref.miyagi.jp/documents/12214/tebiki_normal-shinki-koushin.pdf", 名前: 新規・更新許可申請の手引き, 役割: 実質の手引き }
+  - { url: "https://www.pref.miyagi.jp/documents/12214/tebiki_normal-henkou.pdf", 名前: 事業範囲変更許可申請の手引き, 役割: 実質の手引き }
+  - { url: "https://www.pref.miyagi.jp/documents/12214/ryuiten.pdf", 名前: 産業廃棄物収集運搬業に係る留意点, 役割: 手引きの補足 }
+  - { url: "https://www.pref.miyagi.jp/documents/12214/faqver3.pdf", 名前: 収集運搬業FAQ, 役割: 手引きの補足 }
+利用規約: 独自規約・要許諾型（https://www.pref.miyagi.jp/soshiki/kohou/site-riyou.html）。引用は可。本体は手元だけに置く
+ファイル:
+  - ファイル名: faqver3.pdf
+    名前: 収集運搬業FAQ
+    役割: 手引きの補足
+    url: https://www.pref.miyagi.jp/documents/12214/faqver3.pdf
+    sha256: 4bdf176c4af1eb33394b07b85dd6c431259399d0b1eda9f59829b2890aa2d45f
+    取得日: 2026-11-03
+    サイズ: 494979
+    最終更新: Wed, 30 Sep 2026 15:00:07 GMT
+    ページ数: 21
+    文字にした日: 2026-11-03
+  - ファイル名: ryuiten.pdf
+    名前: 産業廃棄物収集運搬業に係る留意点
+    役割: 手引きの補足
+    url: https://www.pref.miyagi.jp/documents/12214/ryuiten.pdf
+    sha256: 2d8a65489c9266d77d147004d47009f18f93888bb1be048911921561743885a0
+    取得日: 2026-11-03
+    サイズ: 80819
+    最終更新: Tue, 07 Apr 2026 02:30:03 GMT
+    ページ数: 1
+    文字にした日: 2026-11-03
+  - ファイル名: tebiki_normal-henkou.pdf
+    名前: 事業範囲変更許可申請の手引き
+    役割: 実質の手引き
+    url: https://www.pref.miyagi.jp/documents/12214/tebiki_normal-henkou.pdf
+    sha256: e7e1e76785d8785d13ddd1513cbfd82bb6c670402021b8381cdc7cef9a2d169d
+    取得日: 2026-11-03
+    サイズ: 982621
+    最終更新: Mon, 05 Oct 2026 05:45:04 GMT
+    ページ数: 22
+    文字にした日: 2026-11-03
+  - ファイル名: tebiki_normal-shinki-koushin.pdf
+    名前: 新規・更新許可申請の手引き
+    役割: 実質の手引き
+    url: https://www.pref.miyagi.jp/documents/12214/tebiki_normal-shinki-koushin.pdf
+    sha256: 3f7d997bb8bb3e9720c1f074f8b463753f08066ca391748f31b0afb004ac8b44
+    取得日: 2026-11-03
+    サイズ: 1099616
+    最終更新: Mon, 05 Oct 2026 05:45:04 GMT
+    ページ数: 23
+    文字にした日: 2026-11-03
+入口の文書一覧:
+  確認日: 2026-11-03
+  リンク:
+    - 名前: 新規・更新許可申請の手引き（PDF：1,074KB）
+      url: https://www.pref.miyagi.jp/documents/12214/tebiki_normal-shinki-koushin.pdf
+    - 名前: 申請用紙 （新規・更新共通） （ワード：28KB）
+      url: https://www.pref.miyagi.jp/documents/12214/youshiki6_shiniki-koushin.docx
+    - 名前: 添付書類は全申請共通 （ワード：55KB）
+      url: https://www.pref.miyagi.jp/documents/12214/tenpushorui.docx
+    - 名前: 別表1（エクセル：16KB）
+      url: https://www.pref.miyagi.jp/documents/12214/01beppyou.xlsx
+    - 名前: 事業範囲変更許可申請の手引き（PDF：960KB）
+      url: https://www.pref.miyagi.jp/documents/12214/tebiki_normal-henkou.pdf
+    - 名前: 申請用紙（事業範囲の変更）（ワード：28KB）
+      url: https://www.pref.miyagi.jp/documents/12214/youshiki10_jigyou-henkou.docx
+    - 名前: （特別管理）新規・更新許可申請の手引き（PDF：1,106KB）
+      url: https://www.pref.miyagi.jp/documents/12214/tebiki_special-shinki-koushin.pdf
+    - 名前: （特管）許可申請用紙 （新規・更新共通） （ワード：37KB）
+      url: https://www.pref.miyagi.jp/documents/12214/youshiki12_shiniki-koushin.docx
+    - 名前: （特別管理）事業範囲変更許可申請の手引き（PDF：992KB）
+      url: https://www.pref.miyagi.jp/documents/12214/tebiki_special-henkou.pdf
+    - 名前: （特管）許可申請用紙 （事業範囲の変更） （ワード：36KB）
+      url: https://www.pref.miyagi.jp/documents/12214/youshiki16_jigyou-henkou.docx
+    - 名前: 産業廃棄物収集運搬業に係る留意点（PDF：79KB）
+      url: https://www.pref.miyagi.jp/documents/12214/ryuiten.pdf
+    - 名前: 変更届出書（様式第十一号）（ワード：34KB）
+      url: https://www.pref.miyagi.jp/documents/12214/normaltodokede.docx
+    - 名前: 添付書類、記載例（PDF：566KB）
+      url: https://www.pref.miyagi.jp/documents/12214/normaltodoke-kisairei.pdf
+    - 名前: 変更届出書（様式第十七号）（ワード：34KB）
+      url: https://www.pref.miyagi.jp/documents/12214/specialtodokede.docx
+    - 名前: 添付書類、記載例（PDF：430KB）
+      url: https://www.pref.miyagi.jp/documents/12214/specialtodoke-kisairei.pdf
+    - 名前: 収集運搬業FAQ（PDF：484KB）
+      url: https://www.pref.miyagi.jp/documents/12214/faqver3.pdf
+    - 名前: 産業廃棄物を運搬する車両の重複登録禁止について（PDF：244KB）
+      url: https://www.pref.miyagi.jp/documents/12214/333699.pdf
+鮮度確認日: 2026-11-03

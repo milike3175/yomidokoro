@@ -1,0 +1,43 @@
+許可権者: { コード: "18", 名前: 福井県 }
+許認可: 産廃収集運搬
+入口: https://www.pref.fukui.lg.jp/doc/junkan/kyokasyurui.html
+担当: 循環社会推進課
+手引き: 一冊ものの手引きは無い（代替）。収集運搬業の許可申請書と添付書類の記入例
+取得日: 2026-11-03
+取り寄せ:
+  - { url: "https://www.pref.fukui.lg.jp/doc/junkan/kyokasyurui_d/fil/01_syuuun_rei.pdf", 名前: 収集運搬業 許可申請書の記入例, 役割: 記載例 }
+  - { url: "https://www.pref.fukui.lg.jp/doc/junkan/kyokasyurui_d/fil/02_syuuun_tenpu_rei.pdf", 名前: 収集運搬業 添付書類の記入例, 役割: 記載例 }
+利用規約: 独自規約・要許諾型（https://www.pref.fukui.lg.jp/doc/dx-suishin/intro.html）。引用は可。本体は手元だけに置く
+ファイル:
+  - ファイル名: 01_syuuun_rei.pdf
+    名前: 収集運搬業 許可申請書の記入例
+    役割: 記載例
+    url: https://www.pref.fukui.lg.jp/doc/junkan/kyokasyurui_d/fil/01_syuuun_rei.pdf
+    sha256: 083a9d1bbaa3151f0beeee4880f67dc7a9a9d395c313fcc7f1f875842e53777e
+    取得日: 2026-11-03
+    サイズ: 311652
+    最終更新: Mon, 26 Oct 2026 04:11:36 GMT
+    ページ数: 5
+    文字にした日: 2026-11-03
+  - ファイル名: 02_syuuun_tenpu_rei.pdf
+    名前: 収集運搬業 添付書類の記入例
+    役割: 記載例
+    url: https://www.pref.fukui.lg.jp/doc/junkan/kyokasyurui_d/fil/02_syuuun_tenpu_rei.pdf
+    sha256: 1747e1012d252ee9f7ccae99c8999c14765d96c6d39cd816d062c71d2e61b515
+    取得日: 2026-11-03
+    サイズ: 666862
+    最終更新: Mon, 26 Oct 2026 04:11:37 GMT
+    ページ数: 21
+    文字にした日: 2026-11-03
+入口の文書一覧:
+  確認日: 2026-11-03
+  リンク:
+    - 名前: 許可申請書
+      url: https://www.pref.fukui.lg.jp/doc/junkan/kyokasyurui_d/fil/01_syuuun_rei.pdf
+    - 名前: 添付書類
+      url: https://www.pref.fukui.lg.jp/doc/junkan/kyokasyurui_d/fil/02_syuuun_tenpu_rei.pdf
+    - 名前: 許可申請書
+      url: https://www.pref.fukui.lg.jp/doc/junkan/kyokasyurui_d/fil/03_syobun_rei.pdf
+    - 名前: 添付書類
+      url: https://www.pref.fukui.lg.jp/doc/junkan/kyokasyurui_d/fil/04_syobun_tenpu_rei.pdf
+鮮度確認日: 2026-11-03

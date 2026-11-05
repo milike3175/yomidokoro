@@ -1,0 +1,76 @@
+許可権者: { コード: "44", 名前: 大分県 }
+許認可: 産廃収集運搬
+入口: https://www.pref.oita.jp/soshiki/13400/gyoukyoka2018.html
+担当: 循環社会推進課
+手引き: 一冊ものの手引きは無い（代替）。申請の手順、必要書類一覧表、新規・更新許可申請記載例
+取得日: 2026-11-03
+取り寄せ:
+  - { url: "https://www.pref.oita.jp/uploaded/attachment/2078325.pdf", 名前: 申請の手順について, 役割: 実質の手引き }
+  - { url: "https://www.pref.oita.jp/uploaded/attachment/2257302.pdf", 名前: 必要書類一覧表（収集運搬業）, 役割: 添付書類一覧 }
+  - { url: "https://www.pref.oita.jp/uploaded/attachment/2230111.pdf", 名前: 新規・更新許可申請記載例（収集運搬業）, 役割: 記載例 }
+利用規約: 独自規約・要許諾型（https://www.pref.oita.jp/site/userguide/menseki.html）。引用は可。本体は手元だけに置く
+ファイル:
+  - ファイル名: 2078325.pdf
+    名前: 申請の手順について
+    役割: 実質の手引き
+    url: https://www.pref.oita.jp/uploaded/attachment/2078325.pdf
+    sha256: ecf127d5c60d84c4c7669812377c1e6d990652eb72773709954b3e3dfda947f5
+    取得日: 2026-11-03
+    サイズ: 140709
+    最終更新: Mon, 29 May 2023 04:46:25 GMT
+    ページ数: 1
+    文字にした日: 2026-11-03
+  - ファイル名: 2230111.pdf
+    名前: 新規・更新許可申請記載例（収集運搬業）
+    役割: 記載例
+    url: https://www.pref.oita.jp/uploaded/attachment/2230111.pdf
+    sha256: d63703a73732ee7cd5a6db19bd13b0584da4f8e6189573299bee5b8acead23d6
+    取得日: 2026-11-03
+    サイズ: 817176
+    最終更新: Wed, 16 Jul 2025 05:17:20 GMT
+    ページ数: 17
+    文字にした日: 2026-11-03
+  - ファイル名: 2257302.pdf
+    名前: 必要書類一覧表（収集運搬業）
+    役割: 添付書類一覧
+    url: https://www.pref.oita.jp/uploaded/attachment/2257302.pdf
+    sha256: 06502af120955b6f632b65abd9754d885237b5fd07f7174bf3723d7d55e1ced3
+    取得日: 2026-11-03
+    サイズ: 168286
+    最終更新: Fri, 19 Dec 2025 05:02:23 GMT
+    ページ数: 2
+    文字にした日: 2026-11-03
+入口の文書一覧:
+  確認日: 2026-11-03
+  リンク:
+    - 名前: 繰上げ許可に関する取扱要領 [PDFファイル／60KB]
+      url: https://www.pref.oita.jp/uploaded/attachment/2195880.pdf
+    - 名前: （別添様式）繰上げ許可願い書 [Wordファイル／17KB]
+      url: https://www.pref.oita.jp/uploaded/attachment/2195881.docx
+    - 名前: 申請の手順について [PDFファイル／138KB]
+      url: https://www.pref.oita.jp/uploaded/attachment/2078325.pdf
+    - 名前: （参考様式）省略添付書類一覧表 [Wordファイル／16KB]
+      url: https://www.pref.oita.jp/uploaded/attachment/2195933.docx
+    - 名前: (参考様式）添付書類省略（登記事項証明書） [Wordファイル／21KB]
+      url: https://www.pref.oita.jp/uploaded/attachment/2234007.docx
+    - 名前: 成年被後見人等の権利の制限に係る措置の適正化を図るための関係法律の整備に関する法律等の施行について(通知) [PDFファイル／72KB]
+      url: https://www.pref.oita.jp/uploaded/life/2291452_4429517_misc.pdf
+    - 名前: 営業実績が3年以上ある場合 [PDFファイル／96KB]
+      url: https://www.pref.oita.jp/uploaded/attachment/2109780.pdf
+    - 名前: 営業実績が3年未満の場合 [PDFファイル／82KB]
+      url: https://www.pref.oita.jp/uploaded/attachment/2109781.pdf
+    - 名前: （様式１）経理的基礎を有することの説明書 [Wordファイル／19KB]
+      url: https://www.pref.oita.jp/uploaded/life/2291452_4429508_misc.docx
+    - 名前: （様式２）長期財務計画 [Excelファイル／55KB]
+      url: https://www.pref.oita.jp/uploaded/life/2291452_4429509_misc.xls
+    - 名前: 診断書について
+      url: https://www.pref.oita.jp/uploaded/attachment/2109719.pdf
+    - 名前: 「産業廃棄物処理業及び特別管理産業廃棄物処理業並びに産業廃棄物処理施設の許可事務等の取扱いについて」（R2月3日.30環循規発第2003301号環境省環境再生・資源循環局廃棄物規制課長通知） [PDFファイル／313KB]
+      url: https://www.pref.oita.jp/uploaded/attachment/2109541.pdf
+    - 名前: 「行政処分の指針について」（R3月4日.14環境省環境再生・資源循環局廃棄物規制課長通知） [PDFファイル／682KB]
+      url: https://www.pref.oita.jp/uploaded/attachment/2173683.pdf
+    - 名前: 欠格要件該当届出 [Wordファイル／22KB]
+      url: https://www.pref.oita.jp/uploaded/attachment/2067506.docx
+    - 名前: 屋号併記願い [Wordファイル／30KB]
+      url: https://www.pref.oita.jp/uploaded/life/2291452_4429518_misc.doc
+鮮度確認日: 2026-11-03

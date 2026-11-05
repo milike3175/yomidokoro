@@ -1,0 +1,114 @@
+許可権者: { コード: "13", 名前: 東京都 }
+許認可: 産廃収集運搬
+入口: https://www.kankyo.metro.tokyo.lg.jp/resource/industrial_waste/on_processor/license_application
+担当: 環境局 資源循環推進部 産業廃棄物対策課
+手引き: 「手引き・様式」が新規・更新用と変更許可用の2冊（表紙で令和5年11月）。変更届・廃止届は別冊（今回は取らない）
+# 都のファイルURLは拡張子が無い（.../01_xxx-pdf）。2026-11-03 から npm run 取得 が応答の中身（%PDF）で形式を決め、
+# 末尾の -pdf を外して .pdf を付けて置く。入口ページの文書一覧も、リンクの文字「（PDF：○KB）」と中身で拾う
+取得日: 2026-11-03
+文書:
+  - { 名前: 01_syuun_shinki_koushin, 版: 令和5年11月, 役割: 実質の手引き }
+  - { 名前: 02_sanpaishuuun_henkou, 版: 令和5年11月, 役割: 実質の手引き }
+取り寄せ:
+  - { url: https://www.kankyo.metro.tokyo.lg.jp/documents/d/kankyo/01_syuun_shinki_koushin_0511-pdf, 名前: 許可申請の手引（新規・更新許可申請用）, 役割: 実質の手引き, 版: 令和5年11月 }
+  - { url: https://www.kankyo.metro.tokyo.lg.jp/documents/d/kankyo/02_sanpaishuuun_henkou_0511, 名前: 許可申請の手引（変更許可申請用）, 役割: 実質の手引き, 版: 令和5年11月 }
+利用規約: 独自規約・要許諾型（https://www.kankyo.metro.tokyo.lg.jp/policy/）。引用は可。本体は手元だけに置く
+ファイル:
+  - ファイル名: 01_syuun_shinki_koushin_0511.pdf
+    名前: 許可申請の手引（新規・更新許可申請用）
+    役割: 実質の手引き
+    版: 令和5年11月
+    url: https://www.kankyo.metro.tokyo.lg.jp/documents/d/kankyo/01_syuun_shinki_koushin_0511-pdf
+    sha256: 753d84a0192cd5a9296b945600a4292d95eca98436665e478baad553967c12d9
+    取得日: 2026-11-03
+    サイズ: 1702461
+    最終更新: Thu, 18 Jan 2024 09:20:45 GMT
+    ページ数: 50
+    文字にした日: 2026-11-03
+  - ファイル名: 02_sanpaishuuun_henkou_0511.pdf
+    名前: 許可申請の手引（変更許可申請用）
+    役割: 実質の手引き
+    版: 令和5年11月
+    url: https://www.kankyo.metro.tokyo.lg.jp/documents/d/kankyo/02_sanpaishuuun_henkou_0511
+    sha256: 6d2b4fd42bf6ce3d2374e17e6530d7c4801e5e26825fb1439b159e221733a1c2
+    取得日: 2026-11-03
+    サイズ: 1534179
+    最終更新: Thu, 18 Jan 2024 09:20:44 GMT
+    ページ数: 50
+    文字にした日: 2026-11-03
+入口の文書一覧:
+  確認日: 2026-11-03
+  リンク:
+    - 名前: お知らせ
+      url: https://www.kankyo.metro.tokyo.lg.jp/documents/d/kankyo/-34
+    - 名前: 郵送申請の流れ（ワード：23KB）
+      url: https://www.kankyo.metro.tokyo.lg.jp/documents/d/kankyo/on_processor-license_application-files-sinseinagare2
+    - 名前: チェックリスト（ワード：24KB）
+      url: https://www.kankyo.metro.tokyo.lg.jp/documents/d/kankyo/-17
+    - 名前: 郵送申請の流れ（ワード：21KB）
+      url: https://www.kankyo.metro.tokyo.lg.jp/documents/d/kankyo/2026-07-02-171501-460
+    - 名前: チェックリスト
+      url: https://www.kankyo.metro.tokyo.lg.jp/documents/d/kankyo/clist
+    - 名前: こちら（PDF：34KB）
+      url: https://www.kankyo.metro.tokyo.lg.jp/documents/d/kankyo/on_processor-license_application-files-zyuryousyou
+    - 名前: こちら（PDF：212KB）
+      url: https://www.kankyo.metro.tokyo.lg.jp/documents/d/kankyo/on_processor-license_application-files-ishiwata-odei
+    - 名前: 手引き・様式（PDF：1,662KB）
+      url: https://www.kankyo.metro.tokyo.lg.jp/documents/d/kankyo/01_syuun_shinki_koushin_0511-pdf
+    - 名前: 様式（ワード：256KB）
+      url: https://www.kankyo.metro.tokyo.lg.jp/documents/d/kankyo/on_processor-license_application-files-01_sanpai_syuuun_sinki_kousin0503
+    - 名前: 手引き・様式（PDF：1,498KB）
+      url: https://www.kankyo.metro.tokyo.lg.jp/documents/d/kankyo/02_sanpaishuuun_henkou_0511
+    - 名前: 様式（ワード：255KB）
+      url: https://www.kankyo.metro.tokyo.lg.jp/documents/d/kankyo/on_processor-license_application-files-02_sanpai_syuuun_henkou0503
+    - 名前: 手引き・様式（PDF：1,440KB）
+      url: https://www.kankyo.metro.tokyo.lg.jp/documents/d/kankyo/on_processor-license_application-files-03_tokkann_sinki_kousin022
+    - 名前: 様式（ワード：297KB）
+      url: https://www.kankyo.metro.tokyo.lg.jp/documents/d/kankyo/on_processor-license_application-files-03_tokkan_syuuun_sinki_kousin0503
+    - 名前: 手引き・様式（PDF：1,543KB）
+      url: https://www.kankyo.metro.tokyo.lg.jp/documents/d/kankyo/04_tokkan_shuuun_henkou_0511
+    - 名前: 様式（ワード：298KB）
+      url: https://www.kankyo.metro.tokyo.lg.jp/documents/d/kankyo/on_processor-license_application-files-04_tokkan_syuuun_henkou0503
+    - 名前: 手引き・様式（PDF：1,250KB）
+      url: https://www.kankyo.metro.tokyo.lg.jp/documents/d/kankyo/on_processor-license_application-files-r3_jizen_tsumiho-1
+    - 名前: 様式（ワード：81KB）
+      url: https://www.kankyo.metro.tokyo.lg.jp/documents/d/kankyo/on_processor-license_application-files-r3_jizen_tsumiho
+    - 名前: 手引き・様式（PDF：1,421KB）
+      url: https://www.kankyo.metro.tokyo.lg.jp/documents/d/kankyo/on_processor-license_application-files-r3-4jizenkeikakusyo_syobun-1
+    - 名前: 様式（ワード：100KB）
+      url: https://www.kankyo.metro.tokyo.lg.jp/documents/d/kankyo/on_processor-license_application-files-r3-4jizenkeikakusyo_syobun
+    - 名前: こちら（PDF：120KB）
+      url: https://www.kankyo.metro.tokyo.lg.jp/documents/d/kankyo/on_processor-license_application-files-syouryakusyorui_itiran
+    - 名前: 手引き・様式（PDF：1,357KB）
+      url: https://www.kankyo.metro.tokyo.lg.jp/documents/d/kankyo/on_processor-license_application-files-05_syobun_sinki_kousin022
+    - 名前: 様式（ワード：271KB）
+      url: https://www.kankyo.metro.tokyo.lg.jp/documents/d/kankyo/on_processor-license_application-files-05_sanpai_syobun_sinki_kousin
+    - 名前: 手引き・様式（PDF：1,097KB）
+      url: https://www.kankyo.metro.tokyo.lg.jp/documents/d/kankyo/on_processor-license_application-files-06_syobun_henkou022
+    - 名前: 様式（ワード：267KB）
+      url: https://www.kankyo.metro.tokyo.lg.jp/documents/d/kankyo/on_processor-license_application-files-06_sanpai_syobun_henkou
+    - 名前: 手引き・様式（PDF：1,300KB）
+      url: https://www.kankyo.metro.tokyo.lg.jp/documents/d/kankyo/on_processor-license_application-files-07_tokkan_syobun_sinnki_kousin02
+    - 名前: 様式（ワード：316KB）
+      url: https://www.kankyo.metro.tokyo.lg.jp/documents/d/kankyo/on_processor-license_application-files-07_tokkan_syobun_sinki_kousin
+    - 名前: 手引き・様式（PDF：1,294KB）
+      url: https://www.kankyo.metro.tokyo.lg.jp/documents/d/kankyo/on_processor-license_application-files-08_tokkan_syobun_henkou02
+    - 名前: 様式（ワード：320KB）
+      url: https://www.kankyo.metro.tokyo.lg.jp/documents/d/kankyo/on_processor-license_application-files-08_tokkan_syobun_henkou
+    - 名前: 手引き・様式（PDF：1,156KB）
+      url: https://www.kankyo.metro.tokyo.lg.jp/documents/d/kankyo/henkou_haisi
+    - 名前: 様式（ワード：59KB）
+      url: https://www.kankyo.metro.tokyo.lg.jp/documents/d/kankyo/on_processor-license_application-files-11henkoutodoke
+    - 名前: 手引き・様式（PDF：718KB）
+      url: https://www.kankyo.metro.tokyo.lg.jp/documents/d/kankyo/yuuryouninntei-1
+    - 名前: 様式（ワード：114KB）
+      url: https://www.kankyo.metro.tokyo.lg.jp/documents/d/kankyo/on_processor-license_application-files-09_yuuryou_youshiki
+    - 名前: 手引き・様式（PDF：870KB）
+      url: https://www.kankyo.metro.tokyo.lg.jp/documents/d/kankyo/on_processor-license_application-files-12_tokureininteitebiki
+    - 名前: 様式（ワード：45KB）
+      url: https://www.kankyo.metro.tokyo.lg.jp/documents/d/kankyo/on_processor-license_application-files-12_tokureinintei_yousiki
+    - 名前: 特例認定三段対照表（法律・施行令・施工規則）（PDF：325KB）
+      url: https://www.kankyo.metro.tokyo.lg.jp/documents/d/kankyo/on_processor-license_application-files-nintei_taisyo
+    - 名前: 手続きの流れ（PDF：92KB）
+      url: https://www.kankyo.metro.tokyo.lg.jp/documents/d/kankyo/on_processor-license_application-files-flow_institution
+鮮度確認日: 2026-11-03

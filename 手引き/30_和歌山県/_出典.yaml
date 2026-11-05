@@ -1,0 +1,113 @@
+許可権者: { コード: "30", 名前: 和歌山県 }
+許認可: 産廃収集運搬
+入口: https://www.pref.wakayama.lg.jp/prefg/031800/032200/syu-un.html
+# 出典候補表の入口（電子申請の案内 d00221918.html）は手引きへのリンクが1本だけなので、文書が並ぶ syu-un.html を入口にした
+担当: 環境生活部 環境政策局 循環型社会推進課
+手引き: 申請の手引（表紙に「令和８年１１月２日」。11/2 に取ったファイルで確認。候補表の時点では８月３日の版だった）と様式記載例
+取得日: 2026-11-02
+取り寄せ:
+  - { url: "https://www.pref.wakayama.lg.jp/prefg/031800/032200/syu-un_d/fil/shinseitebiki.pdf", 名前: 申請の手引, 役割: 実質の手引き, 版: 令和8年11月2日 }
+  # 出典候補表の yousiki_kisairei.pdf は 404（2026-11-02）。入口ページの今のリンク yousiki_kisaire.pdf に差し替えた
+  - { url: "https://www.pref.wakayama.lg.jp/prefg/031800/032200/syu-un_d/fil/yousiki_kisaire.pdf", 名前: 様式（第1面～第10面）及び別紙3～4記載例, 役割: 記載例 }
+  - { url: "https://www.pref.wakayama.lg.jp/prefg/031800/032200/syu-un_d/fil/shinseisho_kisairei.pdf", 名前: 申請書記載例, 役割: 記載例 }
+  - { url: "https://www.pref.wakayama.lg.jp/prefg/031800/032200/syu-un_d/fil/syu-un-outline.pdf", 名前: 許可申請・届出の概要（積替保管を含まない）, 役割: 手引きの補足 }
+# 申請書の様式（npm run 取得 が 様式/ に取ってくる。本体は上げない）。元は 様式/_出典.txt（2026-11-03 タクミ）
+様式の取り寄せ:
+  - { url: "https://www.pref.wakayama.lg.jp/prefg/031800/032200/syu-un_d/fil/01futushinki20240624.docx", 名前: 産業廃棄物収集運搬業（新規）許可申請の様式 }
+  - { url: "https://www.pref.wakayama.lg.jp/prefg/031800/032200/syu-un_d/fil/jigyoukaizenkeikaku.xlsx", 名前: 事業改善計画書（債務超過等が生じている申請者用）書式1～2 }
+利用規約: 政府標準利用規約（第2.0版）同型の独自規約（https://www.pref.wakayama.lg.jp/prefg/000200/opendata/hpopendatakiyaku.html）。出典明記で再掲可。ただし本体は他県とそろえて手元だけに置く
+ファイル:
+  - ファイル名: shinseisho_kisairei.pdf
+    名前: 申請書記載例
+    役割: 記載例
+    url: https://www.pref.wakayama.lg.jp/prefg/031800/032200/syu-un_d/fil/shinseisho_kisairei.pdf
+    sha256: 194983e6a2447629db2f573944da2c23c604a0258f6e496c2eb06c5089347fc4
+    取得日: 2026-11-02
+    サイズ: 167432
+    最終更新: Fri, 30 Oct 2026 00:41:57 GMT
+    ページ数: 4
+    文字にした日: 2026-11-02
+  - ファイル名: shinseitebiki.pdf
+    名前: 申請の手引
+    役割: 実質の手引き
+    版: 令和8年11月2日
+    url: https://www.pref.wakayama.lg.jp/prefg/031800/032200/syu-un_d/fil/shinseitebiki.pdf
+    sha256: 0f32d53725270f9f1aad2e4330afc0b58de20443068b66da89ddd3465649ba3d
+    取得日: 2026-11-02
+    サイズ: 321245
+    最終更新: Fri, 30 Oct 2026 00:41:57 GMT
+    ページ数: 11
+    文字にした日: 2026-11-02
+  - ファイル名: syu-un-outline.pdf
+    名前: 許可申請・届出の概要（積替保管を含まない）
+    役割: 手引きの補足
+    url: https://www.pref.wakayama.lg.jp/prefg/031800/032200/syu-un_d/fil/syu-un-outline.pdf
+    sha256: a61801e3dcff18ff8e3040ead232d9fe4e6d536eb6755854e75bf9a24eec24cd
+    取得日: 2026-11-02
+    サイズ: 120735
+    最終更新: Fri, 30 Oct 2026 00:41:57 GMT
+    ページ数: 2
+    文字にした日: 2026-11-02
+  - ファイル名: yousiki_kisaire.pdf
+    名前: 様式（第1面～第10面）及び別紙3～4記載例
+    役割: 記載例
+    url: https://www.pref.wakayama.lg.jp/prefg/031800/032200/syu-un_d/fil/yousiki_kisaire.pdf
+    sha256: 8c859459438c6101a43632d50715a6943316d5f68b4d482f50373f979c577f19
+    取得日: 2026-11-02
+    サイズ: 389741
+    最終更新: Fri, 30 Oct 2026 00:41:59 GMT
+    ページ数: 12
+    文字にした日: 2026-11-02
+入口の文書一覧:
+  確認日: 2026-11-02
+  リンク:
+    - 名前: （特別管理）産業廃棄物収集運搬業許可申請の手引の改定について
+      url: https://www.pref.wakayama.lg.jp/prefg/031800/032200/syu-un_d/fil/shinseitebiki.pdf
+    - 名前: （特別管理）産業廃棄物収集運搬業（積替保管を含まない）に係る許可申請・届出の概要 (PDF)
+      url: https://www.pref.wakayama.lg.jp/prefg/031800/032200/syu-un_d/fil/syu-un-outline.pdf
+    - 名前: 申請書記載例（PDF）
+      url: https://www.pref.wakayama.lg.jp/prefg/031800/032200/syu-un_d/fil/shinseisho_kisairei.pdf
+    - 名前: 様式（第1面～第10面）及び別紙3～4記載例（ＰＤＦ）
+      url: https://www.pref.wakayama.lg.jp/prefg/031800/032200/syu-un_d/fil/yousiki_kisaire.pdf
+    - 名前: （特別管理）産業廃棄物収集運搬業変更届・廃止届の手引・記載例（ＰＤＦ）
+      url: https://www.pref.wakayama.lg.jp/prefg/031800/032200/syu-un_d/fil/henkotebiki.pdf
+    - 名前: 同時申請による重複書類省略の申立書
+      url: https://www.pref.wakayama.lg.jp/prefg/031800/032200/syu-un_d/fil/tyouhukumousitate.docx
+    - 名前: 産業廃棄物収集運搬業（新規）許可申請の様式
+      url: https://www.pref.wakayama.lg.jp/prefg/031800/032200/syu-un_d/fil/01futushinki20240624.docx
+    - 名前: 特別管理産業廃棄物収集運搬業（新規）許可申請の様式
+      url: https://www.pref.wakayama.lg.jp/prefg/031800/032200/syu-un_d/fil/tokkanshinki20240624.docx
+    - 名前: 産業廃棄物収集運搬業（更新）許可申請の様式
+      url: https://www.pref.wakayama.lg.jp/prefg/031800/032200/syu-un_d/fil/futusanpaikoushinshinsei.docx
+    - 名前: 特別管理産業廃棄物収集運搬業（更新）許可申請の様式
+      url: https://www.pref.wakayama.lg.jp/prefg/031800/032200/syu-un_d/fil/tokkankoushinshinsei.docx
+    - 名前: 産業廃棄物収集運搬業（変更）許可申請の様式
+      url: https://www.pref.wakayama.lg.jp/prefg/031800/032200/syu-un_d/fil/futusanpaihenkoushinsei.docx
+    - 名前: 特別管理産業廃棄物収集運搬業（変更）許可申請の様式
+      url: https://www.pref.wakayama.lg.jp/prefg/031800/032200/syu-un_d/fil/tokkanhenkoushinsei.docx
+    - 名前: 産業廃棄物収集運搬業変更届・廃止届の様式
+      url: https://www.pref.wakayama.lg.jp/prefg/031800/032200/syu-un_d/fil/futuhenkoutodoke20240624.docx
+    - 名前: 特別管理産業廃棄物収集運搬業変更届・廃止届の様式
+      url: https://www.pref.wakayama.lg.jp/prefg/031800/032200/syu-un_d/fil/tokanhenkotodoke20240624.docx
+    - 名前: 事業改善計画書（債務超過等が生じている申請者用）書式1～2（エクセルファイル）
+      url: https://www.pref.wakayama.lg.jp/prefg/031800/032200/syu-un_d/fil/jigyoukaizenkeikaku.xlsx
+    - 名前: 申請時に講習会の終了書が添付できない旨の申立書（参考様式
+      url: https://www.pref.wakayama.lg.jp/prefg/031800/032200/syu-un_d/fil/kosyukaimositate.docx
+    - 名前: PCB廃棄物収集運搬業許可申請に必要な追加書類
+      url: https://www.pref.wakayama.lg.jp/prefg/031800/032200/syu-un_d/fil/pcb_check.pdf
+鮮度確認日: 2026-11-02
+様式:
+  - ファイル名: 01futushinki20240624.docx
+    名前: 産業廃棄物収集運搬業（新規）許可申請の様式
+    url: https://www.pref.wakayama.lg.jp/prefg/031800/032200/syu-un_d/fil/01futushinki20240624.docx
+    sha256: 7a17dc195b500374cfd87acb9e0f364e8e3b5a1da8f94c1ff078c66572b0f63e
+    取得日: 2026-11-04
+    サイズ: 47667
+    最終更新: Fri, 30 Oct 2026 00:41:54 GMT
+  - ファイル名: jigyoukaizenkeikaku.xlsx
+    名前: 事業改善計画書（債務超過等が生じている申請者用）書式1～2
+    url: https://www.pref.wakayama.lg.jp/prefg/031800/032200/syu-un_d/fil/jigyoukaizenkeikaku.xlsx
+    sha256: 052c143287c2b4cbdddb700c66c56c43dbd07de69f0f88d8926b6b50d3e60ff4
+    取得日: 2026-11-04
+    サイズ: 24815
+    最終更新: Fri, 30 Oct 2026 00:41:56 GMT
