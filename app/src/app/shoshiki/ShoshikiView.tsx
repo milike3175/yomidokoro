@@ -123,7 +123,8 @@ async function docxを作る(
   const JSZip = (await import("jszip")).default;
   const r = await docxに書く(JSZip, 置.バイト, 様, 値たち, 中身, 型);
   if (!r.ok) return r;
-  const blob = new Blob([r.バイト as BlobPart], { type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document" });
+  const 型名 = 様.方式 === "セル" ? "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" : "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+  const blob = new Blob([r.バイト as BlobPart], { type: 型名 });
   return { ok: true, blob, 結果: r.結果 };
 }
 
@@ -310,7 +311,8 @@ export default function ShoshikiView({
         continue;
       }
       const 確 = r.結果.filter((y) => y.状態 === "要確認").length;
-      const 名 = `${x.様.県名}_${x.様.名前.replace(/[（(].*$/, "").slice(0, 20)}_下書き_${日}.docx`;
+      const 拡張子 = /\.xlsx$/i.test(x.様.ファイル名) ? "xlsx" : "docx";
+      const 名 = `${x.様.県名}_${x.様.名前.replace(/[（(].*$/, "").slice(0, 20)}_下書き_${日}.${拡張子}`;
       const 口 = 下書きの口();
       if (口) {
         const w = await 口.保存(名, new Uint8Array(await r.blob.arrayBuffer()));
@@ -467,11 +469,11 @@ export default function ShoshikiView({
         }}
         onClick={() => 受け口.current?.click()}
       >
-        ダウンロードした様式（docx）をここに置いてください。県ごとに何枚でも置けます。押して選ぶこともできます
+        ダウンロードした様式（Word か Excel）をここに置いてください。県ごとに何枚でも置けます。押して選ぶこともできます
         <input
           ref={受け口}
           type="file"
-          accept=".docx"
+          accept=".docx,.xlsx"
           multiple
           className={s.hidden}
           data-testid="様式の受け口"

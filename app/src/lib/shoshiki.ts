@@ -135,7 +135,13 @@ export type 様式 = {
   次と離さない?: { 見出し: string; 箱: number; 字: string }[];
   書かない: 書かない欄[];
   /** 書き方の方式。省略すると「箱」（和歌山の形）。「段落」は見出しだけの様式（山形など） */
-  方式?: "箱" | "段落";
+  方式?: "箱" | "段落" | "セル";
+  /** セルの方式：シートの鍵（第1面 など）と、zip の中のパス */
+  シート?: Record<string, string>;
+  /** セルの方式：どのセルに何を書くか */
+  セルの書く場所?: セルの書く場所[];
+  /** セルの方式：品目の並べ方 */
+  品目のセル?: 品目のセルの形;
   /** 段落の方式：本文の段落（w:p）の数 */
   段落の数?: number;
   /** 段落の方式：どこに何を書くか */
@@ -386,7 +392,7 @@ function 番号(n: number): string {
 /** 品目の選びから、様式に書く字を作る（記入と画面の見込みの両方で使う） */
 export function 品目を書き出す(様: 様式, 中身0: 申請の中身 | undefined): 品目の書き方 | null {
   const 欄 = 様.品目;
-  if (!欄) return 品目を文で書き出す(様, 中身0);
+  if (!欄) return 様.品目のセル ? 品目をセルで書き出す(様, 中身0) : 品目を文で書き出す(様, 中身0);
   const 中身 = 中身を整える(中身0, 様);
   const 表 = new Map(品目たち.map((h) => [h.id, h]));
   const 要確認: string[] = [];
@@ -1391,6 +1397,7 @@ export async function docxに書く(
   型?: 書き方の型 | null,
 ): Promise<{ ok: true; バイト: Uint8Array; 結果: 欄の結果[] } | { ok: false; 理由: string }> {
   const zip = await JSZip.loadAsync(バイト);
+  if (様.方式 === "セル") return セルの様式に書く(zip, 様, 値たち, 中身);
   const entry = zip.file(様.本文);
   if (!entry) return { ok: false, 理由: `${様.本文} が見つかりません` };
   const 元 = await entry.async("uint8array");
@@ -1548,4 +1555,140 @@ function 段落で記入する(本文: string, 様: 様式, 値たち: 値, 中�
   let out = 本文;
   for (const c of 変えたち) out = out.slice(0, c.始め) + c.字 + out.slice(c.終わり);
   return { ok: true, 本文: out, 結果 };
+}
+
+// ================ セルの方式（Excel の様式。奈良の申請様式など） ================
+// 書く前に、セルの元の形（<c r="G9" s="364"/> など、まるごと）が対応表のとおりかを確かめる。違えば何も書かない。
+// 字は inlineStr で書く（共有の字の表は触らない）。書式（s）はそのまま残す。
+
+export type セルの書く場所 = {
+  見出し: string;
+  種類: "セル";
+  /** 様式.シート の鍵（第1面 など） */
+  シート: string;
+  セル: string;
+  /** セルの元の形（まるごと） */
+  元: string;
+  /** 字。{id} は値、{品目.並び}・{品目.数}・{石綿.含む除く}・{水銀使用製品.含む除く}・{水銀含有ばいじん等.含む除く} は品目から作る */
+  字: string;
+  /** 数として書く（以上 N 種類 の N） */
+  数?: boolean;
+  注?: string;
+};
+
+/** 品目の並び（奈良の申請書記載例 p1：「1、廃プラスチック　2、紙くず」） */
+export type 品目のセルの形 = { 札: string; 区切り: string; 要確認?: string[] };
+
+function 品目の札たち(様: 様式, 中身0: 申請の中身 | undefined): { 並び: string; 数: string; 含む: Record<string, string>; 要確認: string[] } {
+  const 形 = 様.品目のセル;
+  const 中身 = 中身を整える(中身0, 様);
+  const 選 = 中身.品目;
+  const 表 = new Map(品目たち.map((h) => [h.id, h]));
+  if (!形 || 選.length === 0) return { 並び: "", 数: "", 含む: {}, 要確認: [] };
+  const 並び = 選.map((x, i) => 型に差す(形.札, { 番号: 全角に(String(i + 1)), 名前: 表.get(x.id)!.名前 })).join(形.区切り);
+  const 含むか2 = (v: 含み | undefined) => v === "両方" || v === "だけ";
+  const 含む = {
+    "石綿.含む除く": 選.some((x) => 含むか2(x.石綿)) ? "含む" : "除く",
+    "水銀使用製品.含む除く": 選.some((x) => x.水銀使用製品) ? "含む" : "除く",
+    "水銀含有ばいじん等.含む除く": 選.some((x) => 含むか2(x.水銀含有ばいじん等)) ? "含む" : "除く",
+  };
+  const 要確認 = [...(形.要確認 ?? [])];
+  if (中身.積替保管 === "有") 要確認.push(`積替保管「有」：${様.県名}の様式は「業務の種類」を積み替え・保管を含むものに選び直し、積替え又は保管の欄を書く必要があります。道具では書いていません`);
+  return { 並び, 数: String(選.length), 含む, 要確認 };
+}
+
+/** セルの方式で、シートの XML たちに書く。戻りはシートの鍵ごとの新しい XML */
+export function セルに記入する(
+  シートたち: Record<string, string>,
+  様: 様式,
+  値たち: 値,
+  中身0?: 申請の中身,
+): { ok: true; シートたち: Record<string, string>; 結果: 欄の結果[] } | { ok: false; 理由: string } {
+  const v: Record<string, string> = {};
+  for (const [k, x] of Object.entries(値たち)) v[k] = 全角に((x ?? "").trim());
+  const 住 = 住所を割る(値たち["住所"] ?? "");
+  v["住所.〒"] = 住.郵便;
+  v["住所.本体"] = 全角に(住.本体);
+  const 品 = 品目の札たち(様, 中身0);
+  v["品目.並び"] = 品.並び;
+  v["品目.数"] = 品.数;
+  Object.assign(v, 品.含む);
+  const 選んだ = (中身0?.品目.length ?? 0) > 0;
+
+  const out = { ...シートたち };
+  const 結果: 欄の結果[] = [];
+  for (const w of 様.セルの書く場所 ?? []) {
+    const xml = out[w.シート];
+    if (xml === undefined) return { ok: false, 理由: `${w.見出し}：シート「${w.シート}」が見つかりません。書きません` };
+    if (xml.split(w.元).length !== 2) return { ok: false, 理由: `${w.見出し}：セル ${w.セル} の元の形が様式と違います。別の版の様式かもしれないので書きません` };
+    // 字の中の値がどれも空なら書かない（品目の字は品目を選んだときだけ）
+    const 鍵たち = [...w.字.matchAll(/\{([^{}]+)\}/g)].map((m) => m[1]);
+    const 品目の字 = 鍵たち.some((k) => /^(品目|石綿|水銀)/.test(k));
+    if ((鍵たち.length > 0 && 鍵たち.every((k) => !v[k])) || (品目の字 && !選んだ) || (鍵たち.length === 0 && !選んだ)) {
+      結果.push({ id: w.見出し, 見出し: w.見出し, 状態: "空", 説明: [] });
+      continue;
+    }
+    const 字 = w.字.replace(/\{([^{}]+)\}/g, (_m, k: string) => v[k] ?? "");
+    // 元の開きタグの属性（r・s・ph など）を残し、型（t）だけ付け替える
+    const 頭 = (/^<c\b[^>]*?(?=\/?>)/.exec(w.元)?.[0] ?? `<c r="${w.セル}"`).replace(/\s+t="[^"]*"/, "");
+    const 新 = w.数 && /^\d+$/.test(字) ? `${頭}><v>${字}</v></c>` : `${頭} t="inlineStr"><is><t xml:space="preserve">${esc(字)}</t></is></c>`;
+    out[w.シート] = xml.replace(w.元, 新);
+    const 説明 = [...(w.注 ? [w.注] : []), ...(品目の字 && w.字.includes("{品目.並び}") ? 品.要確認 : [])];
+    結果.push({ id: w.見出し, 見出し: w.見出し, 状態: 説明.length ? "要確認" : "書いた", 説明 });
+  }
+  return { ok: true, シートたち: out, 結果 };
+}
+
+/** 画面の見込み：セルの方式の「事業の範囲」に書く字 */
+export function 品目をセルで書き出す(様: 様式, 中身0: 申請の中身 | undefined): 品目の書き方 | null {
+  if (!様.品目のセル) return null;
+  const 品 = 品目の札たち(様, 中身0);
+  if (!品.並び) return { 行たち: [], あふれ: [], 石綿の番号: "", 水銀含有ばいじん等の番号: "", 丸: [], 表の行: [], 表のあふれ: [], 要確認: [] };
+  const 行たち = [
+    "（１）業務の種類　収集運搬業（積み替え・保管を含まない）",
+    "（２）取り扱う産業廃棄物の種類",
+    品.並び,
+    `石綿含有産業廃棄物を　${品.含む["石綿.含む除く"]}`,
+    `水銀使用製品産業廃棄物を　${品.含む["水銀使用製品.含む除く"]}`,
+    `水銀含有ばいじん等を　${品.含む["水銀含有ばいじん等.含む除く"]}　　以上　${全角に(品.数)}　種類`,
+  ];
+  return { 行たち, あふれ: [], 石綿の番号: "", 水銀含有ばいじん等の番号: "", 丸: [], 表の行: [], 表のあふれ: [], 要確認: 品.要確認 };
+}
+
+async function セルの様式に書く(
+  zip: Awaited<ReturnType<JSZipの形["loadAsync"]>>,
+  様: 様式,
+  値たち: 値,
+  中身?: 申請の中身,
+): Promise<{ ok: true; バイト: Uint8Array; 結果: 欄の結果[] } | { ok: false; 理由: string }> {
+  const シートたち: Record<string, string> = {};
+  const 元のバイト: Record<string, Uint8Array> = {};
+  for (const [鍵, パス] of Object.entries(様.シート ?? {})) {
+    const e = zip.file(パス);
+    if (!e) return { ok: false, 理由: `${パス} が見つかりません。別の版の様式かもしれないので書きません` };
+    const b = await e.async("uint8array");
+    const t = new TextDecoder("utf-8", { fatal: true }).decode(b);
+    const 戻し = new TextEncoder().encode(t);
+    if (戻し.length !== b.length || 戻し.some((x, i) => x !== b[i])) return { ok: false, 理由: `${パス} を文字にして戻すと元と同じになりません。書きません` };
+    シートたち[鍵] = t;
+    元のバイト[鍵] = b;
+  }
+  const r = セルに記入する(シートたち, 様, 値たち, 中身);
+  if (!r.ok) return r;
+  const 名前の並び = Object.keys(zip.files);
+  for (const [鍵, パス] of Object.entries(様.シート ?? {})) {
+    if (r.シートたち[鍵] === シートたち[鍵]) continue;
+    const e = zip.file(パス)!;
+    zip.file(パス, new TextEncoder().encode(r.シートたち[鍵]), {
+      binary: true,
+      date: e.date,
+      compression: "DEFLATE",
+      unixPermissions: e.unixPermissions,
+      dosPermissions: e.dosPermissions,
+      createFolders: false,
+    });
+  }
+  if (Object.keys(zip.files).join("\n") !== 名前の並び.join("\n")) return { ok: false, 理由: "zip の中のファイルの並びが変わりました。書きません" };
+  const out = await zip.generateAsync({ type: "uint8array", compression: "DEFLATE", platform: "DOS" });
+  return { ok: true, バイト: out, 結果: r.結果 };
 }

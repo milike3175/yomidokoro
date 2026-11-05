@@ -1,4 +1,4 @@
-// 申請書の下書き（docx）を、このパソコンの「書類」フォルダの よみどころ_下書き/ に置く。
+// 申請書の下書き（docx・xlsx）を、このパソコンの「書類」フォルダの よみどころ_下書き/ に置く。
 // 置き場：Windows はドキュメント\よみどころ_下書き、Mac は 書類/よみどころ_下書き
 // 画面から来たファイル名は信用しない。フォルダの外を指せないよう、名前だけを取り出して使う。上書きしない。
 // 中身は記録（launch-log.txt）にも書かない。
@@ -19,16 +19,18 @@ function 名前を整える(名) {
   let n = path.basename(String(名 ?? "")).normalize("NFC");
   n = n.replace(/[\u0000-\u001f<>:"/\\|?*]/g, "_").replace(/[. ]+$/, "").trim();
   if (!n) return null;
-  if (!/\.docx$/i.test(n)) n += ".docx";
-  if (n.length > 120) n = n.slice(0, 115) + ".docx";
+  if (!/\.(docx|xlsx)$/i.test(n)) n += ".docx";
+  const 拡 = n.slice(-5);
+  if (n.length > 120) n = n.slice(0, 115) + 拡;
   return n;
 }
 
 function 空いた名前(d, n) {
   if (!fs.existsSync(path.join(d, n))) return n;
-  const 元 = n.replace(/\.docx$/i, "");
+  const 拡 = n.slice(-5);
+  const 元 = n.slice(0, -5);
   for (let i = 2; i < 1000; i++) {
-    const c = `${元}_${i}.docx`;
+    const c = `${元}_${i}${拡}`;
     if (!fs.existsSync(path.join(d, c))) return c;
   }
   return null;

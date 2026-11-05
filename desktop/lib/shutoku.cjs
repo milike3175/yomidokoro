@@ -35,6 +35,16 @@ const 様式の目録 = {
     ファイル名: "yo6-r060226.docx",
     対応表: "06_山形_様式第六号.yaml",
   },
+  // 2026-11-05：奈良の申請様式（普通産廃、Excel）
+  "29": {
+    県名: "奈良県",
+    短い名前: "申請様式（普通産廃）",
+    名前: "産業廃棄物収集運搬業許可申請書（申請様式・普通産廃）",
+    url: "https://www.pref.nara.lg.jp/documents/924/20260122101422.xlsx",
+    入口: "https://www.pref.nara.lg.jp/n093/12648.html",
+    ファイル名: "20260122101422.xlsx",
+    対応表: "29_奈良_申請様式.yaml",
+  },
 };
 
 const 大きさの上限 = 20 * 1024 * 1024;
@@ -85,7 +95,7 @@ async function 様式を取ってくる(県コード, userData, 対応表の置�
   const buf = Buffer.from(await res.arrayBuffer());
   if (buf.length > 大きさの上限) return 手で("思ったより大きいファイルが返ってきた");
   // docx は zip。頭が PK でなければ様式ではない
-  if (buf.length < 4 || buf[0] !== 0x50 || buf[1] !== 0x4b) return 手で("返ってきたものが docx（Word の様式）ではなかった");
+  if (buf.length < 4 || buf[0] !== 0x50 || buf[1] !== 0x4b) return 手で("返ってきたものが Word・Excel の様式ではなかった");
 
   const sha = sha256(buf);
   const 期待 = 対応表のsha(対応表の置き場, m.対応表);
