@@ -47,6 +47,34 @@ const 様式の目録 = {
   },
 };
 
+/**
+ * 申請書のほかに、同じ県で取ってくる様式（事業計画の概要など）。記入の画面は sha256（対応表のもの）で指す
+ * 2026-11-05：山形の事業計画の概要を記載した書類（収集運搬業）。手引き/06_山形県/_出典.yaml の 様式の取り寄せ と同じ
+ */
+const 追加の様式 = [
+  {
+    県コード: "06",
+    県名: "山形県",
+    短い名前: "事業計画の概要",
+    名前: "事業計画の概要を記載した書類（収集運搬業）",
+    url: "https://www.pref.yamagata.jp/documents/17440/keikakuh29.docx",
+    入口: "https://www.pref.yamagata.jp/050010/kurashi/kankyo/haikibutsu/shorigyousha/horigyotetsuduki2020.html",
+    ファイル名: "keikakuh29.docx",
+    対応表: "06_山形_事業計画の概要.yaml",
+  },
+];
+
+/** 県コード（と、あれば対応表の sha256）から、取ってくる様式を選ぶ。sha が無ければ申請書 */
+function 目録を引く(県コード, 対応表の置き場, sha256) {
+  const c = 県コードを直す(県コード);
+  const 候補 = [様式の目録[c], ...追加の様式.filter((m) => m.県コード === c)].filter(Boolean);
+  if (sha256) {
+    const hit = 候補.find((m) => 対応表のsha(対応表の置き場, m.対応表) === sha256);
+    if (hit) return hit;
+  }
+  return 様式の目録[c] || null;
+}
+
 const 大きさの上限 = 20 * 1024 * 1024;
 
 function sha256(buf) {
@@ -71,8 +99,8 @@ function 置き場(userData, 県コード) {
 /**
  * @returns {Promise<{ok:true, 名前:string, 置き場:string, sha256:string, 対応表と一致:boolean, 大きさ:number} | {ok:false, 理由:string, 入口:string}>}
  */
-async function 様式を取ってくる(県コード, userData, 対応表の置き場) {
-  const m = 様式の目録[県コードを直す(県コード)];
+async function 様式を取ってくる(県コード, userData, 対応表の置き場, 対応表のsha256) {
+  const m = 目録を引く(県コード, 対応表の置き場, 対応表のsha256);
   if (!m) return { ok: false, 理由: `県コード ${県コード} の様式はまだ目録に無い`, 入口: "" };
   const 手で = (理由) => ({ ok: false, 理由, 入口: m.入口 });
 
@@ -134,7 +162,7 @@ function 県コードを直す(c) {
  * 形は app/src/app/shoshiki/page.tsx の「手元の様式」と同じ { 県, ファイル名, sha256, 中身 }
  */
 function 取ってきた様式の一覧(userData, 対応表の置き場) {
-  const 知っている = new Set(Object.values(様式の目録).map((m) => 対応表のsha(対応表の置き場, m.対応表)).filter(Boolean));
+  const 知っている = new Set([...Object.values(様式の目録), ...追加の様式].map((m) => 対応表のsha(対応表の置き場, m.対応表)).filter(Boolean));
   const root = path.join(userData, "様式");
   if (!fs.existsSync(root)) return [];
   const 一覧 = [];
@@ -151,4 +179,4 @@ function 取ってきた様式の一覧(userData, 対応表の置き場) {
   return 一覧;
 }
 
-module.exports = { 様式を取ってくる, 取ってきた様式の一覧, 様式の目録 };
+module.exports = { 様式を取ってくる, 取ってきた様式の一覧, 様式の目録, 追加の様式 };
