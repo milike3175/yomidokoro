@@ -1448,6 +1448,8 @@ export type 書く場所 =
       半角?: boolean;
       /** 改行して次の行にも書く（同じ run の中で w:br。愛知の氏名の欄の、名称の下の代表者など） */
       次の行?: { 頭: string; 字: string };
+      /** 見出しの後ろに並んだ空白を詰めてから書く（「氏　名　　　　　」のような見出し） */
+      空白を詰める?: boolean;
     }
   | {
       見出し: string;
@@ -1560,6 +1562,11 @@ function 段落で記入する(本文: string, 様: 様式, 値たち: 値, 中�
   v["住所.〒"] = 住.郵便;
   v["住所.本体"] = 全角に(住.本体);
   const 品 = 品目を文で書き出す(様, 中身0);
+  // 品目を一つずつ（表の行に一つずつ書く様式のため。並びは施行令の順）：{品目.1} {品目.2} …
+  {
+    const 名前 = new Map(品目たち.map((h) => [h.id, h.名前]));
+    中身を整える(中身0, 様).品目.forEach((x, i) => (v[`品目.${i + 1}`] = 名前.get(x.id) ?? x.id));
+  }
   const 差す = (t: string) => t.replace(/\{([^{}]+)\}/g, (_m, k: string) => v[k] ?? "");
 
   type 変え = { 始め: number; 終わり: number; 字: string };
@@ -1580,7 +1587,7 @@ function 段落で記入する(本文: string, 様: 様式, 値たち: 値, 中�
         const z = Array.from(値);
         if (z.length > w.幅) 説明.push(`${w.幅}字を超えたので切りました`);
         字 = z.length >= w.幅 ? z.slice(z.length - w.幅).join("") : SP.repeat(w.幅 - z.length) + 値;
-      } else 字 = w.元 + 値;
+      } else 字 = (w.種類 === "後ろ" && w.空白を詰める ? `${w.元.replace(/[\u3000 ]+$/, "")}\u3000` : w.元) + 値;
       const m = 箱たち[w.箱];
       const 頭 = m[0].slice(0, m[0].indexOf(">") + 1);
       const 新しい頭 = /xml:space="preserve"/.test(頭) ? 頭 : 頭.replace(/^<w:t/, '<w:t xml:space="preserve"');
