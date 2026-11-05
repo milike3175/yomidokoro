@@ -35,7 +35,9 @@
       "target": [
         "zip"
       ],
-      "signAndEditExecutable": false,
+      "signAndEditExecutable": true,
+      "signExecutable": false,
+      "icon": "build/icon.png",
       "artifactName": "${productName}-${version}-win-${arch}.${ext}"
     },
     "mac": {
@@ -43,6 +45,7 @@
         "zip"
       ],
       "identity": null,
+      "icon": "build/icon.png",
       "category": "public.app-category.productivity"
     }
   }

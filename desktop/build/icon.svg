@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#3f8394"/>
+      <stop offset="1" stop-color="#2c6271"/>
+    </linearGradient>
+    <filter id="sh" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="14" stdDeviation="18" flood-color="#0d2a33" flood-opacity="0.28"/>
+    </filter>
+  </defs>
+  <rect x="64" y="64" width="896" height="896" rx="208" fill="url(#bg)"/>
+  <!-- 手引きの紙 -->
+  <g filter="url(#sh)">
+    <path d="M300 230 H640 L744 334 V792 a28 28 0 0 1 -28 28 H300 a28 28 0 0 1 -28 -28 V258 a28 28 0 0 1 28 -28 Z" fill="#fbf8f1"/>
+    <path d="M640 230 V306 a28 28 0 0 0 28 28 H744 Z" fill="#e4ddcd"/>
+  </g>
+  <!-- 行 -->
+  <g stroke-linecap="round" stroke-width="30" fill="none">
+    <line x1="344" y1="420" x2="560" y2="420" stroke="#cfc7b6"/>
+    <line x1="344" y1="500" x2="672" y2="500" stroke="#cfc7b6"/>
+    <line x1="344" y1="660" x2="672" y2="660" stroke="#cfc7b6"/>
+    <line x1="344" y1="740" x2="520" y2="740" stroke="#cfc7b6"/>
+    <!-- 読みどころ：印を付けた一行 -->
+    <line x1="344" y1="580" x2="672" y2="580" stroke="#f1c9a8" stroke-width="44"/>
+    <line x1="344" y1="580" x2="600" y2="580" stroke="#c96e44"/>
+  </g>
+  <!-- ピン -->
+  <g filter="url(#sh)">
+    <path d="M708 372 c-66 0 -116 50 -116 114 c0 86 116 196 116 196 s116 -110 116 -196 c0 -64 -50 -114 -116 -114 Z" fill="#d9774a"/>
+    <circle cx="708" cy="484" r="44" fill="#fbf8f1"/>
+  </g>
+</svg>
