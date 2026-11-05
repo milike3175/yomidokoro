@@ -113,6 +113,7 @@ if (process.platform === "win32") {
 
 const { 様式を取ってくる, 取ってきた様式の一覧, 様式の目録 } = require("./lib/shutoku.cjs");
 const 控え = require("./lib/hikae.cjs");
+const 下書き = require("./lib/shitagaki.cjs");
 
 const 住所 = "yomi";
 const 家 = "app";
@@ -297,6 +298,10 @@ function 献立(win) {
       submenu: [
         ...様式の項目,
         {
+          label: "申請書の下書きの置き場を開く",
+          click: () => void shell.openPath(下書き.下書きの置き場(app.getPath("documents"))),
+        },
+        {
           label: "事業者の控えの置き場を開く",
           click: () => void shell.openPath(控え.控えの置き場(app.getPath("userData"))),
         },
@@ -395,6 +400,19 @@ if (!app.requestSingleInstanceLock()) {
       return true;
     });
     控えの口("控えの置き場を開く", () => shell.openPath(控え.控えの置き場(app.getPath("userData"))));
+    // 申請書の下書き（docx）。置き場は 書類/よみどころ_下書き/
+    控えの口("下書きを保存", (名, バイト) => 下書き.下書きを保存(app.getPath("documents"), 名, バイト));
+    控えの口("下書きの置き場を開く", () => shell.openPath(下書き.下書きの置き場(app.getPath("documents"))));
+    // 県のサイトから様式を取ってくる（目録にある県だけ。ふつうの GET を一回。依頼者の情報は送らない）
+    ipcMain.handle("様式を取ってくる", async (_e, コード) => {
+      try {
+        const r = await 様式を取ってくる(String(コード ?? ""), app.getPath("userData"), 対応表の置き場());
+        return r.ok ? { ok: true, 名前: r.名前, 対応表と一致: r.対応表と一致 } : { ok: false, 理由: r.理由, 入口: r.入口 };
+      } catch (e) {
+        記録("様式を取ってくる failed", String(e && e.code ? e.code : "error"));
+        return { ok: false, 理由: "取ってこられませんでした", 入口: "" };
+      }
+    });
 
     // 試し：YOMIDOKORO_SHUTOKU=30 なら、窓を出さずに一回だけ取ってきて結果を出して終わる
     if (process.env.YOMIDOKORO_SHUTOKU) {

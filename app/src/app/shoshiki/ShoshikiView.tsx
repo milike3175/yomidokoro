@@ -81,6 +81,24 @@ function アプリの控えの口(): 控えの口の型 | null {
   return y?.控え ?? null;
 }
 
+// デスクトップ版の下書きの口と、様式を県のサイトから取ってくる口。ブラウザで開いたときは無い
+type 下書きの口の型 = {
+  保存: (ファイル名: string, バイト: Uint8Array) => Promise<{ ok: true; ファイル名: string; 置き場: string } | { ok: false; 理由: string }>;
+  置き場を開く: () => Promise<unknown>;
+};
+type アプリの様式の口 = {
+  様式を取ってくる?: (県コード: string) => Promise<{ ok: true; 名前: string; 対応表と一致: boolean } | { ok: false; 理由: string; 入口: string }>;
+  取ってきた様式?: () => Promise<手元の様式[]>;
+  下書き?: 下書きの口の型;
+};
+function アプリの口(): アプリの様式の口 | null {
+  if (typeof window === "undefined") return null;
+  return (window as unknown as { yomidokoro?: アプリの様式の口 }).yomidokoro ?? null;
+}
+function 下書きの口(): 下書きの口の型 | null {
+  return アプリの口()?.下書き ?? null;
+}
+
 function 今日(): string {
   const d = new Date();
   const p = (n: number) => String(n).padStart(2, "0");
@@ -123,7 +141,9 @@ export default function ShoshikiView({
   試せる: 公開する様式[];
 }) {
   const 表 = useMemo(() => new Map(様式たち.map((x) => [x.sha256, x])), [様式たち]);
-  const [置, set置] = useState<置いた様式 | null>(null);
+  // 置いた様式は県ごとに複数持てる（2026-11-05 みゆき「県を選ぶ（複数可能）と、申請書の下書きができる」）。同じ sha256 は1つ
+  const [置たち, set置たち] = useState<置いた様式[]>([]);
+  const [外す, set外す] = useState<Record<string, boolean>>({});
   const [値たち, set値たち] = useState<値>({});
   const [中身, set中身] = useState<申請の中身>({ ...空の中身, 品目: [] });
   const [知らせ, set知らせ] = useState<string>("");
@@ -135,6 +155,9 @@ export default function ShoshikiView({
   const [アプリ, setアプリ] = useState<控えの口の型 | null>(null);
   const [控えの一覧, set控えの一覧] = useState<{ ファイル名: string; 更新: string }[]>([]);
   const [選んだ控え, set選んだ控え] = useState<string>("");
+  const [下書きの置き場, set下書きの置き場] = useState<string>("");
+  const [取りの知らせ, set取りの知らせ] = useState<string>("");
+  const [取れる, set取れる] = useState(false);
   async function 一覧を読み直す(口: 控えの口の型 | null = アプリ) {
     if (!口) return;
     const r = await 口.一覧();
@@ -149,11 +172,58 @@ export default function ShoshikiView({
     const 口 = アプリの控えの口();
     setアプリ(口);
     void 一覧を読み直す(口);
+    set取れる(!!アプリの口()?.様式を取ってくる);
+    void 取ってきた様式を置く();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const 様 = 置?.様 ?? null;
-  const 型 = (様 && 型たち.find((t) => t.sha256 === 様.sha256)) || null;
+  /** アプリ：前に取ってきた様式（対応表と一致したもの）を全部置く */
+  async function 取ってきた様式を置く() {
+    const 口 = アプリの口();
+    if (!口?.取ってきた様式) return;
+    try {
+      const 一覧 = await 口.取ってきた様式();
+      for (const t of 一覧) if (t.中身) await 置く(t.ファイル名, base64からバイト(t.中身));
+    } catch {
+      /* 読めなければ置かない */
+    }
+  }
+
+  /** アプリ：県のサイトから様式を取ってきて置く */
+  async function 県から取る(x: 様式) {
+    const 口 = アプリの口();
+    if (!口?.様式を取ってくる) return;
+    set取りの知らせ(`${x.県名}の様式を県のサイトから取ってきています…`);
+    const r = await 口.様式を取ってくる(x.県コード);
+    if (!r.ok) {
+      set取りの知らせ(`${x.県名}：${r.理由}。県のページから手で保存して、下に置いてください${r.入口 ? `（${r.入口}）` : ""}`);
+      return;
+    }
+    if (!r.対応表と一致) {
+      set取りの知らせ(`${x.県名}：取ってきましたが、道具が知っている様式と中身が違います（県が様式を改めたのかもしれません）。まだ書けません`);
+      return;
+    }
+    await 取ってきた様式を置く();
+    set取りの知らせ(`${x.県名}の「${r.名前}」を取ってきて、このパソコンに置きました`);
+  }
+
+  // 下書きを作る様式：置いた様式のうち、対応表があって、外していないもの
+  const 選んだ置 = 置たち.filter((x) => x.様 && !外す[x.sha256]) as (置いた様式 & { 様: 様式 })[];
+  const 置 = 選んだ置[0] ?? 置たち[置たち.length - 1] ?? null;
+  // 入力欄は、選んだ様式の欄を id で合わせたもの（和歌山も山形も 申請日・住所・氏名… は同じ id）
+  const 様: 様式 | null = useMemo(() => {
+    if (選んだ置.length === 0) return null;
+    const 元 = 選んだ置[0].様;
+    if (選んだ置.length === 1) return 元;
+    const 欄 = [...元.欄];
+    for (const x of 選んだ置.slice(1)) for (const f of x.様.欄) if (!欄.some((g) => g.id === f.id)) 欄.push(f);
+    const 書かない = 選んだ置.flatMap((x) => x.様.書かない.map((b) => ({ ...b, 見出し: `${x.様.県名}：${b.見出し}` })));
+    return { ...元, 欄, 書かない };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [置たち, 外す]);
+  // 書き方の型（事業計画の概要の文）は、型のある様式（今は和歌山）を選んだときだけ
+  const 型の様 = 選んだ置.map((x) => x.様).find((x) => 型たち.some((t) => t.sha256 === x.sha256)) ?? null;
+  const 型 = (型の様 && 型たち.find((t) => t.sha256 === 型の様.sha256)) || null;
 
   async function 置く(ファイル名: string, バイト: Uint8Array) {
     // 様式を見分ける計算（sha256）は、https か 127.0.0.1 で開いたときだけブラウザが使わせてくれる
@@ -162,7 +232,9 @@ export default function ShoshikiView({
       return;
     }
     const sha256 = await sha256を出す(バイト);
-    set置({ ファイル名, sha256, バイト, 様: 表.get(sha256) ?? null });
+    const x: 置いた様式 = { ファイル名, sha256, バイト, 様: 表.get(sha256) ?? null };
+    set置たち((a) => [...a.filter((y) => y.sha256 !== sha256), x]);
+    set外す((m) => ({ ...m, [sha256]: false }));
     set知らせ("");
   }
 
@@ -227,15 +299,29 @@ export default function ShoshikiView({
   }, [様, 値たち]);
 
   async function 書いて保存() {
-    if (!置 || !様) return;
-    const r = await docxを作る(置, 様, 値たち, 中身, 型);
-    if (!r.ok) {
-      set知らせ(`書きませんでした：${r.理由}`);
-      return;
+    if (選んだ置.length === 0) return;
+    const 文たち: string[] = [];
+    const 日 = 今日();
+    for (const x of 選んだ置) {
+      const 型x = 型たち.find((t) => t.sha256 === x.様.sha256) ?? null;
+      const r = await docxを作る(x, x.様, 値たち, 中身, 型x);
+      if (!r.ok) {
+        文たち.push(`${x.様.県名}：書きませんでした（${r.理由}）`);
+        continue;
+      }
+      const 確 = r.結果.filter((y) => y.状態 === "要確認").length;
+      const 名 = `${x.様.県名}_${x.様.名前.replace(/[（(].*$/, "").slice(0, 20)}_下書き_${日}.docx`;
+      const 口 = 下書きの口();
+      if (口) {
+        const w = await 口.保存(名, new Uint8Array(await r.blob.arrayBuffer()));
+        文たち.push(w.ok ? `${x.様.県名}：「${w.ファイル名}」（要確認 ${確}件）` : `${x.様.県名}：保存できませんでした（${w.理由}）`);
+        if (w.ok) set下書きの置き場(w.置き場);
+      } else {
+        保存させる(r.blob, 名);
+        文たち.push(`${x.様.県名}：「${名}」（要確認 ${確}件）`);
+      }
     }
-    const 確 = r.結果.filter((x) => x.状態 === "要確認").length;
-    保存させる(r.blob, `記入_${様.県コード}_${置.ファイル名.replace(/\.docx$/i, "")}.docx`);
-    set知らせ(`記入した docx を保存しました（このパソコンの中だけ）。要確認 ${確}件。Word で開いて確かめてください`);
+    set知らせ(`下書きを保存しました（このパソコンの中だけ）。${文たち.join("　")}。Word で開いて、要確認の所を確かめてください`);
   }
 
   async function 控えを保存() {
@@ -302,10 +388,9 @@ export default function ShoshikiView({
     set中身((c) => ({ ...c, 品目: c.品目.map((x): 品目の選び => (x.id === id ? { ...x, 水銀使用製品: !x.水銀使用製品 } : x)) }));
   const 含みを選ぶ = (id: string, k: "石綿" | "水銀含有ばいじん等", v: 含み) =>
     set中身((c) => ({ ...c, 品目: c.品目.map((x): 品目の選び => (x.id === id ? { ...x, [k]: v === "含まない" ? undefined : v } : x)) }));
-  const 品目の見込み = useMemo(() => (様 ? 品目を書き出す(様, 中身) : null), [様, 中身]);
-  const 型の見込み = useMemo(() => (様 && 型 ? 型を組む(型, 様, 値たち, 中身) : []), [様, 型, 値たち, 中身]);
-  const 使う = useMemo(() => (型 && 様 ? 使う口(型, 値たち, 中身の印(様, 中身)) : new Set<string>()), [型, 様, 値たち, 中身]);
-  const 品目の名 = useMemo(() => (様 ? 品目の名たち(様, 中身) : []), [様, 中身]);
+  const 型の見込み = useMemo(() => (型の様 && 型 ? 型を組む(型, 型の様, 値たち, 中身) : []), [型の様, 型, 値たち, 中身]);
+  const 使う = useMemo(() => (型 && 型の様 ? 使う口(型, 値たち, 中身の印(型の様, 中身)) : new Set<string>()), [型, 型の様, 値たち, 中身]);
+  const 品目の名 = useMemo(() => (型の様 ? 品目の名たち(型の様, 中身) : []), [型の様, 中身]);
 
   return (
     <>
@@ -344,8 +429,12 @@ export default function ShoshikiView({
         </div>
       )}
 
-      <h2>1．様式を県のページから取ってくる</h2>
-      <p className={s.note}>道具は県のサイトから様式を取ってきません。下のページを開いて、様式ファイルを自分で保存してください。</p>
+      <h2>1．様式を県から取ってくる（下書きできる県：{様式たち.map((x) => x.県名).join("・")}）</h2>
+      <p className={s.note}>
+        {取れる
+          ? "アプリでは、ボタンを押すと県のサイトから様式を取ってきて、このパソコンに置きます（県の公開ページから取るだけで、事業者の情報は送りません）。"
+          : "ブラウザでは、道具は県のサイトから様式を取ってきません。下のページを開いて、様式ファイルを自分で保存してください。"}
+      </p>
       <ul className={s.list}>
         {様式たち.map((x) => (
           <li key={x.sha256}>
@@ -353,9 +442,15 @@ export default function ShoshikiView({
               {x.県名}の産業廃棄物収集運搬業のページ
             </a>
             　{x.名前}（ファイル名 {x.ファイル名}）
+            {取れる && (
+              <button type="button" className={s.small} data-testid={`県から取る-${x.県コード}`} onClick={() => void 県から取る(x)}>
+                {置たち.some((y) => y.sha256 === x.sha256) ? "取り直す" : "県のサイトから取ってくる"}
+              </button>
+            )}
           </li>
         ))}
       </ul>
+      {取りの知らせ && <p className={s.placed}>{取りの知らせ}</p>}
 
       <h2>2．保存した様式をここに置く</h2>
       <div
@@ -368,19 +463,20 @@ export default function ShoshikiView({
         onDrop={(e) => {
           e.preventDefault();
           set重ねる(false);
-          void ファイルを受ける(e.dataTransfer.files[0]);
+          for (const f of Array.from(e.dataTransfer.files)) void ファイルを受ける(f);
         }}
         onClick={() => 受け口.current?.click()}
       >
-        ダウンロードした様式（docx）をここに置いてください。押して選ぶこともできます
+        ダウンロードした様式（docx）をここに置いてください。県ごとに何枚でも置けます。押して選ぶこともできます
         <input
           ref={受け口}
           type="file"
           accept=".docx"
+          multiple
           className={s.hidden}
           data-testid="様式の受け口"
           onChange={(e) => {
-            void ファイルを受ける(e.target.files?.[0]);
+            for (const f of Array.from(e.target.files ?? [])) void ファイルを受ける(f);
             e.target.value = "";
           }}
         />
@@ -410,11 +506,31 @@ export default function ShoshikiView({
         </div>
       )}
 
-      {置 && (
-        <p className={s.placed} data-testid="置いた様式">
-          置いた様式：{置.ファイル名}（sha256 {置.sha256.slice(0, 16)}…）
-          {様 ? <strong>　{様.県名}「{様.名前}」と分かりました</strong> : <strong className={s.warn}>　知らない様式です。まだ対応表が無いので書けません</strong>}
-        </p>
+      {置たち.length > 0 && (
+        <div className={s.placed} data-testid="置いた様式">
+          <div>置いた様式（チェックを付けた県の下書きを作ります）</div>
+          <ul className={s.list}>
+            {置たち.map((x) => (
+              <li key={x.sha256}>
+                {x.様 ? (
+                  <label>
+                    <input
+                      type="checkbox"
+                      data-testid={`県を選ぶ-${x.様.県コード}`}
+                      checked={!外す[x.sha256]}
+                      onChange={() => set外す((m) => ({ ...m, [x.sha256]: !m[x.sha256] }))}
+                    />
+                    <strong>{x.様.県名}</strong>「{x.様.名前}」（{x.ファイル名}）
+                  </label>
+                ) : (
+                  <span>
+                    {x.ファイル名}（sha256 {x.sha256.slice(0, 16)}…）<strong className={s.warn}>　知らない様式です。まだ対応表が無いので書けません</strong>
+                  </span>
+                )}
+              </li>
+            ))}
+          </ul>
+        </div>
       )}
 
       {様 && (
@@ -460,7 +576,7 @@ export default function ShoshikiView({
             })}
           </div>
 
-          {様.品目 && 品目の見込み && (
+          {(様.品目 || 様.品目の文 || 選んだ置.some((x) => x.様.品目 || x.様.品目の文)) && (
             <>
               <h3 className={s.h3}>申請する品目と積替保管</h3>
               <p className={s.note}>
@@ -558,41 +674,59 @@ export default function ShoshikiView({
                     )}
                   </div>
                 </div>
-                {中身.品目.length > 0 && (
-                  <div className={s.row}>
-                    <div className={s.label}>様式にこう書きます</div>
-                    <div data-testid="品目の見込み">
-                      <div className={s.faint}>第1面「事業の範囲」（和歌山の申請書記載例 p1 の書き方）</div>
-                      <div className={s.preview}>
-                        {品目の見込み.行たち.map((t, k) => (
-                          <div key={k}>{t}</div>
-                        ))}
-                        <div>石綿含有産業廃棄物【有・無】（{品目の見込み.石綿の番号}）</div>
-                        <div>水銀使用製品産業廃棄物【有・無】</div>
-                        <div>水銀含有ばいじん等【有・無】（{品目の見込み.水銀含有ばいじん等の番号}）</div>
-                        <div>積替え又は保管【有・無】</div>
+                {中身.品目.length > 0 &&
+                  選んだ置.map((x) => {
+                    const 見 = 品目を書き出す(x.様, 中身);
+                    if (!見) return null;
+                    const 箱の形 = !!x.様.品目;
+                    return (
+                      <div className={s.row} key={x.sha256}>
+                        <div className={s.label}>{x.様.県名}の様式にこう書きます</div>
+                        <div data-testid={`品目の見込み-${x.様.県コード}`}>
+                          <div className={s.faint}>
+                            第1面「事業の範囲」（{x.様.県名}の申請書記載例の書き方）
+                          </div>
+                          <div className={s.preview}>
+                            {見.行たち.map((t, k) => (
+                              <div key={k}>{t}</div>
+                            ))}
+                            {箱の形 && (
+                              <>
+                                <div>石綿含有産業廃棄物【有・無】（{見.石綿の番号}）</div>
+                                <div>水銀使用製品産業廃棄物【有・無】</div>
+                                <div>水銀含有ばいじん等【有・無】（{見.水銀含有ばいじん等の番号}）</div>
+                                <div>積替え又は保管【有・無】</div>
+                              </>
+                            )}
+                          </div>
+                          {箱の形 && (
+                            <>
+                              <div className={s.faint}>【有・無】の○は、Word の囲い文字で付けます。LibreOffice では囲い文字が見えず「無」などが消えて見えるので、Word で開いて確かめてください。</div>
+                              <div className={s.faint}>事業計画の概要の品目表、品目の名前の列（{x.様.県名}の様式記載例の書き方）</div>
+                              <ol className={s.preview}>
+                                {見.表の行.map((t, k) => (
+                                  <li key={k}>{t}</li>
+                                ))}
+                              </ol>
+                            </>
+                          )}
+                          {[...丸の説明(見), ...見.要確認].length > 0 && (
+                            <div className={s.check} data-testid={`要確認-品目-${x.様.県コード}`}>
+                              <span className={s.badge}>要確認</span>
+                              {[...丸の説明(見), ...見.要確認].map((t, k) => (
+                                <div key={k}>{t}</div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
                       </div>
-                      <div className={s.faint}>【有・無】の○は、Word の囲い文字で付けます。LibreOffice では囲い文字が見えず「無」などが消えて見えるので、Word で開いて確かめてください。</div>
-                      <div className={s.faint}>事業計画の概要の品目表、品目の名前の列（和歌山の様式記載例 p1〜p2 の書き方）</div>
-                      <ol className={s.preview}>
-                        {品目の見込み.表の行.map((t, k) => (
-                          <li key={k}>{t}</li>
-                        ))}
-                      </ol>
-                      <div className={s.check} data-testid="要確認-品目">
-                        <span className={s.badge}>要確認</span>
-                        {[...丸の説明(品目の見込み), ...品目の見込み.要確認].map((t, k) => (
-                          <div key={k}>{t}</div>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                )}
+                    );
+                  })}
               </div>
             </>
           )}
 
-          {様.文の欄 && 型 && (
+          {型の様?.文の欄 && 型 && (
             <>
               <h3 className={s.h3}>事業計画の概要・環境保全措置の文（{型.県名}の記載例の書き方の型）</h3>
               <p className={s.note}>
@@ -762,8 +896,13 @@ export default function ShoshikiView({
           <h2>4．書いて保存する</h2>
           <div className={s.buttons}>
             <button type="button" className={s.primary} data-testid="書いて保存" onClick={() => void 書いて保存()}>
-              記入した docx を保存する
+              {選んだ置.length > 1 ? `${選んだ置.map((x) => x.様.県名).join("・")}の下書きを作る` : "下書きの docx を作る"}
             </button>
+            {下書きの口() && (
+              <button type="button" data-testid="下書きの置き場を開く" onClick={() => void 下書きの口()?.置き場を開く()}>
+                下書きの置き場を開く
+              </button>
+            )}
           </div>
           {知らせ && (
             <p className={s.placed} data-testid="知らせ">

@@ -16,7 +16,7 @@ const path = require("node:path");
  * 期待する sha256 は、記入の対応表（app/data/様式/*.yaml）の sha256 を正とする。ここには書かない
  */
 const 様式の目録 = {
-  30: {
+  "30": {
     県名: "和歌山県",
     短い名前: "様式第六号（新規）",
     名前: "産業廃棄物収集運搬業許可申請書（様式第六号・新規）",
@@ -24,6 +24,16 @@ const 様式の目録 = {
     入口: "https://www.pref.wakayama.lg.jp/prefg/031800/032200/syu-un.html",
     ファイル名: "01futushinki20240624.docx",
     対応表: "30_和歌山_様式第六号.yaml",
+  },
+  // 2026-11-05：山形の様式第6号（入口の文書一覧から。手引き/06_山形県/_出典.yaml の 様式の取り寄せ と同じ）
+  "06": {
+    県名: "山形県",
+    短い名前: "様式第6号",
+    名前: "産業廃棄物収集運搬業許可申請書（様式第6号）",
+    url: "https://www.pref.yamagata.jp/documents/17440/yo6-r060226.docx",
+    入口: "https://www.pref.yamagata.jp/050010/kurashi/kankyo/haikibutsu/shorigyousha/horigyotetsuduki2020.html",
+    ファイル名: "yo6-r060226.docx",
+    対応表: "06_山形_様式第六号.yaml",
   },
 };
 
