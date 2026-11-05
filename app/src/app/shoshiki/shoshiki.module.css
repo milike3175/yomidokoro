@@ -260,3 +260,17 @@ div.preview {
   color: var(--ink);
   max-width: 100%;
 }
+
+/* 県のページから来たときの印 */
+.here {
+  margin: 8px 0;
+  padding: 8px 12px;
+  border-left: 4px solid var(--ai);
+  background: var(--paper);
+  font-size: 13.5px;
+}
+.hereItem {
+  outline: 2px solid var(--ai);
+  outline-offset: 4px;
+  border-radius: 6px;
+}

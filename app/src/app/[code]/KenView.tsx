@@ -236,7 +236,7 @@ export default function KenView({
 
       {書ける様式.length > 0 ? (
         <p className="to-form">
-          <a href="/shoshiki/">{県名}の申請書に下書きする</a>
+          <a href={`/shoshiki/?県=${県コード}`}>{県名}の申請書に下書きする</a>
           <span>
             {書ける様式.join("・")}に、事業者の情報をこのパソコンの中だけで書き込めます（Claude にもインターネットにも送りません）
           </span>

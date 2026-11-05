@@ -145,6 +145,9 @@ export default function ShoshikiView({
   // 置いた様式は県ごとに複数持てる（2026-11-05 みゆき「県を選ぶ（複数可能）と、申請書の下書きができる」）。同じ sha256 は1つ
   const [置たち, set置たち] = useState<置いた様式[]>([]);
   const [外す, set外す] = useState<Record<string, boolean>>({});
+  // 県のページから来たとき（/shoshiki/?県=30）：その県に印を付け、置いた様式のうちその県だけを最初に選ぶ
+  const [来た県, set来た県] = useState<string>("");
+  const 初めの選びをした = useRef<Set<string>>(new Set());
   const [値たち, set値たち] = useState<値>({});
   const [中身, set中身] = useState<申請の中身>({ ...空の中身, 品目: [] });
   const [知らせ, set知らせ] = useState<string>("");
@@ -169,6 +172,28 @@ export default function ShoshikiView({
     set控えの一覧(r);
     set選んだ控え((v) => (r.some((x) => x.ファイル名 === v) ? v : (r[0]?.ファイル名 ?? "")));
   }
+  useEffect(() => {
+    const c = new URLSearchParams(window.location.search).get("県") ?? "";
+    if (様式たち.some((x) => x.県コード === c)) {
+      set来た県(c);
+      setTimeout(() => document.querySelector(`[data-testid="県の様式-${c}"]`)?.scrollIntoView({ block: "center" }), 50);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // 県のページから来たときは、ほかの県の様式は最初は外しておく（印を付ければ一緒に作れる）。一度決めた様式は、あとから変えない
+  useEffect(() => {
+    if (!来た県) return;
+    const 新しい = 置たち.filter((x) => x.様 && !初めの選びをした.current.has(x.sha256));
+    if (!新しい.length) return;
+    for (const x of 新しい) 初めの選びをした.current.add(x.sha256);
+    set外す((m) => {
+      const n = { ...m };
+      for (const x of 新しい) if (x.様!.県コード !== 来た県) n[x.sha256] = true;
+      return n;
+    });
+  }, [置たち, 来た県]);
+
   useEffect(() => {
     const 口 = アプリの控えの口();
     setアプリ(口);
@@ -437,9 +462,14 @@ export default function ShoshikiView({
           ? "アプリでは、ボタンを押すと県のサイトから様式を取ってきて、このパソコンに置きます（県の公開ページから取るだけで、事業者の情報は送りません）。"
           : "ブラウザでは、道具は県のサイトから様式を取ってきません。下のページを開いて、様式ファイルを自分で保存してください。"}
       </p>
+      {来た県 && (
+        <p className={s.here} data-testid="来た県">
+          {様式たち.find((x) => x.県コード === 来た県)?.県名}のページから来ました。この県の様式に印を付けています。ほかの県も一緒に作るときは、下の「置いた様式」でその県にも印を付けてください（まだ置いていない県は、先に取ってくるか置いてください）
+        </p>
+      )}
       <ul className={s.list}>
         {様式たち.map((x) => (
-          <li key={x.sha256}>
+          <li key={x.sha256} data-testid={`県の様式-${x.県コード}`} className={x.県コード === 来た県 ? s.hereItem : undefined}>
             <a href={x.入口} target="_blank" rel="noopener noreferrer">
               {x.県名}の産業廃棄物収集運搬業のページ
             </a>
