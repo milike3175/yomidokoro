@@ -1542,7 +1542,13 @@ function 段落で記入する(本文: string, 様: 様式, 値たち: 値, 中�
       const 元 = p[0];
       let 新: string;
       if (元.endsWith("/>")) 新 = `${元.slice(0, -2)}><w:pPr>${詰め}</w:pPr></w:p>`;
-      else if (/<w:pPr>/.test(元)) 新 = 元.replace(/<w:pPr>([\s\S]*?)<\/w:pPr>/, (_m, 中: string) => `<w:pPr>${中.replace(/<w:spacing\b[^>]*\/>/, "").replace(/<w:rPr>[\s\S]*?<\/w:rPr>/, "")}${詰め}</w:pPr>`);
+      else if (/<w:pPr>/.test(元))
+        // Word の決まりの順：pStyle・keepNext など → spacing → ind・jc など → rPr
+        新 = 元.replace(/<w:pPr>([\s\S]*?)<\/w:pPr>/, (_m, 中: string) => {
+          const 残り = 中.replace(/<w:spacing\b[^>]*\/>/, "").replace(/<w:rPr>[\s\S]*?<\/w:rPr>/, "");
+          const 前 = /^(?:<w:(?:pStyle|keepNext|keepLines|pageBreakBefore|framePr|widowControl|numPr|suppressLineNumbers|pBdr|shd|tabs|suppressAutoHyphens|kinsoku|wordWrap|overflowPunct|topLinePunct|autoSpaceDE|autoSpaceDN|bidi|adjustRightInd|snapToGrid)\b[^>]*\/>)*/.exec(残り)![0];
+          return `<w:pPr>${前}<w:spacing w:before="0" w:after="0" w:line="20" w:lineRule="exact"/>${残り.slice(前.length)}<w:rPr><w:sz w:val="2"/><w:szCs w:val="2"/></w:rPr></w:pPr>`;
+        });
       else 新 = 元.replace(/^(<w:p\b[^>]*>)/, `$1<w:pPr>${詰め}</w:pPr>`);
       変えたち.push({ 始め: p.index!, 終わり: p.index! + 元.length, 字: 新 });
       continue;
