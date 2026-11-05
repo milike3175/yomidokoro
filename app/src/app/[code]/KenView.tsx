@@ -12,6 +12,10 @@ type Props = {
   県名: string;
   /** この県の様式で、手元で下書きできるもの（様式に書く画面へ案内する） */
   書ける様式: string[];
+  /** 下書きできる県の名前（対応表のある県） */
+  書ける県: string[];
+  /** 県の産廃収集運搬業のページ。様式はここから取ってくる */
+  様式の入口: string | null;
   県コード: string;
   手引きの状態: string;
   改訂: { 日付: string; 内容: string[] } | null;
@@ -38,6 +42,8 @@ const 状態の説明: Record<string, string> = {
 export default function KenView({
   県名,
   書ける様式,
+  書ける県,
+  様式の入口,
   県コード,
   手引きの状態,
   改訂,
@@ -228,13 +234,29 @@ export default function KenView({
         </span>
       </p>
 
-      {書ける様式.length > 0 && (
+      {書ける様式.length > 0 ? (
         <p className="to-form">
           <a href="/shoshiki/">{県名}の申請書に下書きする</a>
           <span>
             {書ける様式.join("・")}に、事業者の情報をこのパソコンの中だけで書き込めます（Claude にもインターネットにも送りません）
           </span>
         </p>
+      ) : (
+        <div className="to-form to-form-not-yet" data-testid="まだ書けない">
+          <strong>{県名}の申請書は、まだ下書きできません</strong>
+          <span>
+            今、下書きできるのは{書ける県.join("・")}の様式です。様式は県ごとに形が違うので、どこに何を書くかの対応表を県ごとに作り、架空の事業者で試して人の目で確かめた様式だけを書けるようにしています。
+            {県名}の様式は
+            {様式の入口 ? (
+              <a href={様式の入口} target="_blank" rel="noreferrer">
+                県のページ
+              </a>
+            ) : (
+              "県のページ"
+            )}
+            から取ってきてください。
+          </span>
+        </div>
       )}
 
       <nav className="toc-mobile" aria-label="目次">

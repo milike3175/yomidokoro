@@ -1218,6 +1218,9 @@ a.tile:hover {
 }
 .to-form a { font-weight: 700; color: var(--ai); }
 .to-form span { color: var(--sub); }
+.to-form-not-yet { border-left-color: var(--line); }
+.to-form-not-yet strong { color: var(--ink); }
+.to-form-not-yet span { line-height: 1.7; }
 
 /* チェックリストを書き写す */
 .checklist-tools {

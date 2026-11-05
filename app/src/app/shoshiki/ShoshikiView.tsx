@@ -526,7 +526,9 @@ export default function ShoshikiView({
                   </label>
                 ) : (
                   <span>
-                    {x.ファイル名}（sha256 {x.sha256.slice(0, 16)}…）<strong className={s.warn}>　知らない様式です。まだ対応表が無いので書けません</strong>
+                    {x.ファイル名}（sha256 {x.sha256.slice(0, 16)}…）<strong className={s.warn}>
+                      　この様式は、まだ下書きできません。下書きできるのは、対応表を作って人の目で確かめた様式（今は{様式たち.map((y) => y.県名).join("・")}）だけです。県が様式を改めたときも、ここに出ます
+                    </strong>
                   </span>
                 )}
               </li>
