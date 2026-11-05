@@ -144,10 +144,12 @@ export default function ShoshikiView({
   const 表 = useMemo(() => new Map(様式たち.map((x) => [x.sha256, x])), [様式たち]);
   // 置いた様式は県ごとに複数持てる（2026-11-05 みゆき「県を選ぶ（複数可能）と、申請書の下書きができる」）。同じ sha256 は1つ
   const [置たち, set置たち] = useState<置いた様式[]>([]);
-  const [外す, set外す] = useState<Record<string, boolean>>({});
-  // 県のページから来たとき（/shoshiki/?県=30）：その県に印を付け、置いた様式のうちその県だけを最初に選ぶ
+  // 申請する都道府県（県コード）。いくつでも選べる。選んだ県の数だけ下書きを作る
+  const [選んだ県, set選んだ県] = useState<Set<string>>(new Set());
+  // 県のページから来たとき（/shoshiki/?県=30）：その県を選んだ状態で始める
   const [来た県, set来た県] = useState<string>("");
-  const 初めの選びをした = useRef<Set<string>>(new Set());
+  const [作成中, set作成中] = useState(false);
+  const [手で置くを開く, set手で置くを開く] = useState(false);
   const [値たち, set値たち] = useState<値>({});
   const [中身, set中身] = useState<申請の中身>({ ...空の中身, 品目: [] });
   const [知らせ, set知らせ] = useState<string>("");
@@ -176,23 +178,12 @@ export default function ShoshikiView({
     const c = new URLSearchParams(window.location.search).get("県") ?? "";
     if (様式たち.some((x) => x.県コード === c)) {
       set来た県(c);
+      set選んだ県(new Set([c]));
       setTimeout(() => document.querySelector(`[data-testid="県の様式-${c}"]`)?.scrollIntoView({ block: "center" }), 50);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // 県のページから来たときは、ほかの県の様式は最初は外しておく（印を付ければ一緒に作れる）。一度決めた様式は、あとから変えない
-  useEffect(() => {
-    if (!来た県) return;
-    const 新しい = 置たち.filter((x) => x.様 && !初めの選びをした.current.has(x.sha256));
-    if (!新しい.length) return;
-    for (const x of 新しい) 初めの選びをした.current.add(x.sha256);
-    set外す((m) => {
-      const n = { ...m };
-      for (const x of 新しい) if (x.様!.県コード !== 来た県) n[x.sha256] = true;
-      return n;
-    });
-  }, [置たち, 来た県]);
 
   useEffect(() => {
     const 口 = アプリの控えの口();
@@ -215,7 +206,7 @@ export default function ShoshikiView({
     if (!口?.取ってきた様式) return;
     try {
       const 一覧 = await 口.取ってきた様式();
-      for (const t of 一覧) if (t.中身) await 置く(t.ファイル名, base64からバイト(t.中身));
+      for (const t of 一覧) if (t.中身) await 置く(t.ファイル名, base64からバイト(t.中身), false);
     } catch {
       /* 読めなければ置かない */
     }
@@ -236,38 +227,55 @@ export default function ShoshikiView({
       return;
     }
     await 取ってきた様式を置く();
+    set選んだ県((m) => new Set(m).add(x.県コード));
     set取りの知らせ(`${x.県名}の「${r.名前}」を取ってきて、このパソコンに置きました`);
   }
 
-  // 下書きを作る様式：置いた様式のうち、対応表があって、外していないもの
-  const 選んだ置 = 置たち.filter((x) => x.様 && !外す[x.sha256]) as (置いた様式 & { 様: 様式 })[];
-  const 置 = 選んだ置[0] ?? 置たち[置たち.length - 1] ?? null;
-  // 入力欄は、選んだ様式の欄を id で合わせたもの（和歌山も山形も 申請日・住所・氏名… は同じ id）
+  // 下書きを作る様式：選んだ県の対応表（様式ファイルは作成のときに用意する）
+  const 選んだ様たち = 様式たち.filter((x) => 選んだ県.has(x.県コード));
+  // 入力欄は、選んだ県の欄を id で合わせたもの（和歌山も山形も 申請日・住所・氏名… は同じ id）。
+  // まだ県を選んでいないときも、下書きできる県全部の欄を出して、すぐ入れられるようにする
   const 様: 様式 | null = useMemo(() => {
-    if (選んだ置.length === 0) return null;
-    const 元 = 選んだ置[0].様;
-    if (選んだ置.length === 1) return 元;
+    const 元たち = 選んだ様たち.length ? 選んだ様たち : 様式たち;
+    if (元たち.length === 0) return null;
+    const 元 = 元たち[0];
     const 欄 = [...元.欄];
-    for (const x of 選んだ置.slice(1)) for (const f of x.様.欄) if (!欄.some((g) => g.id === f.id)) 欄.push(f);
-    const 書かない = 選んだ置.flatMap((x) => x.様.書かない.map((b) => ({ ...b, 見出し: `${x.様.県名}：${b.見出し}` })));
+    for (const x of 元たち.slice(1)) for (const f of x.欄) if (!欄.some((g) => g.id === f.id)) 欄.push(f);
+    const 書かない = 選んだ様たち.flatMap((x) => x.書かない.map((b) => ({ ...b, 見出し: `${x.県名}：${b.見出し}` })));
     return { ...元, 欄, 書かない };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [置たち, 外す]);
+  }, [選んだ県, 様式たち]);
   // 書き方の型（事業計画の概要の文）は、型のある様式（今は和歌山）を選んだときだけ
-  const 型の様 = 選んだ置.map((x) => x.様).find((x) => 型たち.some((t) => t.sha256 === x.sha256)) ?? null;
+  const 型の様 = 選んだ様たち.find((x) => 型たち.some((t) => t.sha256 === x.sha256)) ?? null;
   const 型 = (型の様 && 型たち.find((t) => t.sha256 === 型の様.sha256)) || null;
 
-  async function 置く(ファイル名: string, バイト: Uint8Array) {
+  async function 置く(ファイル名: string, バイト: Uint8Array, 選ぶ = true): Promise<置いた様式 | null> {
     // 様式を見分ける計算（sha256）は、https か 127.0.0.1 で開いたときだけブラウザが使わせてくれる
     if (!globalThis.crypto?.subtle) {
       set知らせ("この開き方では様式を見分けられません。https のページか、このパソコンの 127.0.0.1 で開き直してください");
-      return;
+      return null;
     }
     const sha256 = await sha256を出す(バイト);
     const x: 置いた様式 = { ファイル名, sha256, バイト, 様: 表.get(sha256) ?? null };
     set置たち((a) => [...a.filter((y) => y.sha256 !== sha256), x]);
-    set外す((m) => ({ ...m, [sha256]: false }));
+    if (選ぶ && x.様) set選んだ県((m) => new Set(m).add(x.様!.県コード));
     set知らせ("");
+    return x;
+  }
+
+  /** 作成のとき：選んだ県の様式を用意する。置いてあればそれを、アプリなら県のサイトから取ってくる */
+  async function 様式を用意する(x: 様式): Promise<{ 置: 置いた様式 } | { 置: null; 理由: string }> {
+    const ある = 置たち.find((p) => p.sha256 === x.sha256);
+    if (ある) return { 置: ある };
+    const 口 = アプリの口();
+    if (!口?.様式を取ってくる || !口.取ってきた様式)
+      return { 置: null, 理由: "様式がまだありません。県のページから様式を保存して、下の「様式を手で置く」から置いてください" };
+    const r = await 口.様式を取ってくる(x.県コード);
+    if (!r.ok) return { 置: null, 理由: `県のサイトから様式を取れませんでした（${r.理由}）。県のページから手で保存して、下の「様式を手で置く」から置いてください` };
+    if (!r.対応表と一致) return { 置: null, 理由: "取ってきた様式が、道具の知っている様式と違います（県が様式を改めたのかもしれません）。まだ書けません" };
+    const t = (await 口.取ってきた様式()).find((y) => y.sha256 === x.sha256 && y.中身);
+    const p = t ? await 置く(t.ファイル名, base64からバイト(t.中身!), false) : null;
+    return p ? { 置: p } : { 置: null, 理由: "取ってきた様式を読めませんでした" };
   }
 
   /** このサイトに置いた様式を、同じオリジンから読み込んで置く（外へは出ない） */
@@ -331,34 +339,61 @@ export default function ShoshikiView({
   }, [様, 値たち]);
 
   async function 書いて保存() {
-    if (選んだ置.length === 0) return;
+    if (選んだ様たち.length === 0) {
+      set知らせ("申請する都道府県を選んでください");
+      return;
+    }
+    set作成中(true);
+    set知らせ(`${選んだ様たち.map((x) => x.県名).join("・")}の下書きを作っています…`);
     const 文たち: string[] = [];
     const 日 = 今日();
-    for (const x of 選んだ置) {
-      const 型x = 型たち.find((t) => t.sha256 === x.様.sha256) ?? null;
-      const r = await docxを作る(x, x.様, 値たち, 中身, 型x);
+    let 作った = 0;
+    for (const x of 選んだ様たち) {
+      const 用意 = await 様式を用意する(x);
+      if (!用意.置) {
+        文たち.push(`${x.県名}：${用意.理由}`);
+        set手で置くを開く(true);
+        continue;
+      }
+      const 型x = 型たち.find((t) => t.sha256 === x.sha256) ?? null;
+      const r = await docxを作る(用意.置, x, 値たち, 中身, 型x);
       if (!r.ok) {
-        文たち.push(`${x.様.県名}：書きませんでした（${r.理由}）`);
+        文たち.push(`${x.県名}：書きませんでした（${r.理由}）`);
         continue;
       }
       const 確 = r.結果.filter((y) => y.状態 === "要確認").length;
-      const 拡張子 = /\.xlsx$/i.test(x.様.ファイル名) ? "xlsx" : "docx";
-      const 名 = `${x.様.県名}_${x.様.名前.replace(/[（(].*$/, "").slice(0, 20)}_下書き_${日}.${拡張子}`;
+      const 拡張子 = /\.xlsx$/i.test(x.ファイル名) ? "xlsx" : "docx";
+      const 名 = `${x.県名}_${x.名前.replace(/[（(].*$/, "").slice(0, 20)}_下書き_${日}.${拡張子}`;
       const 口 = 下書きの口();
       if (口) {
         const w = await 口.保存(名, new Uint8Array(await r.blob.arrayBuffer()));
-        文たち.push(w.ok ? `${x.様.県名}：「${w.ファイル名}」（要確認 ${確}件）` : `${x.様.県名}：保存できませんでした（${w.理由}）`);
-        if (w.ok) set下書きの置き場(w.置き場);
+        文たち.push(w.ok ? `${x.県名}：「${w.ファイル名}」（要確認 ${確}件）` : `${x.県名}：保存できませんでした（${w.理由}）`);
+        if (w.ok) {
+          set下書きの置き場(w.置き場);
+          作った++;
+        }
       } else {
         保存させる(r.blob, 名);
-        文たち.push(`${x.様.県名}：「${名}」（要確認 ${確}件）`);
+        文たち.push(`${x.県名}：「${名}」（要確認 ${確}件）`);
+        作った++;
       }
     }
-    set知らせ(`下書きを保存しました（このパソコンの中だけ）。${文たち.join("　")}。Word で開いて、要確認の所を確かめてください`);
+    // アプリでは、作成と一緒に名簿にも入れる（会社名があるとき）
+    let 名簿 = "";
+    if (作った > 0 && アプリ && (値たち["氏名"] ?? "").trim()) {
+      const ok = await 控えを保存();
+      名簿 = ok ? "名簿にも入れました。" : "";
+    }
+    set作成中(false);
+    set知らせ(
+      作った > 0
+        ? `下書きを${作った}つ作りました（このパソコンの中だけ）。${名簿}${文たち.join("　")}。Word・Excel で開いて、要確認の所を確かめてください`
+        : `下書きを作れませんでした。${文たち.join("　")}`,
+    );
   }
 
-  async function 控えを保存() {
-    if (!様) return;
+  async function 控えを保存(): Promise<boolean> {
+    if (!様) return false;
     const k = 控えを作る(様, 値たち, 今日(), 中身);
     const 名 = (値たち["氏名"] ?? "").trim() || "事業者";
     const 文 = JSON.stringify(k, null, 2) + "\n";
@@ -367,15 +402,16 @@ export default function ShoshikiView({
       const r = await アプリ.保存(ファイル名, 文);
       if (!r.ok) {
         set控えの知らせ(`保存できませんでした：${r.理由}`);
-        return;
+        return false;
       }
       await 一覧を読み直す();
       set選んだ控え(r.ファイル名);
       set控えの知らせ(`「${名}」を名簿に入れました（このパソコンの中だけ）。次からは、事業者さんの名簿か下の一覧から選べば欄が埋まります`);
-      return;
+      return true;
     }
     保存させる(new Blob([文], { type: "application/json" }), ファイル名);
     set控えの知らせ("名簿のファイルを保存しました（このパソコンの中だけ）。次はこのファイルを読み込めば、同じ値で書けます");
+    return true;
   }
 
   async function アプリの控えを読む() {
@@ -430,152 +466,20 @@ export default function ShoshikiView({
       <a className="back" href="/">
         全国の地図へ戻る
       </a>
-      <h1>様式に書く（試し）</h1>
+      <h1>申請書に下書きする</h1>
       <p className="lead">
-        県の公式の様式ファイルに、事業者の情報を書き込みます。書き込みはこのブラウザの中だけで行い、様式も事業者の情報もどこにも送りません（Claude にも送りません）。
-        様式の欄の空白だけを同じ字数の値に置き換えるので、書式・改行・枠はそのまま残ります。最後は必ず Word で開いて、行政書士が確かめてください。
-      </p>
-
-      {試せる.length > 0 && (
-        <div className={s.trial}>
-          <p className={s.note}>まず試すなら：県の様式の写しを、このサイトに一つだけ置いています。押すとこのサイトから読み込みます（外へは何も送りません）。架空の会社で書いてみてください</p>
-          {試せる.map((x) => (
-            <div key={x.sha256}>
-              <div className={s.buttons}>
-                <button type="button" className={s.primary} data-testid={`試す-${x.sha256.slice(0, 8)}`} onClick={() => void 試しの様式を置く(x)}>
-                  {x.県名}の{x.呼び名}で試す
-                </button>
-              </div>
-              <p className={s.source} data-testid="出典">
-                出典：{x.県名}「{x.出典の名前}」（
-                <a href={x.入口} target="_blank" rel="noopener noreferrer">
-                  {x.入口}
-                </a>
-                、{x.取得日.replace(/^(\d{4})-0?(\d+)-0?(\d+)$/, "$1年$2月$3日")}取得）。
-                <a href={x.規約} target="_blank" rel="noopener noreferrer">
-                  {x.規約の名前}
-                </a>
-                に基づき、中身を変えずに掲載しています。
-              </p>
-            </div>
-          ))}
-        </div>
-      )}
-
-      <h2>1．様式を県から取ってくる（下書きできる県：{様式たち.map((x) => x.県名).join("・")}）</h2>
-      <p className={s.note}>
-        {取れる
-          ? "アプリでは、ボタンを押すと県のサイトから様式を取ってきて、このパソコンに置きます（県の公開ページから取るだけで、事業者の情報は送りません）。"
-          : "ブラウザでは、道具は県のサイトから様式を取ってきません。下のページを開いて、様式ファイルを自分で保存してください。"}
+        事業者さんの情報と品目を一度入れて、申請する都道府県を選ぶと、県ごとの公式の様式に書き込んだ下書きができます。書き込みはこのパソコンの中だけで行い、事業者さんの情報はどこにも送りません（Claude にも送りません）。
+        様式の書式・改行・枠はそのまま残ります。最後は必ず Word・Excel で開いて、行政書士が確かめてください。
       </p>
       {来た県 && (
         <p className={s.here} data-testid="来た県">
-          {様式たち.find((x) => x.県コード === 来た県)?.県名}のページから来ました。この県の様式に印を付けています。ほかの県も一緒に作るときは、下の「置いた様式」でその県にも印を付けてください（まだ置いていない県は、先に取ってくるか置いてください）
+          {様式たち.find((x) => x.県コード === 来た県)?.県名}のページから来ました。この県を選んでいます。ほかの県も一緒に作るときは、「3．申請する都道府県」で印を付けてください
         </p>
-      )}
-      <ul className={s.list}>
-        {様式たち.map((x) => (
-          <li key={x.sha256} data-testid={`県の様式-${x.県コード}`} className={x.県コード === 来た県 ? s.hereItem : undefined}>
-            <a href={x.入口} target="_blank" rel="noopener noreferrer">
-              {x.県名}の産業廃棄物収集運搬業のページ
-            </a>
-            　{x.名前}（ファイル名 {x.ファイル名}）
-            {取れる && (
-              <button type="button" className={s.small} data-testid={`県から取る-${x.県コード}`} onClick={() => void 県から取る(x)}>
-                {置たち.some((y) => y.sha256 === x.sha256) ? "取り直す" : "県のサイトから取ってくる"}
-              </button>
-            )}
-          </li>
-        ))}
-      </ul>
-      {取りの知らせ && <p className={s.placed}>{取りの知らせ}</p>}
-
-      <h2>2．保存した様式をここに置く</h2>
-      <div
-        className={`${s.drop} ${重ねる ? s.dropOn : ""}`}
-        onDragOver={(e) => {
-          e.preventDefault();
-          set重ねる(true);
-        }}
-        onDragLeave={() => set重ねる(false)}
-        onDrop={(e) => {
-          e.preventDefault();
-          set重ねる(false);
-          for (const f of Array.from(e.dataTransfer.files)) void ファイルを受ける(f);
-        }}
-        onClick={() => 受け口.current?.click()}
-      >
-        ダウンロードした様式（Word か Excel）をここに置いてください。県ごとに何枚でも置けます。押して選ぶこともできます
-        <input
-          ref={受け口}
-          type="file"
-          accept=".docx,.xlsx"
-          multiple
-          className={s.hidden}
-          data-testid="様式の受け口"
-          onChange={(e) => {
-            for (const f of Array.from(e.target.files ?? [])) void ファイルを受ける(f);
-            e.target.value = "";
-          }}
-        />
-      </div>
-
-      {手帳版 && (
-        <div className={s.techo}>
-          <p className={s.note}>手元の版だけ：手引き/ にすでにある様式（公開版には出ません）</p>
-          {手元.length === 0 ? (
-            <p className={s.note}>手引き/&lt;県&gt;/様式/ に様式ファイルがありません。</p>
-          ) : (
-            <ul className={s.list}>
-              {手元.map((t) => (
-                <li key={`${t.県}/${t.ファイル名}`}>
-                  {t.県}／{t.ファイル名}
-                  {t.中身 ? (
-                    <button type="button" className={s.small} onClick={() => void 置く(t.ファイル名, base64からバイト(t.中身!))}>
-                      これを使う
-                    </button>
-                  ) : (
-                    <span className={s.faint}>まだ対応表の無い様式（sha256 {t.sha256.slice(0, 12)}…）</span>
-                  )}
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
-      )}
-
-      {置たち.length > 0 && (
-        <div className={s.placed} data-testid="置いた様式">
-          <div>置いた様式（チェックを付けた県の下書きを作ります）</div>
-          <ul className={s.list}>
-            {置たち.map((x) => (
-              <li key={x.sha256}>
-                {x.様 ? (
-                  <label>
-                    <input
-                      type="checkbox"
-                      data-testid={`県を選ぶ-${x.様.県コード}`}
-                      checked={!外す[x.sha256]}
-                      onChange={() => set外す((m) => ({ ...m, [x.sha256]: !m[x.sha256] }))}
-                    />
-                    <strong>{x.様.県名}</strong>「{x.様.名前}」（{x.ファイル名}）
-                  </label>
-                ) : (
-                  <span>
-                    {x.ファイル名}（sha256 {x.sha256.slice(0, 16)}…）<strong className={s.warn}>
-                      　この様式は、まだ下書きできません。下書きできるのは、対応表を作って人の目で確かめた様式（今は{様式たち.map((y) => y.県名).join("・")}）だけです。県が様式を改めたときも、ここに出ます
-                    </strong>
-                  </span>
-                )}
-              </li>
-            ))}
-          </ul>
-        </div>
       )}
 
       {様 && (
         <>
-          <h2>3．事業者の情報を入れる</h2>
+          <h2>1．事業者さんの情報</h2>
           <p className={s.note}>半角の英数字は全角にして書きます。空けた欄は様式のままにします（触りません）。</p>
           <div className={s.form}>
             {様.欄.map((f) => {
@@ -616,9 +520,9 @@ export default function ShoshikiView({
             })}
           </div>
 
-          {(様.品目 || 様.品目の文 || 選んだ置.some((x) => x.様.品目 || x.様.品目の文)) && (
+          {(様.品目 || 様.品目の文 || 様式たち.some((x) => x.品目 || x.品目の文 || x.品目のセル)) && (
             <>
-              <h3 className={s.h3}>申請する品目と積替保管</h3>
+              <h2>2．申請する品目と積替保管</h2>
               <p className={s.note}>
                 この様式とこの道具は、特別管理産業廃棄物を含みません（普通の産業廃棄物の収集運搬だけです）。特別管理産業廃棄物の申請は、別の様式で行政書士が作ってください。
               </p>
@@ -715,12 +619,13 @@ export default function ShoshikiView({
                   </div>
                 </div>
                 {中身.品目.length > 0 &&
-                  選んだ置.map((x) => {
+                  選んだ様たち.map((x0) => {
+                    const x = { 様: x0 };
                     const 見 = 品目を書き出す(x.様, 中身);
                     if (!見) return null;
                     const 箱の形 = !!x.様.品目;
                     return (
-                      <div className={s.row} key={x.sha256}>
+                      <div className={s.row} key={x0.sha256}>
                         <div className={s.label}>{x.様.県名}の様式にこう書きます</div>
                         <div data-testid={`品目の見込み-${x.様.県コード}`}>
                           <div className={s.faint}>
@@ -923,7 +828,39 @@ export default function ShoshikiView({
             </>
           )}
 
-          <h3 className={s.h3}>今は書かない欄</h3>
+          <h2>3．申請する都道府県</h2>
+          <p className={s.note}>いくつでも選べます。選んだ県の数だけ、下書きができます（今、下書きできるのは{様式たち.map((x) => x.県名).join("・")}です）。</p>
+          <ul className={`${s.list} ${s.kenList}`} data-testid="申請する県">
+            {様式たち.map((x) => {
+              const ある = 置たち.some((p) => p.sha256 === x.sha256);
+              return (
+                <li key={x.sha256} data-testid={`県の様式-${x.県コード}`} className={x.県コード === 来た県 ? s.hereItem : undefined}>
+                  <label className={s.kenPick}>
+                    <input
+                      type="checkbox"
+                      data-testid={`県を選ぶ-${x.県コード}`}
+                      checked={選んだ県.has(x.県コード)}
+                      onChange={() =>
+                        set選んだ県((m) => {
+                          const n = new Set(m);
+                          if (n.has(x.県コード)) n.delete(x.県コード);
+                          else n.add(x.県コード);
+                          return n;
+                        })
+                      }
+                    />
+                    <strong>{x.県名}</strong>
+                    <span>{x.名前}</span>
+                  </label>
+                  <span className={s.faint}>
+                    {ある ? "様式はこのパソコンにあります" : 取れる ? "作成のときに県のサイトから取ってきます" : "様式を下の「様式を手で置く」から置いてください"}
+                  </span>
+                </li>
+              );
+            })}
+          </ul>
+
+          {様.書かない.length > 0 && <h3 className={s.h3}>今は書かない欄</h3>}
           <ul className={s.later}>
             {様.書かない.map((x) => (
               <li key={x.見出し}>
@@ -933,10 +870,19 @@ export default function ShoshikiView({
             ))}
           </ul>
 
-          <h2>4．書いて保存する</h2>
+          <h2>4．作成する</h2>
+          <p className={s.note}>
+            {取れる
+              ? "選んだ県の様式を、道具が県のサイトから取ってきて書き込みます（県の公開ページから取るだけで、事業者さんの情報は送りません）。前に取ってきた様式があれば、それを使います。作った下書きは書類の「よみどころ_下書き」に、県の名前のファイルで残ります。事業者さんは名簿にも入ります。"
+              : "選んだ県の様式に書き込みます。ブラウザでは道具が県のサイトから様式を取ってこられないので、下の「様式を手で置く」から、県のページで保存した様式を置いてください。"}
+          </p>
           <div className={s.buttons}>
-            <button type="button" className={s.primary} data-testid="書いて保存" onClick={() => void 書いて保存()}>
-              {選んだ置.length > 1 ? `${選んだ置.map((x) => x.様.県名).join("・")}の下書きを作る` : "下書きの docx を作る"}
+            <button type="button" className={s.primary} data-testid="書いて保存" disabled={作成中 || 選んだ様たち.length === 0} onClick={() => void 書いて保存()}>
+              {作成中
+                ? "作っています…"
+                : 選んだ様たち.length
+                  ? `${選んだ様たち.map((x) => x.県名).join("・")}の下書きを作成する`
+                  : "申請する都道府県を選んでください"}
             </button>
             {下書きの口() && (
               <button type="button" data-testid="下書きの置き場を開く" onClick={() => void 下書きの口()?.置き場を開く()}>
@@ -1009,6 +955,136 @@ export default function ShoshikiView({
           {控えの知らせ}
         </p>
       )}
+
+      <details className={s.manual} open={!取れる || 手で置くを開く} data-testid="様式を手で置く">
+        <summary>様式を手で置く（県のサイトから取れなかったとき・ブラウザで使うとき）</summary>
+      {試せる.length > 0 && (
+        <div className={s.trial}>
+          <p className={s.note}>まず試すなら：県の様式の写しを、このサイトに一つだけ置いています。押すとこのサイトから読み込みます（外へは何も送りません）。架空の会社で書いてみてください</p>
+          {試せる.map((x) => (
+            <div key={x.sha256}>
+              <div className={s.buttons}>
+                <button type="button" className={s.primary} data-testid={`試す-${x.sha256.slice(0, 8)}`} onClick={() => void 試しの様式を置く(x)}>
+                  {x.県名}の{x.呼び名}で試す
+                </button>
+              </div>
+              <p className={s.source} data-testid="出典">
+                出典：{x.県名}「{x.出典の名前}」（
+                <a href={x.入口} target="_blank" rel="noopener noreferrer">
+                  {x.入口}
+                </a>
+                、{x.取得日.replace(/^(\d{4})-0?(\d+)-0?(\d+)$/, "$1年$2月$3日")}取得）。
+                <a href={x.規約} target="_blank" rel="noopener noreferrer">
+                  {x.規約の名前}
+                </a>
+                に基づき、中身を変えずに掲載しています。
+              </p>
+            </div>
+          ))}
+        </div>
+      )}
+
+      <h3 className={s.h3}>県から取ってくる（下書きできる県：{様式たち.map((x) => x.県名).join("・")}）</h3>
+      <p className={s.note}>
+        {取れる
+          ? "アプリでは、ボタンを押すと県のサイトから様式を取ってきて、このパソコンに置きます（県の公開ページから取るだけで、事業者の情報は送りません）。"
+          : "ブラウザでは、道具は県のサイトから様式を取ってきません。下のページを開いて、様式ファイルを自分で保存してください。"}
+      </p>
+      <ul className={s.list}>
+        {様式たち.map((x) => (
+          <li key={x.sha256}>
+            <a href={x.入口} target="_blank" rel="noopener noreferrer">
+              {x.県名}の産業廃棄物収集運搬業のページ
+            </a>
+            　{x.名前}（ファイル名 {x.ファイル名}）
+            {取れる && (
+              <button type="button" className={s.small} data-testid={`県から取る-${x.県コード}`} onClick={() => void 県から取る(x)}>
+                {置たち.some((y) => y.sha256 === x.sha256) ? "取り直す" : "県のサイトから取ってくる"}
+              </button>
+            )}
+          </li>
+        ))}
+      </ul>
+      {取りの知らせ && <p className={s.placed}>{取りの知らせ}</p>}
+
+      <h3 className={s.h3}>保存した様式をここに置く</h3>
+      <div
+        className={`${s.drop} ${重ねる ? s.dropOn : ""}`}
+        onDragOver={(e) => {
+          e.preventDefault();
+          set重ねる(true);
+        }}
+        onDragLeave={() => set重ねる(false)}
+        onDrop={(e) => {
+          e.preventDefault();
+          set重ねる(false);
+          for (const f of Array.from(e.dataTransfer.files)) void ファイルを受ける(f);
+        }}
+        onClick={() => 受け口.current?.click()}
+      >
+        ダウンロードした様式（Word か Excel）をここに置いてください。県ごとに何枚でも置けます。押して選ぶこともできます
+        <input
+          ref={受け口}
+          type="file"
+          accept=".docx,.xlsx"
+          multiple
+          className={s.hidden}
+          data-testid="様式の受け口"
+          onChange={(e) => {
+            for (const f of Array.from(e.target.files ?? [])) void ファイルを受ける(f);
+            e.target.value = "";
+          }}
+        />
+      </div>
+
+      {手帳版 && (
+        <div className={s.techo}>
+          <p className={s.note}>手元の版だけ：手引き/ にすでにある様式（公開版には出ません）</p>
+          {手元.length === 0 ? (
+            <p className={s.note}>手引き/&lt;県&gt;/様式/ に様式ファイルがありません。</p>
+          ) : (
+            <ul className={s.list}>
+              {手元.map((t) => (
+                <li key={`${t.県}/${t.ファイル名}`}>
+                  {t.県}／{t.ファイル名}
+                  {t.中身 ? (
+                    <button type="button" className={s.small} onClick={() => void 置く(t.ファイル名, base64からバイト(t.中身!))}>
+                      これを使う
+                    </button>
+                  ) : (
+                    <span className={s.faint}>まだ対応表の無い様式（sha256 {t.sha256.slice(0, 12)}…）</span>
+                  )}
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
+
+      {置たち.length > 0 && (
+        <div className={s.placed} data-testid="置いた様式">
+          <div>このパソコンに置いた様式</div>
+          <ul className={s.list}>
+            {置たち.map((x) => (
+              <li key={x.sha256}>
+                {x.様 ? (
+                  <span>
+                    <strong>{x.様.県名}</strong>「{x.様.名前}」（{x.ファイル名}）
+                  </span>
+                ) : (
+                  <span>
+                    {x.ファイル名}（sha256 {x.sha256.slice(0, 16)}…）<strong className={s.warn}>
+                      　この様式は、まだ下書きできません。下書きできるのは、対応表を作って人の目で確かめた様式（今は{様式たち.map((y) => y.県名).join("・")}）だけです。県が様式を改めたときも、ここに出ます
+                    </strong>
+                  </span>
+                )}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      </details>
     </>
   );
 }

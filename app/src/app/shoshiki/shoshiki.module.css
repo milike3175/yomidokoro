@@ -301,3 +301,26 @@ div.preview {
   .book td:nth-child(4),
   .book td:nth-child(6) { white-space: nowrap; }
 }
+
+/* 申請する都道府県 */
+.kenList li { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; padding: 6px 0; }
+.kenPick { display: inline-flex; align-items: baseline; gap: 8px; font-size: 15px; cursor: pointer; }
+.kenPick input { transform: scale(1.2); }
+.kenPick span { color: var(--sub); font-size: 13px; }
+
+/* 様式を手で置く（たたむ） */
+.manual { margin-top: 28px; border-top: 1px solid var(--line); padding-top: 10px; }
+.manual > summary { cursor: pointer; font-weight: 600; color: var(--sub); }
+
+/* 名簿のページの「新しい事業者さんを入れる」 */
+.bookNew { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; margin: 14px 0 22px; }
+.bookNewButton {
+  display: inline-block;
+  padding: 10px 22px;
+  border-radius: 999px;
+  background: var(--ai);
+  color: var(--paper) !important;
+  font-weight: 700;
+  text-decoration: none;
+}
+.bookNew span { color: var(--sub); font-size: 13.5px; }

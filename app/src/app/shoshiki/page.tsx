@@ -7,7 +7,7 @@ import { 公開する様式を読む } from "@/lib/kokai-yoshiki";
 import type { 様式, 書き方の型 } from "@/lib/shoshiki";
 import ShoshikiView, { type 手元の様式 } from "./ShoshikiView";
 
-export const metadata = { title: "様式に書く｜よみどころ" };
+export const metadata = { title: "申請書に下書きする｜よみどころ" };
 
 const APP = process.cwd();
 const 対応表の置き場 = path.join(APP, "data", "様式");

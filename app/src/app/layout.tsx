@@ -44,7 +44,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <span className="site-catch">ところ変われば、書き方も変わる。</span>
             <nav className="site-nav" aria-label="画面">
               <a href="/">全国の地図</a>
-              <a href="/shoshiki/">様式に書く（試し）</a>
+              <a href="/shoshiki/">申請書に下書きする</a>
               <a href="/jigyosha/">事業者さんの名簿</a>
             </nav>
           </div>
