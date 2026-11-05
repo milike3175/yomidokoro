@@ -1437,7 +1437,9 @@ export async function docxに書く(
 export type 書く場所 =
   | { 見出し: string; 種類: "箱"; 箱: number; 元: string; 字: string; 幅: number }
   | { 見出し: string; 種類: "後ろ"; 箱: number; 元: string; 字: string; /** 狭いマスなので英数字を半角のまま書く */ 半角?: boolean }
-  | { 見出し: string; 種類: "段落"; 段落: number; 確かめ: { 箱: number; 字: string }; 行: string[]; 注?: string };
+  | { 見出し: string; 種類: "段落"; 段落: number; 確かめ: { 箱: number; 字: string }; 行: string[]; 注?: string }
+  /** 面の終わりの空の段落の高さをほぼ無くす（書き足した行で表が伸びても、空の段落が次のページへ押し出されて白紙ができないように） */
+  | { 見出し: string; 種類: "詰める"; 段落: number; 確かめ: { 箱: number; 字: string } };
 
 /** 「事業の範囲」を文で書く形（山形の申請書記載例 p25） */
 export type 品目の文の欄 = {
@@ -1530,6 +1532,19 @@ function 段落で記入する(本文: string, 様: 様式, 値たち: 値, 中�
       const 新しい頭 = /xml:space="preserve"/.test(頭) ? 頭 : 頭.replace(/^<w:t/, '<w:t xml:space="preserve"');
       変えたち.push({ 始め: m.index!, 終わり: m.index! + m[0].length, 字: `${新しい頭}${esc(字)}</w:t>` });
       結果.push({ id: w.見出し, 見出し: w.見出し, 状態: 説明.length ? "要確認" : "書いた", 説明 });
+      continue;
+    }
+    if (w.種類 === "詰める") {
+      if (箱の字(w.確かめ.箱) !== w.確かめ.字) return { ok: false, 理由: `${w.見出し}：見出しの字が様式と違います（${w.確かめ.箱}番目の箱）。書きません` };
+      const p = 段たち[w.段落];
+      if (!p || /<w:t[\s>]/.test(p[0]) || /<w:r[\s>]/.test(p[0])) return { ok: false, 理由: `${w.見出し}：詰める段落（${w.段落}番目）が空ではありません。書きません` };
+      const 詰め = '<w:spacing w:before="0" w:after="0" w:line="20" w:lineRule="exact"/><w:rPr><w:sz w:val="2"/><w:szCs w:val="2"/></w:rPr>';
+      const 元 = p[0];
+      let 新: string;
+      if (元.endsWith("/>")) 新 = `${元.slice(0, -2)}><w:pPr>${詰め}</w:pPr></w:p>`;
+      else if (/<w:pPr>/.test(元)) 新 = 元.replace(/<w:pPr>([\s\S]*?)<\/w:pPr>/, (_m, 中: string) => `<w:pPr>${中.replace(/<w:spacing\b[^>]*\/>/, "").replace(/<w:rPr>[\s\S]*?<\/w:rPr>/, "")}${詰め}</w:pPr>`);
+      else 新 = 元.replace(/^(<w:p\b[^>]*>)/, `$1<w:pPr>${詰め}</w:pPr>`);
+      変えたち.push({ 始め: p.index!, 終わり: p.index! + 元.length, 字: 新 });
       continue;
     }
     // 段落：空の段落に、行たちを改行（w:br）でつないだ run を1つ足す
