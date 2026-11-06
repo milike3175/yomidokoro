@@ -150,6 +150,8 @@ export type 様式 = {
   セルの文?: セルの文[];
   /** セルの方式：品目の表・車両の表・容器の表（行ごとのセル） */
   セルの表?: セルの表[];
+  /** セルの方式：書いたあとに「折り返して全体を表示」にするセル（様式の書式が折り返さないマス。奈良の誓約書の住所・氏名）。書式（styles.xml の cellXfs）に、元の書式に wrapText を足した一つを足して付け替える */
+  折り返す?: { シート: string; セル: string }[];
   /** 段落の方式：本文の段落（w:p）の数 */
   段落の数?: number;
   /** 段落の方式：どこに何を書くか */
@@ -2817,6 +2819,47 @@ async function セルの様式に書く(
   const r = セルに記入する(シートたち, 様, 値たち, 中身, 型);
   if (!r.ok) return r;
   const 名前の並び = Object.keys(zip.files);
+  // 折り返すセル：書式の表（styles.xml）に、元の書式に wrapText="1" を足したものを一つ足し、そのセルの s を付け替える
+  if (様.折り返す?.length) {
+    const 書式の場所 = "xl/styles.xml";
+    const e = zip.file(書式の場所);
+    if (!e) return { ok: false, 理由: `${書式の場所} が見つかりません。書きません` };
+    let 書式 = await e.async("string");
+    const m = /<cellXfs count="(\d+)">([\s\S]*?)<\/cellXfs>/.exec(書式);
+    if (!m) return { ok: false, 理由: "書式の表（cellXfs）が見つかりません。書きません" };
+    const xfたち = [...m[2].matchAll(/<xf\b[^>]*?(?:\/>|>[\s\S]*?<\/xf>)/g)].map((x) => x[0]);
+    if (xfたち.length !== Number(m[1])) return { ok: false, 理由: "書式の表の数が合いません。書きません" };
+    const 足した = new Map<string, number>();
+    const 新しいxf: string[] = [];
+    let 変えた = false;
+    for (const w of 様.折り返す) {
+      const xml = r.シートたち[w.シート];
+      if (xml === undefined) continue;
+      const c = new RegExp(`<c r="${w.セル}" s="(\\d+)"([^>]*?)(?:/>|>)`).exec(xml);
+      // 書いていないセル（空のまま）は触らない
+      if (!c || c[0].endsWith("/>")) continue;
+      const 元s = c[1];
+      const 元xf = xfたち[Number(元s)];
+      if (!元xf || /wrapText="1"/.test(元xf)) continue;
+      let n = 足した.get(元s);
+      if (n === undefined) {
+        const 新 = /<alignment\b/.test(元xf)
+          ? 元xf.replace(/<alignment\b/, '<alignment wrapText="1"')
+          : 元xf.endsWith("/>")
+            ? `${元xf.slice(0, -2)} applyAlignment="1"><alignment wrapText="1"/></xf>`
+            : 元xf.replace(/<\/xf>$/, '<alignment wrapText="1"/></xf>');
+        n = xfたち.length + 新しいxf.length;
+        新しいxf.push(新);
+        足した.set(元s, n);
+      }
+      r.シートたち[w.シート] = xml.replace(c[0], c[0].replace(`s="${元s}"`, `s="${n}"`));
+      変えた = true;
+    }
+    if (変えた) {
+      書式 = 書式.replace(m[0], `<cellXfs count="${xfたち.length + 新しいxf.length}">${m[2]}${新しいxf.join("")}</cellXfs>`);
+      zip.file(書式の場所, new TextEncoder().encode(書式), { binary: true, date: e.date, compression: "DEFLATE", unixPermissions: e.unixPermissions, dosPermissions: e.dosPermissions, createFolders: false });
+    }
+  }
   for (const [鍵, パス] of Object.entries(様.シート ?? {})) {
     if (r.シートたち[鍵] === シートたち[鍵]) continue;
     const e = zip.file(パス)!;
