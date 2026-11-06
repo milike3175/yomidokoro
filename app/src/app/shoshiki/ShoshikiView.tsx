@@ -41,6 +41,8 @@ import {
   type 欄の結果,
   type 申請の中身,
   type 品目の選び,
+  自動車等破砕物の品目,
+  type 区分,
 } from "@/lib/shoshiki";
 import type { 公開する様式 } from "@/lib/kokai-yoshiki";
 import s from "./shoshiki.module.css";
@@ -443,7 +445,14 @@ export default function ShoshikiView({
     const 書かない = 選んだ様たち.flatMap((x) =>
       x.書かない.map((b) => ({ ...b, 見出し: `${x.県名}：${b.見出し}` })),
     );
-    return { ...元, 欄, 書かない };
+    // 区分（石綿・水銀・自動車等破砕物）は、選んだ県のどれかにあれば画面に出す（2026-11-06 みゆき「愛知と和歌山を選ぶと自動車等破砕物が出なかった」）。
+    // 自動車等破砕物は、どの県でも三品目で選べる（書き方の無い県は要確認が出る）
+    const 区分の品目: NonNullable<様式["区分の品目"]> = {};
+    for (const x of 元たち)
+      for (const [k, ids] of Object.entries(x.区分の品目 ?? {}) as [区分, string[]][])
+        区分の品目[k] = [...new Set([...(区分の品目[k] ?? []), ...ids])];
+    区分の品目.自動車等破砕物 = [...new Set([...(区分の品目.自動車等破砕物 ?? []), ...自動車等破砕物の品目])];
+    return { ...元, 欄, 書かない, 区分の品目 };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [選んだ県, 様式たち]);
   // 書き方の型（事業計画の概要の文）：型のある様式を選んだ分だけ（和歌山の申請書、山形の事業計画の概要…）。
@@ -848,6 +857,10 @@ export default function ShoshikiView({
         x.id === id ? { ...x, 水銀使用製品: !x.水銀使用製品 } : x,
       ),
     }));
+  // くり返しの組（車両・容器など）の欄の数。初めは一つ。「足す」で増やす（2026-11-06 みゆき「最初は１つずつ入力欄があって、ボタンを押すと増やせるように」）
+  const [組の数, set組の数] = useState<Record<string, number>>({});
+  const 組を足す = (id: string, 最大: number) =>
+    set組の数((c) => ({ ...c, [id]: Math.min(最大, Math.max(c[id] ?? 1, ...入っている組(まとめた型!, id, 値たち)) + 1) }));
   const 自動車等破砕物を切り替える = (id: string) =>
     set中身((c) => ({
       ...c,
@@ -1451,9 +1464,8 @@ export default function ShoshikiView({
                                 d.最大 ?? 10,
                                 Math.max(
                                   1,
-                                  ...入っている組(まとめた型, d.id, 値たち).map(
-                                    (n) => n + 1,
-                                  ),
+                                  組の数[d.id] ?? 1,
+                                  ...入っている組(まとめた型, d.id, 値たち),
                                 ),
                               ),
                             },
@@ -1521,6 +1533,25 @@ export default function ShoshikiView({
                               })}
                             </div>
                           ))}
+                          {Math.min(
+                            d.最大 ?? 10,
+                            Math.max(
+                              1,
+                              組の数[d.id] ?? 1,
+                              ...入っている組(まとめた型, d.id, 値たち),
+                            ),
+                          ) < (d.最大 ?? 10) && (
+                            <div className={s.buttons}>
+                              <button
+                                type="button"
+                                className={s.small}
+                                data-testid={`組を足す-${d.id}`}
+                                onClick={() => 組を足す(d.id, d.最大 ?? 10)}
+                              >
+                                {d.見出し}をもう一組足す
+                              </button>
+                            </div>
+                          )}
                           {d.写真 &&
                             選んだ様たち.some((x) => x.写真の場所?.length) && (
                               <div className={s.faint}>
