@@ -9,6 +9,7 @@ sha256: 7818c70a663b2ba38616a1f6c130b32e250cbf508f8ab9951f31c4babf7f83a8
 県名: 愛知県
 ファイル名: 667389_3083495_misc.docx
 入口: https://www.pref.aichi.jp/soshiki/junkan/shuun-yosiki.html
+ファイルの場所: https://www.pref.aichi.jp/uploaded/life/667389_3083495_misc.docx  # 様式ファイルそのもの。ブラウザでは、ここから保存して「手で置く」に入れる
 # 県のサイトは自動の取得を断る（2026-11-05 確認）。くぐり抜けはしない
 自動で取れない: 愛知県のサイトは、道具が自動で様式を取ってくるのを受け付けていません
 本文: word/document.xml

@@ -328,3 +328,45 @@ div.preview {
 /* 申請する都道府県：地方ごとのまとまり */
 .region { margin-bottom: 0.6rem; }
 .region .h3 { margin: 0.6rem 0 0.2rem; }
+
+/* 品目ごと・くり返しの差し込み口（2026-11-06 みゆき「品目が縦になって見づらい」）：一品目を一枠にして、名前を一行の見出しに、欄は横に並べる */
+.kumi {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(17em, 1fr));
+  gap: 6px 8px;
+  align-items: center;
+  margin: 0 0 8px;
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--paper);
+}
+.kumiHead {
+  grid-column: 1 / -1;
+  font-weight: 600;
+  font-size: 13.5px;
+  color: var(--sub);
+}
+.kumi .input {
+  max-width: none;
+}
+
+/* 開け閉めできる組（県ごとの見込み、事業計画の欄）。たくさんの県に申請するときに畳める */
+.fold {
+  margin: 4px 0 10px;
+}
+.fold > summary {
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--sub);
+  padding: 6px 0;
+  list-style: revert;
+}
+.fold > summary:hover {
+  color: var(--ink);
+}
+.foldHead {
+  font-size: 15px !important;
+  color: var(--ink) !important;
+}

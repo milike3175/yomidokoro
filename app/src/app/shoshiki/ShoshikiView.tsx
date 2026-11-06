@@ -690,8 +690,11 @@ export default function ShoshikiView({
                     if (!見) return null;
                     const 箱の形 = !!x.様.品目;
                     return (
-                      <div className={s.row} key={x0.sha256}>
-                        <div className={s.label}>{x.様.県名}の様式にこう書きます</div>
+                      <details className={s.fold} key={x0.sha256} open={選んだ様たち.length === 1}>
+                        <summary>
+                          {x.様.県名}の様式にこう書きます
+                          {[...丸の説明(見), ...見.要確認].length > 0 && <span className={s.badge}>要確認 {[...丸の説明(見), ...見.要確認].length}</span>}
+                        </summary>
                         <div data-testid={`品目の見込み-${x.様.県コード}`}>
                           <div className={s.faint}>
                             第1面「事業の範囲」（{x.様.県名}の申請書記載例の書き方）
@@ -729,7 +732,7 @@ export default function ShoshikiView({
                             </div>
                           )}
                         </div>
-                      </div>
+                      </details>
                     );
                   })}
               </div>
@@ -737,8 +740,8 @@ export default function ShoshikiView({
           )}
 
           {型の組たち.length > 0 && 型 && まとめた型 && (
-            <>
-              <h3 className={s.h3}>事業計画の概要・環境保全措置の文（{型の組たち.map((g) => g.型.県名).join("・")}の記載例の書き方の型）</h3>
+            <details className={s.fold} open data-testid="事業計画の欄">
+              <summary className={s.foldHead}>事業計画の概要・環境保全措置の文（{型の組たち.map((g) => g.型.県名).join("・")}の記載例の書き方の型）</summary>
               <p className={s.note}>
                 型の文は{型の組たち.map((g) => g.型.県名).join("・")}の記載例と手引きから前もって作ったものです。下の欄に入れた事業者の中身を、このブラウザの中で差し込みます（どこにも送りません）。
                 空けた所は様式に「【要確認：…】」と残します。品目を選んだときだけ書きます。型の文は記載例の会社の例なので、事業者の実際に合わせて行政書士が直してください。
@@ -783,7 +786,7 @@ export default function ShoshikiView({
                           {品目の名.length === 0 && <div className={s.faint}>上で品目を選ぶと、品目ごとの欄が出ます</div>}
                           {品目の名.map((h) => (
                             <div key={h.鍵} className={s.kumi}>
-                              <span className={s.faint}>{h.名}</span>
+                              <div className={s.kumiHead}>{h.名}</div>
                               {(d.項目 ?? []).map((k) => (
                                 <input
                                   key={k.id}
@@ -823,7 +826,9 @@ export default function ShoshikiView({
                         <div>
                           {Array.from({ length: Math.min(d.最大 ?? 10, Math.max(1, ...入っている組(まとめた型, d.id, 値たち).map((n) => n + 1))) }, (_, j) => j + 1).map((n) => (
                             <div key={n} className={s.kumi}>
-                              <span className={s.faint}>{n}</span>
+                              <div className={s.kumiHead}>
+                                {d.見出し} {n}
+                              </div>
                               {(d.項目 ?? []).map((k) => (
                                 <input
                                   key={k.id}
@@ -844,8 +849,11 @@ export default function ShoshikiView({
                   )}
                 {中身.品目.length > 0 &&
                   型の見込み.map((g) => (
-                    <div key={`${g.型.sha256}-${g.id}`} className={s.row}>
-                      <div className={s.label}>{型の組たち.length > 1 ? `${g.型.県名}：${g.見出し}` : g.見出し}</div>
+                    <details key={`${g.型.sha256}-${g.id}`} className={s.fold} open={型の組たち.length === 1}>
+                      <summary>
+                        {型の組たち.length > 1 ? `${g.型.県名}：${g.見出し}` : g.見出し}
+                        {g.要確認.length > 0 && <span className={s.badge}>要確認 {g.要確認.length}</span>}
+                      </summary>
                       <div data-testid={`型の見込み-${g.id}`}>
                         <div className={s.preview}>
                           {g.行たち.map((t, k) => (
@@ -888,10 +896,10 @@ export default function ShoshikiView({
                           </ul>
                         </details>
                       </div>
-                    </div>
+                    </details>
                   ))}
               </div>
-            </>
+            </details>
           )}
 
           <h2>3．申請する都道府県</h2>
@@ -1087,6 +1095,14 @@ export default function ShoshikiView({
               {x.県名}の産業廃棄物収集運搬業のページ
             </a>
             　{x.名前}（ファイル名 {x.ファイル名}）
+            {!取れる && x.ファイルの場所 && (
+              <>
+
+                <a href={x.ファイルの場所} target="_blank" rel="noopener noreferrer" data-testid={`様式ファイル-${x.sha256.slice(0, 8)}`}>
+                  様式ファイルを保存する
+                </a>
+              </>
+            )}
             {取れる && !x.自動で取れない && (
               <button type="button" className={s.small} data-testid={`県から取る-${x.県コード}`} onClick={() => void 県から取る(x)}>
                 {置たち.some((y) => y.sha256 === x.sha256) ? "取り直す" : "県のサイトから取ってくる"}

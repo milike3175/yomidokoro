@@ -112,6 +112,8 @@ export type 様式 = {
   県名: string;
   ファイル名: string;
   入口: string;
+  /** 様式ファイルそのものの場所（県のサイト）。ブラウザでは、ここから保存して「手で置く」に入れる */
+  ファイルの場所?: string;
   /** 県のサイトが自動の取得を断る（ボット対策など）ときの理由。あれば、アプリは取りに行かず、県のページから手で保存して置くよう案内する */
   自動で取れない?: string;
   /** 書き換える本文のファイル（zip の中のパス） */
@@ -1174,6 +1176,41 @@ export function 記入する(本文: string, 様: 様式, 値たち: 値, 中身
           ...g.要確認,
         ],
       });
+    }
+  }
+
+  // ---- 書く場所（段落の方式の「後ろ」「箱」と同じ仕組み。和歌山の誓約書など、欄の形で表せない所。2026-11-06） ----
+  {
+    const v: Record<string, string> = {};
+    for (const [k, x] of Object.entries(値たち)) v[k] = 全角に((x ?? "").trim());
+    const 住 = 住所を割る(値たち["住所"] ?? "");
+    v["住所.〒"] = 住.郵便;
+    v["住所.本体"] = 全角に(住.本体);
+    const 差す = (t: string) => t.replace(/\{([^{}]+)\}/g, (_m, k: string) => v[k] ?? "");
+    const 半 = (t: string) => t.replace(/\{([^{}]+)\}/g, (_m, k: string) => (値たち[k] ?? "").trim());
+    for (const w of 様.書く場所 ?? []) {
+      if (w.種類 !== "箱" && w.種類 !== "後ろ") return { ok: false, 理由: `${w.見出し}：箱の方式では「${w.種類}」の書く場所は使えません。対応表を直してください` };
+      if (中身(w.箱) !== w.元) return { ok: false, 理由: `${w.見出し}：元の字が様式と違います（${w.箱}番目の箱）。書きません` };
+      if (差したち.some((d) => d.箱 === w.箱)) return { ok: false, 理由: `${w.見出し}：${w.箱}番目の箱に二つの欄が書こうとしています。対応表を直してください` };
+      const 値 = w.種類 === "後ろ" && w.半角 ? 半(w.字) : 差す(w.字);
+      if (!値.replace(/　/g, "")) {
+        結果.push({ id: w.見出し, 見出し: w.見出し, 状態: "空", 説明: [] });
+        continue;
+      }
+      const 説明: string[] = [];
+      let 字: string;
+      if (w.種類 === "箱") {
+        const z = Array.from(値);
+        if (z.length > w.幅) 説明.push(`${w.幅}字を超えたので切りました`);
+        字 = z.length >= w.幅 ? z.slice(z.length - w.幅).join("") : SP.repeat(w.幅 - z.length) + 値;
+      } else 字 = (w.空白を詰める ? `${w.元.replace(/[　 ]+$/, "")}　` : w.元) + 値;
+      const m = 箱たち[w.箱];
+      const 頭 = m[0].slice(0, m[0].indexOf(">") + 1);
+      const 新しい頭 = /xml:space="preserve"/.test(頭) ? 頭 : 頭.replace(/^<w:t/, '<w:t xml:space="preserve"');
+      const 次 = w.種類 === "後ろ" && w.次の行 ? 差す(w.次の行.字) : "";
+      const 次の字 = w.種類 === "後ろ" && w.次の行 && 次.replace(/　/g, "") ? `<w:br/><w:t xml:space="preserve">${esc(w.次の行.頭 + 次)}</w:t>` : "";
+      変え.push({ 始め: m.index!, 終わり: m.index! + m[0].length, 字: `${新しい頭}${esc(字)}</w:t>${次の字}` });
+      結果.push({ id: w.見出し, 見出し: w.見出し, 状態: 説明.length ? "要確認" : "書いた", 説明 });
     }
   }
 
