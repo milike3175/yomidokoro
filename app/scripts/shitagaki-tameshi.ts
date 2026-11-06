@@ -3,7 +3,7 @@
 import fs from "node:fs";
 import { parse } from "yaml";
 import JSZip from "jszip";
-import { docxに書く, type 様式, type 書き方の型 } from "../src/lib/shoshiki.ts";
+import { docxに書く, type 様式, type 書き方の型, type 写真 } from "../src/lib/shoshiki.ts";
 
 const [yml, docx, out, kata] = process.argv.slice(2);
 const 様 = parse(fs.readFileSync(yml, "utf8")) as 様式;
@@ -58,7 +58,15 @@ const 値たち = {
 };
 const 中身 = { 品目: [{ id: "廃プラスチック類", 石綿: "両方" as const }, { id: "がれき類", 石綿: "両方" as const }], 積替保管: "無" as const };
 const 型 = kata ? (parse(fs.readFileSync(kata, "utf8")) as 書き方の型) : null;
-const r = await docxに書く(JSZip as never, new Uint8Array(fs.readFileSync(docx)), 様, 値たち, 中身, 型);
+// 写真：../_申請/試し/写真/ に <鍵>.png か <鍵>.jpg（車両.1.前面.png など）があれば貼る（和歌山の第6面・第7面）
+const 写真たち: Record<string, 写真> = {};
+const 写真の置き場 = "../_申請/試し/写真";
+if (fs.existsSync(写真の置き場))
+  for (const f of fs.readdirSync(写真の置き場)) {
+    const m = /^(.+)\.(png|jpe?g)$/i.exec(f);
+    if (m) 写真たち[m[1]] = { 名前: f, バイト: new Uint8Array(fs.readFileSync(`${写真の置き場}/${f}`)) };
+  }
+const r = await docxに書く(JSZip as never, new Uint8Array(fs.readFileSync(docx)), 様, 値たち, 中身, 型, 写真たち);
 if (!r.ok) { console.log("書けなかった：", r.理由); process.exit(1); }
 fs.writeFileSync(out, r.バイト);
 for (const x of r.結果) console.log(x.状態, x.見出し, x.説明.join(" / "));

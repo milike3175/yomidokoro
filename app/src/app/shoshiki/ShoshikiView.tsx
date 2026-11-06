@@ -37,6 +37,7 @@ import {
   全角に,
   type 様式,
   type 値,
+  type 写真,
   type 欄の結果,
   type 申請の中身,
   type 品目の選び,
@@ -139,9 +140,10 @@ async function docxを作る(
   値たち: 値,
   中身: 申請の中身,
   型: 書き方の型 | null,
+  写真たち: Record<string, 写真>,
 ): Promise<{ ok: true; blob: Blob; 結果: 欄の結果[] } | { ok: false; 理由: string }> {
   const JSZip = (await import("jszip")).default;
-  const r = await docxに書く(JSZip, 置.バイト, 様, 値たち, 中身, 型);
+  const r = await docxに書く(JSZip, 置.バイト, 様, 値たち, 中身, 型, 写真たち);
   if (!r.ok) return r;
   const 型名 = 様.方式 === "セル" ? "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" : "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
   const blob = new Blob([r.バイト as BlobPart], { type: 型名 });
@@ -171,6 +173,20 @@ export default function ShoshikiView({
   const [作成中, set作成中] = useState(false);
   const [手で置くを開く, set手で置くを開く] = useState(false);
   const [値たち, set値たち] = useState<値>({});
+  // 写真（車両の前面・側面、容器）。鍵は 車両.1.前面 など。このブラウザの中だけに持ち、控えには入れない（どこにも送らない）
+  const [写真たち, set写真たち] = useState<Record<string, 写真>>({});
+  async function 写真を受ける(鍵: string, f: File | undefined) {
+    if (!f) return;
+    const バイト = new Uint8Array(await f.arrayBuffer());
+    set写真たち((v) => ({ ...v, [鍵]: { 名前: f.name, バイト } }));
+  }
+  function 写真を外す(鍵: string) {
+    set写真たち((v) => {
+      const w = { ...v };
+      delete w[鍵];
+      return w;
+    });
+  }
   const [中身, set中身] = useState<申請の中身>({ ...空の中身, 品目: [] });
   const [知らせ, set知らせ] = useState<string>("");
   const [控えの知らせ, set控えの知らせ] = useState<string>("");
@@ -409,7 +425,7 @@ export default function ShoshikiView({
         continue;
       }
       const 型x = 型たち.find((t) => t.sha256 === x.sha256) ?? null;
-      const r = await docxを作る(用意.置, x, 値たち, 中身, 型x);
+      const r = await docxを作る(用意.置, x, 値たち, 中身, 型x, 写真たち);
       if (!r.ok) {
         文たち.push(`${呼び名}：書きませんでした（${r.理由}）`);
         continue;
@@ -840,8 +856,35 @@ export default function ShoshikiView({
                                   onChange={変える(くり返しの鍵(d.id, n, k.id))}
                                 />
                               ))}
+                              {(d.写真 ?? []).map((k) => {
+                                const 鍵 = `${d.id}.${n}.${k.id}`;
+                                const 今 = 写真たち[鍵];
+                                return (
+                                  <div key={k.id} className={s.photo} data-testid={`写真-${鍵}`}>
+                                    <span className={s.faint}>{k.見出し}</span>
+                                    {今 ? (
+                                      <>
+                                        <span className={s.photoName}>{今.名前}</span>
+                                        <button type="button" className={s.small} onClick={() => 写真を外す(鍵)}>
+                                          外す
+                                        </button>
+                                      </>
+                                    ) : (
+                                      <input type="file" accept="image/png,image/jpeg" aria-label={`${d.見出し} ${n} ${k.見出し}`} onChange={(e) => void 写真を受ける(鍵, e.target.files?.[0])} />
+                                    )}
+                                  </div>
+                                );
+                              })}
                             </div>
                           ))}
+                          {d.写真 && 選んだ様たち.some((x) => x.写真の場所?.length) && (
+                            <div className={s.faint}>
+                              写真は PNG か JPEG。{選んだ様たち.filter((x) => x.写真の場所?.length).map((x) => `${x.県名}の様式の写真の面（${[...new Set(x.写真の場所!.map((p) => p.見出し.replace(/（.*$/, "")))].join("・")}）`).join("、")}に貼ります。写真は控えには入れず、このパソコンの中だけで扱います
+                            </div>
+                          )}
+                          {d.写真 && !選んだ様たち.some((x) => x.写真の場所?.length) && 選んだ様たち.length > 0 && (
+                            <div className={s.faint}>選んだ県の様式には、道具が写真を貼る所をまだ決めていません。写真は手で貼ってください</div>
+                          )}
                           {d.説明 && <div className={s.faint}>{d.説明}</div>}
                         </div>
                       </div>

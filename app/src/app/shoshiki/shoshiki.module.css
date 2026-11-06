@@ -370,3 +370,21 @@ div.preview {
   font-size: 15px !important;
   color: var(--ink) !important;
 }
+
+/* くり返しの組の写真（車両の前面・側面、容器）。選んだらファイル名と「外す」 */
+.photo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 10px;
+  font-size: 13.5px;
+}
+.photo input[type="file"] {
+  font: inherit;
+  font-size: 13px;
+  max-width: 100%;
+}
+.photoName {
+  color: var(--ink);
+  word-break: break-all;
+}

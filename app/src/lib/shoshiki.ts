@@ -152,6 +152,10 @@ export type 様式 = {
   書く場所?: 書く場所[];
   /** 段落の方式：「事業の範囲」を文で書く形 */
   品目の文?: 品目の文の欄;
+  /** 写真を貼る場所（運搬車両・運搬容器の写真の面）。画面で選んだ写真を、記入のあとに貼る */
+  写真の場所?: 写真の場所[];
+  /** 写真の面に書く字（車両番号・容器の名称など）。記入のいちばん最後に書く */
+  写真の字?: 写真の字[];
 };
 
 /** 面の前の段落（その段落の中の箱と、元の字）と、次の面の名前。元から改ページのある面は持たない */
@@ -606,6 +610,8 @@ export type 差し込み口 = {
   /** くり返しの組の中身 */
   項目?: { id: string; 見出し: string; 例?: string }[];
   最大?: number;
+  /** くり返しの組ごとに選べる写真（車両の前面・側面など）。鍵は <id>.<n>.<写真のid>。様式の 写真の場所 と結びつく */
+  写真?: { id: string; 見出し: string }[];
 };
 
 /** 書き方の形（記載例の形・品目ごとの箇条書き など）。初めは並びの最初の形 */
@@ -724,6 +730,9 @@ export function 様式が使う口(様: 様式, 型: 書き方の型): Set<strin
       } else if (v && typeof v === "object" && typeof (v as { 字?: unknown }).字 === "string") 字たち.push((v as { 字: string }).字);
     }
   }
+  // 写真の面の字（{型.車両.1.登録番号} など）と、写真を貼る場所の鍵（車両.1.前面 → 車両）
+  for (const w of 様.写真の字 ?? []) 字たち.push(w.字);
+  for (const p of 様.写真の場所 ?? []) r.add(p.鍵.split(".")[0]);
   const 項目たち = new Set<string>();
   for (const t of 字たち) {
     for (const m of t.matchAll(/\{型\.([^.{}]+)/g)) r.add(m[1]);
@@ -1494,6 +1503,7 @@ export async function docxに書く(
   値たち: 値,
   中身?: 申請の中身,
   型?: 書き方の型 | null,
+  写真たち?: Record<string, 写真>,
 ): Promise<{ ok: true; バイト: Uint8Array; 結果: 欄の結果[] } | { ok: false; 理由: string }> {
   const zip = await JSZip.loadAsync(バイト);
   if (様.方式 === "セル") return セルの様式に書く(zip, 様, 値たち, 中身);
@@ -1508,22 +1518,45 @@ export async function docxに書く(
   }
   const r = 記入する(本文, 様, 値たち, 中身, 型);
   if (!r.ok) return r;
+  let 新しい本文 = r.本文;
+  const 結果 = [...r.結果];
   const 名前の並び = Object.keys(zip.files);
-  zip.file(様.本文, new TextEncoder().encode(r.本文), {
-    binary: true,
-    date: entry.date,
-    compression: "DEFLATE",
-    unixPermissions: entry.unixPermissions,
-    dosPermissions: entry.dosPermissions,
-    createFolders: false,
-  });
-  if (Object.keys(zip.files).join("\n") !== 名前の並び.join("\n")) {
+  const 書き方 = (e: typeof entry) => ({ binary: true, date: e.date, compression: "DEFLATE" as const, unixPermissions: e.unixPermissions, dosPermissions: e.dosPermissions, createFolders: false });
+  // 写真（運搬車両・運搬容器の写真の面）と写真の面の字。段落の数は記入の前後で変わらないので、記入のあとに貼る
+  if (様.写真の場所?.length || 様.写真の字?.length) {
+    const relsの場所 = 様.本文.replace(/([^/]+)$/, "_rels/$1.rels");
+    const rels = zip.file(relsの場所);
+    const 型の場所 = "[Content_Types].xml";
+    const 型 = zip.file(型の場所);
+    if (!rels || !型) return { ok: false, 理由: `${relsの場所} か ${型の場所} が見つかりません。写真を貼れないので書きません` };
+    const rels文 = await rels.async("string");
+    const 次のrId = Math.max(0, ...[...rels文.matchAll(/Id="rId(\d+)"/g)].map((m) => Number(m[1]))) + 1;
+    const p = 写真を貼る(本文, 新しい本文, 様, 写真たち ?? {}, 値たち, 次のrId);
+    if (!p.ok) return p;
+    新しい本文 = p.本文;
+    結果.push(...p.結果);
+    if (p.追加.length) {
+      let 新rels = rels文;
+      let 型文 = await 型.async("string");
+      for (const a of p.追加) {
+        zip.file(`${様.本文.replace(/[^/]+$/, "")}media/${a.ファイル名}`, a.バイト, { binary: true, compression: "DEFLATE", createFolders: false, date: entry.date });
+        新rels = 新rels.replace(/<\/Relationships>\s*$/, `<Relationship Id="${a.rId}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="media/${a.ファイル名}"/></Relationships>`);
+        if (!new RegExp(`<Default Extension="${a.拡張子}"`).test(型文))
+          型文 = 型文.replace(/(<Types\b[^>]*>)/, `$1<Default Extension="${a.拡張子}" ContentType="image/${a.拡張子}"/>`);
+      }
+      zip.file(relsの場所, new TextEncoder().encode(新rels), 書き方(rels));
+      zip.file(型の場所, new TextEncoder().encode(型文), 書き方(型));
+    }
+  }
+  zip.file(様.本文, new TextEncoder().encode(新しい本文), 書き方(entry));
+  const 今の並び = Object.keys(zip.files);
+  if (今の並び.slice(0, 名前の並び.length).join("\n") !== 名前の並び.join("\n") || 今の並び.slice(名前の並び.length).some((n) => !/\/media\/yomidokoro\d+\.(png|jpeg)$/.test(n))) {
     return { ok: false, 理由: "zip の中のファイルの並びが変わりました。書きません" };
   }
   // 圧縮方式を元と同じ DEFLATE にする。JSZip は、読み込んだパーツの方式と同じなら圧縮データを解かずにそのまま書く
   // （指定しないと全パーツが無圧縮で詰め直される）
   const out = await zip.generateAsync({ type: "uint8array", compression: "DEFLATE", platform: "DOS" });
-  return { ok: true, バイト: out, 結果: r.結果 };
+  return { ok: true, バイト: out, 結果 };
 }
 
 // ================ 段落の方式（見出しだけの様式。山形の様式第六号など） ================
@@ -1583,6 +1616,176 @@ export type 品目の文の欄 = {
 };
 
 const 段落の形 = /<w:p\b[^>]*\/>|<w:p\b[^>]*>[\s\S]*?<\/w:p>/g;
+
+/** 空の段落の高さをほぼ無くした形（行の高さ 1pt・字の大きさ 1pt）。面の終わりの余白や、写真を入れたセルの残りの空の段落に使う */
+function 空の段落を詰めた形(元: string): string {
+  const 詰め = '<w:spacing w:before="0" w:after="0" w:line="20" w:lineRule="exact"/><w:rPr><w:sz w:val="2"/><w:szCs w:val="2"/></w:rPr>';
+  if (元.endsWith("/>")) return `${元.slice(0, -2)}><w:pPr>${詰め}</w:pPr></w:p>`;
+  if (/<w:pPr>/.test(元))
+    // Word の決まりの順：pStyle・keepNext など → spacing → ind・jc など → rPr
+    return 元.replace(/<w:pPr>([\s\S]*?)<\/w:pPr>/, (_m, 中: string) => {
+      const 残り = 中.replace(/<w:spacing\b[^>]*\/>/, "").replace(/<w:rPr>[\s\S]*?<\/w:rPr>/, "");
+      const 前 = /^(?:<w:(?:pStyle|keepNext|keepLines|pageBreakBefore|framePr|widowControl|numPr|suppressLineNumbers|pBdr|shd|tabs|suppressAutoHyphens|kinsoku|wordWrap|overflowPunct|topLinePunct|autoSpaceDE|autoSpaceDN|bidi|adjustRightInd|snapToGrid)\b[^>]*\/>)*/.exec(残り)![0];
+      return `<w:pPr>${前}<w:spacing w:before="0" w:after="0" w:line="20" w:lineRule="exact"/>${残り.slice(前.length)}<w:rPr><w:sz w:val="2"/><w:szCs w:val="2"/></w:rPr></w:pPr>`;
+    });
+  return 元.replace(/^(<w:p\b[^>]*>)/, `$1<w:pPr>${詰め}</w:pPr>`);
+}
+
+// ================ 写真（運搬車両・運搬容器の写真の面に画像を貼る。2026-11-06） ================
+// 様式の「写真の場所」の空の段落に、画像の run（w:drawing、inline）を1つ入れる。同じセルの残りの空の段落は詰めて、
+// 枠の高さが変わらないようにする。画像は枠（幅・高さ、twips）に収まるように縮める（縦横の比は保つ）。
+// 画像のファイルは docx の word/media/ に足し、関係（rels）と Content_Types に登録する（docxに書く が行う）。
+// 写真の中身は、ほかの値と同じく、このパソコンの中だけで扱う。
+
+/** 写真を貼る場所。鍵は画面の写真の鍵（車両.1.前面 など） */
+export type 写真の場所 = { 見出し: string; 鍵: string; 段落: number; 確かめ: { 箱: number; 字: string }; 幅: number; 高さ: number };
+/** 写真の面に書く字（空の段落に書く。{型.車両.1.登録番号} など）。記入のいちばん最後に書く */
+export type 写真の字 = { 見出し: string; 段落: number; 字: string };
+export type 写真 = { 名前: string; バイト: Uint8Array };
+
+/** PNG・JPEG の縦横の画素数を読む（ほかの形式は null） */
+export function 画像の大きさ(b: Uint8Array): { 幅: number; 高さ: number; 拡張子: "png" | "jpeg" } | null {
+  if (b.length > 24 && b[0] === 0x89 && b[1] === 0x50 && b[2] === 0x4e && b[3] === 0x47) {
+    const v = new DataView(b.buffer, b.byteOffset, b.byteLength);
+    return { 幅: v.getUint32(16), 高さ: v.getUint32(20), 拡張子: "png" };
+  }
+  if (b.length > 4 && b[0] === 0xff && b[1] === 0xd8) {
+    const v = new DataView(b.buffer, b.byteOffset, b.byteLength);
+    let i = 2;
+    while (i + 9 < b.length) {
+      if (b[i] !== 0xff) return null;
+      const marker = b[i + 1];
+      if (marker === 0xd8 || marker === 0x01 || (marker >= 0xd0 && marker <= 0xd7)) {
+        i += 2;
+        continue;
+      }
+      const len = v.getUint16(i + 2);
+      if ((marker >= 0xc0 && marker <= 0xc3) || (marker >= 0xc5 && marker <= 0xc7) || (marker >= 0xc9 && marker <= 0xcb) || (marker >= 0xcd && marker <= 0xcf)) {
+        return { 高さ: v.getUint16(i + 5), 幅: v.getUint16(i + 7), 拡張子: "jpeg" };
+      }
+      i += 2 + len;
+    }
+  }
+  return null;
+}
+
+export type 写真の追加 = { ファイル名: string; バイト: Uint8Array; 拡張子: "png" | "jpeg"; rId: string };
+
+/**
+ * 写真の面に画像と字を入れる。記入する のあとに呼ぶ（段落の数は記入の前後で変わらない。箱の数は変わりうるので、確かめは元の本文で行う）
+ * @param 元の本文 記入する前の本文（確かめの箱を見る）
+ * @param 本文 記入したあとの本文（ここに足す）
+ */
+export function 写真を貼る(
+  元の本文: string,
+  本文: string,
+  様: 様式,
+  写真たち: Record<string, 写真>,
+  値たち: 値,
+  次のrId: number,
+): { ok: true; 本文: string; 追加: 写真の追加[]; 結果: 欄の結果[] } | { ok: false; 理由: string } {
+  const 元の箱 = [...元の本文.matchAll(箱の形)];
+  const 元の段 = [...元の本文.matchAll(段落の形)];
+  const 段たち = [...本文.matchAll(段落の形)];
+  if (元の段.length !== 段たち.length) return { ok: false, 理由: `記入の前後で段落の数が変わりました（${元の段.length} → ${段たち.length}）。写真を貼りません` };
+  const 空か = (p: RegExpMatchArray) => !/<w:t[\s>]/.test(p[0]) && !/<w:r[\s>]/.test(p[0]) && !/<w:drawing[\s>]/.test(p[0]);
+  type 変え = { 始め: number; 終わり: number; 字: string };
+  const 変えたち: 変え[] = [];
+  const 結果: 欄の結果[] = [];
+  const 追加: 写真の追加[] = [];
+  const 使った = new Set<string>();
+  let 番号 = 次のrId;
+
+  for (const 場 of 様.写真の場所 ?? []) {
+    const 写 = 写真たち[場.鍵];
+    if (!写) {
+      結果.push({ id: `写真.${場.鍵}`, 見出し: 場.見出し, 状態: "空", 説明: [] });
+      continue;
+    }
+    使った.add(場.鍵);
+    const 箱 = 元の箱[場.確かめ.箱];
+    if (!箱 || 箱[1] !== 場.確かめ.字) return { ok: false, 理由: `${場.見出し}：見出しの字が様式と違います（${場.確かめ.箱}番目の箱）。写真を貼りません` };
+    const p = 段たち[場.段落];
+    if (!p || !空か(p)) return { ok: false, 理由: `${場.見出し}：写真を入れる段落（${場.段落}番目）が空ではありません。写真を貼りません` };
+    const 大きさ = 画像の大きさ(写.バイト);
+    if (!大きさ || 大きさ.幅 === 0 || 大きさ.高さ === 0) {
+      結果.push({ id: `写真.${場.鍵}`, 見出し: 場.見出し, 状態: "要確認", 説明: [`${写.名前}：PNG か JPEG の写真だけ貼れます。この写真は貼っていません`] });
+      continue;
+    }
+    // 枠に収まる大きさ（twips → EMU は ×635）。縦横の比は保つ
+    const 倍 = Math.min(場.幅 / 大きさ.幅, 場.高さ / 大きさ.高さ);
+    const cx = Math.round(大きさ.幅 * 倍 * 635);
+    const cy = Math.round(大きさ.高さ * 倍 * 635);
+    const rId = `rId${番号++}`;
+    const n = 追加.length + 1;
+    const ファイル名 = `yomidokoro${n}.${大きさ.拡張子}`;
+    追加.push({ ファイル名, バイト: 写.バイト, 拡張子: 大きさ.拡張子, rId });
+    const id = 9000 + n;
+    const 絵 =
+      `<w:r><w:drawing><wp:inline distT="0" distB="0" distL="0" distR="0"><wp:extent cx="${cx}" cy="${cy}"/><wp:docPr id="${id}" name="写真${n}"/>` +
+      `<a:graphic xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main"><a:graphicData uri="http://schemas.openxmlformats.org/drawingml/2006/picture">` +
+      `<pic:pic xmlns:pic="http://schemas.openxmlformats.org/drawingml/2006/picture"><pic:nvPicPr><pic:cNvPr id="${id}" name="${ファイル名}"/><pic:cNvPicPr/></pic:nvPicPr>` +
+      `<pic:blipFill><a:blip r:embed="${rId}"/><a:stretch><a:fillRect/></a:stretch></pic:blipFill>` +
+      `<pic:spPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="${cx}" cy="${cy}"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom></pic:spPr></pic:pic></a:graphicData></a:graphic></wp:inline></w:drawing></w:r>`;
+    const 閉じ = p.index! + p[0].length - "</w:p>".length;
+    if (p[0].endsWith("/>")) {
+      // <w:p .../> の形。中身のある段落にする
+      変えたち.push({ 始め: p.index!, 終わり: p.index! + p[0].length, 字: `${p[0].slice(0, -2)}>${絵}</w:p>` });
+    } else 変えたち.push({ 始め: 閉じ, 終わり: 閉じ, 字: 絵 });
+    // 同じセルの残りの空の段落を詰める（枠の高さを変えない）
+    const セルの終わり = 本文.indexOf("</w:tc>", p.index!);
+    let 詰めた = 0;
+    for (let k = 場.段落 + 1; k < 段たち.length; k++) {
+      const q = 段たち[k];
+      if (セルの終わり >= 0 && q.index! > セルの終わり) break;
+      if (!空か(q)) break;
+      変えたち.push({ 始め: q.index!, 終わり: q.index! + q[0].length, 字: 空の段落を詰めた形(q[0]) });
+      詰めた++;
+    }
+    結果.push({
+      id: `写真.${場.鍵}`,
+      見出し: 場.見出し,
+      状態: "書いた",
+      説明: [`${写.名前}（${大きさ.幅}×${大きさ.高さ}）を ${Math.round(cx / 36000)}×${Math.round(cy / 36000)}mm で貼りました${詰めた ? `。枠の残りの空の行 ${詰めた}行を詰めました` : ""}。Word で開いて、写真の大きさと面の崩れを確かめてください`],
+    });
+  }
+  // 貼る所の無い写真（2台目以降など）
+  for (const 鍵 of Object.keys(写真たち)) {
+    if (使った.has(鍵)) continue;
+    const 場所がある = (様.写真の場所 ?? []).length > 0;
+    結果.push({
+      id: `写真.${鍵}`,
+      見出し: `写真 ${鍵}`,
+      状態: "要確認",
+      説明: [場所がある ? `この様式には ${鍵} の写真を貼る所がありません（${様.県名}の様式は1台目の車両と容器2つまで）。写真の面を複製して、手で貼ってください` : `${様.県名}の様式には、道具が写真を貼る所をまだ決めていません。手で貼ってください`],
+    });
+  }
+  // 写真の面の字
+  const v: Record<string, string> = {};
+  for (const [k, x] of Object.entries(値たち)) v[k] = 全角に((x ?? "").trim());
+  const 差す = (t: string) => t.replace(/\{([^{}]+)\}/g, (_m, k: string) => v[k] ?? "");
+  for (const w of 様.写真の字 ?? []) {
+    const 字 = 差す(w.字).trim();
+    if (!字) {
+      結果.push({ id: `写真の字.${w.段落}`, 見出し: w.見出し, 状態: "空", 説明: [] });
+      continue;
+    }
+    const p = 段たち[w.段落];
+    if (!p || !空か(p)) return { ok: false, 理由: `${w.見出し}：書く段落（${w.段落}番目）が空ではありません。書きません` };
+    const run = `<w:r><w:rPr><w:rFonts w:hint="eastAsia"/></w:rPr><w:t xml:space="preserve">${esc(字)}</w:t></w:r>`;
+    if (p[0].endsWith("/>")) 変えたち.push({ 始め: p.index!, 終わり: p.index! + p[0].length, 字: `${p[0].slice(0, -2)}>${run}</w:p>` });
+    else {
+      const 閉じ = p.index! + p[0].length - "</w:p>".length;
+      変えたち.push({ 始め: 閉じ, 終わり: 閉じ, 字: run });
+    }
+    結果.push({ id: `写真の字.${w.段落}`, 見出し: w.見出し, 状態: "書いた", 説明: [] });
+  }
+  // 後ろから当てる（前の位置がずれないように）。同じ位置への挿入は無い（段落ごとに1つ）
+  変えたち.sort((a, b) => b.始め - a.始め);
+  let out = 本文;
+  for (const c of 変えたち) out = out.slice(0, c.始め) + c.字 + out.slice(c.終わり);
+  return { ok: true, 本文: out, 追加, 結果 };
+}
 
 function 住所を割る(v: string): { 郵便: string; 本体: string } {
   const m = /^〒?\s*([0-9０-９]{3})[-－ー‐]?([0-9０-９]{4})\s*(.*)$/.exec(v.trim());
@@ -1704,19 +1907,7 @@ function 段落で記入する(本文: string, 様: 様式, 値たち: 値, 中�
       if (箱の字(w.確かめ.箱) !== w.確かめ.字) return { ok: false, 理由: `${w.見出し}：見出しの字が様式と違います（${w.確かめ.箱}番目の箱）。書きません` };
       const p = 段たち[w.段落];
       if (!p || /<w:t[\s>]/.test(p[0]) || /<w:r[\s>]/.test(p[0])) return { ok: false, 理由: `${w.見出し}：詰める段落（${w.段落}番目）が空ではありません。書きません` };
-      const 詰め = '<w:spacing w:before="0" w:after="0" w:line="20" w:lineRule="exact"/><w:rPr><w:sz w:val="2"/><w:szCs w:val="2"/></w:rPr>';
-      const 元 = p[0];
-      let 新: string;
-      if (元.endsWith("/>")) 新 = `${元.slice(0, -2)}><w:pPr>${詰め}</w:pPr></w:p>`;
-      else if (/<w:pPr>/.test(元))
-        // Word の決まりの順：pStyle・keepNext など → spacing → ind・jc など → rPr
-        新 = 元.replace(/<w:pPr>([\s\S]*?)<\/w:pPr>/, (_m, 中: string) => {
-          const 残り = 中.replace(/<w:spacing\b[^>]*\/>/, "").replace(/<w:rPr>[\s\S]*?<\/w:rPr>/, "");
-          const 前 = /^(?:<w:(?:pStyle|keepNext|keepLines|pageBreakBefore|framePr|widowControl|numPr|suppressLineNumbers|pBdr|shd|tabs|suppressAutoHyphens|kinsoku|wordWrap|overflowPunct|topLinePunct|autoSpaceDE|autoSpaceDN|bidi|adjustRightInd|snapToGrid)\b[^>]*\/>)*/.exec(残り)![0];
-          return `<w:pPr>${前}<w:spacing w:before="0" w:after="0" w:line="20" w:lineRule="exact"/>${残り.slice(前.length)}<w:rPr><w:sz w:val="2"/><w:szCs w:val="2"/></w:rPr></w:pPr>`;
-        });
-      else 新 = 元.replace(/^(<w:p\b[^>]*>)/, `$1<w:pPr>${詰め}</w:pPr>`);
-      変えたち.push({ 始め: p.index!, 終わり: p.index! + 元.length, 字: 新 });
+      変えたち.push({ 始め: p.index!, 終わり: p.index! + p[0].length, 字: 空の段落を詰めた形(p[0]) });
       continue;
     }
     // 段落：空の段落に、行たちを改行（w:br）でつないだ run を1つ足す
