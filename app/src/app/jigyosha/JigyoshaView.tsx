@@ -89,6 +89,18 @@ export default function JigyoshaView() {
         名簿はこのパソコンの中にだけあります。Claude にもインターネットにも送りません。
       </p>
 
+      {アプリ !== undefined && (
+        <p className={s.bookNew}>
+          <a href="/shoshiki/" className={s.bookNewButton} data-testid="新しい事業者さんを入れる">
+            新しい事業者さんを入れる
+          </a>
+          <span>
+            会社の情報と品目を入れて、申請する都道府県を選ぶと、県の数だけ下書きができます
+            {アプリ === null && "（ブラウザでは、下書きと控えのファイルがダウンロードされます）"}
+          </span>
+        </p>
+      )}
+
       {アプリ === null && (
         <p className={s.note} data-testid="ブラウザの控え">
           ブラウザで開いているときは、名簿に入れた事業者さんは、ダウンロードしたファイル（控え_会社名_日付.json）として手元にあります。
@@ -98,12 +110,6 @@ export default function JigyoshaView() {
 
       {アプリ && (
         <>
-          <p className={s.bookNew}>
-            <a href="/shoshiki/" className={s.bookNewButton} data-testid="新しい事業者さんを入れる">
-              新しい事業者さんを入れる
-            </a>
-            <span>会社の情報と品目を入れて、申請する都道府県を選ぶと、県の数だけ下書きができます</span>
-          </p>
           <h2>今までの事業者さん</h2>
           {知らせ && <p className={s.placed}>{知らせ}</p>}
           {行たち.length === 0 ? (
