@@ -45,6 +45,16 @@ const 様式の目録 = {
     ファイル名: "20260122101422.xlsx",
     対応表: "29_奈良_申請様式.yaml",
   },
+  // 2026-11-06：京都の様式第六号（作成代理人用。shosiki17.html「産業廃棄物処理業 申請等様式」。府のサイトは普通のダウンロードに応じる）
+  "26": {
+    県名: "京都府",
+    短い名前: "様式第六号（作成代理人用）",
+    名前: "産業廃棄物収集運搬業許可申請書（様式第六号・作成代理人用）",
+    url: "https://www.pref.kyoto.jp/sanpai/documents/dairi_kisoku_6.docx",
+    入口: "https://www.pref.kyoto.jp/sanpai/shosiki17.html",
+    ファイル名: "dairi_kisoku_6.docx",
+    対応表: "26_京都_様式第六号.yaml",
+  },
 };
 
 /**
@@ -61,6 +71,17 @@ const 追加の様式 = [
     入口: "https://www.pref.yamagata.jp/050010/kurashi/kankyo/haikibutsu/shorigyousha/horigyotetsuduki2020.html",
     ファイル名: "keikakuh29.docx",
     対応表: "06_山形_事業計画の概要.yaml",
+  },
+  // 2026-11-06：京都の事業計画の概要（様式第六号の二・一括）
+  {
+    県コード: "26",
+    県名: "京都府",
+    短い名前: "事業計画の概要",
+    名前: "事業計画の概要（様式第六号の二）",
+    url: "https://www.pref.kyoto.jp/sanpai/documents/kisoku_6_2_all.docx",
+    入口: "https://www.pref.kyoto.jp/sanpai/shosiki17.html",
+    ファイル名: "kisoku_6_2_all.docx",
+    対応表: "26_京都_事業計画の概要.yaml",
   },
 ];
 
