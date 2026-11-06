@@ -210,8 +210,11 @@ export default function KenView({
   const [探す, set探す] = useState("");
   const [記録だけ, set記録だけ] = useState(false);
   const 探す語 = 探す.trim();
+  // 観点の名前・探す言葉のほか、記録の本文（手引きの要点の文・問い・引用）に字があっても残す（2026-11-06 夜）
+  const 記録に字がある = (k: 観点) => 観点の記録(k.id).some((c) => [c.本文, c.問い ?? "", c.出典?.引用 ?? ""].some((t) => t.includes(探す語)));
   const 観点が合う = (k: 観点) =>
-    (!探す語 || [k.番号, k.表示名, k.id, k.手引きで探すもの, k.電話で聞く文].some((t) => t.includes(探す語))) && (!記録だけ || 観点の記録(k.id).length > 0);
+    (!探す語 || [k.番号, k.表示名, k.id, k.手引きで探すもの, k.電話で聞く文].some((t) => t.includes(探す語)) || 記録に字がある(k)) &&
+    (!記録だけ || 観点の記録(k.id).length > 0);
   const 見せる観点 = 観点一覧.filter(観点が合う);
   const 絞っている = !!探す語 || 記録だけ;
   const 群順 = 全群順.filter((g) => 見せる観点.some((k) => k.群 === g));
@@ -398,7 +401,7 @@ export default function KenView({
             <div className="hint">
               {絞っている
                 ? `${見せる観点.length}観点を出しています（全部で${観点一覧.length}）。消すと全部にもどります`
-                : "観点の名前や、手引きで探す言葉で絞れます。"}
+                : "観点の名前や、記録の文に入っている言葉で絞れます。"}
             </div>
           </div>
           <nav className="panel toc" aria-label="目次">
