@@ -158,6 +158,8 @@ export type 様式 = {
   写真の場所?: 写真の場所[];
   /** 写真の面に書く字（車両番号・容器の名称など）。記入のいちばん最後に書く */
   写真の字?: 写真の字[];
+  /** 記載例の図（箱と矢印と字。京都の全体計画の「排出事業場 → 処分業者」）を Word の図形で描く場所。記入のあとに描く */
+  図の場所?: 図の場所[];
 };
 
 /** 面の前の段落（その段落の中の箱と、元の字）と、次の面の名前。元から改ページのある面は持たない */
@@ -771,6 +773,8 @@ export function 様式が使う口(様: 様式, 型: 書き方の型): Set<strin
   // 写真の面の字（{型.車両.1.登録番号} など）と、写真を貼る場所の鍵（車両.1.前面 → 車両）
   for (const w of 様.写真の字 ?? []) 字たち.push(w.字);
   for (const p of 様.写真の場所 ?? []) r.add(p.鍵.split(".")[0]);
+  // 図の部品の字（{型.駐車場} などを差し込む県があれば、その口も画面に出す）
+  for (const 図 of 様.図の場所 ?? []) for (const 部 of 図.部品) if (部.種類 !== "矢印") 字たち.push(部.字);
   const 項目たち = new Set<string>();
   for (const t of 字たち) {
     for (const m of t.matchAll(/\{型\.([^.{}]+)/g)) r.add(m[1]);
@@ -1620,6 +1624,13 @@ export async function docxに書く(
       zip.file(型の場所, new TextEncoder().encode(型文), 書き方(型));
     }
   }
+  // 記載例の図（Word の図形）。段落の数は記入で変わりうるので、段落の対応で引き直す
+  if (様.図の場所?.length) {
+    const z = 図を描く(本文, 新しい本文, 様, 値たち, 中身, r.段落の対応);
+    if (!z.ok) return z;
+    新しい本文 = z.本文;
+    結果.push(...z.結果);
+  }
   zip.file(様.本文, new TextEncoder().encode(新しい本文), 書き方(entry));
   const 今の並び = Object.keys(zip.files);
   if (今の並び.slice(0, 名前の並び.length).join("\n") !== 名前の並び.join("\n") || 今の並び.slice(名前の並び.length).some((n) => !/\/media\/yomidokoro\d+\.(png|jpeg)$/.test(n))) {
@@ -1825,6 +1836,31 @@ export type 写真の場所 = {
 export type 写真の字 = { 見出し: string; 段落: number; 字: string };
 export type 写真 = { 名前: string; バイト: Uint8Array };
 
+/**
+ * 図の部品。位置と大きさは twips（1mm ≈ 57）。x・y は、図を置く段落の左上からの距離。
+ * - 箱：枠線のある四角。字は真ん中
+ * - 矢印：左から右への線。右の端に矢じり
+ * - 字：枠線の無い字。{品目の並び}・{型.…} などを差し込める
+ */
+export type 図の部品 =
+  | { 種類: "箱"; x: number; y: number; 幅: number; 高さ: number; 字: string; 大きさ?: number }
+  | { 種類: "矢印"; x: number; y: number; 幅: number }
+  | { 種類: "字"; x: number; y: number; 幅: number; 高さ: number; 字: string; 大きさ?: number; 下線?: boolean; 寄せ?: "左" | "中" | "下" };
+/**
+ * 記載例の図を Word の図形で描く場所（2026-11-06 みゆき「図形で描けるようにして。図形を書く県が出てきたら対応できるように」）。
+ * 部品は、段落の位置に浮かせる（文の流れに入らない）。見出しの段落に置き、型の行で図のぶんの空の行を空けておく
+ */
+export type 図の場所 = {
+  見出し: string;
+  段落: number;
+  確かめ: { 箱: number; 字: string };
+  部品: 図の部品[];
+  /** 控えの選びで描くかどうか（中身の印 の鍵）。合わなければ描かない */
+  条件?: string;
+  /** 画面と結果に出す説明 */
+  注?: string;
+};
+
 /** PNG・JPEG の縦横の画素数を読む（ほかの形式は null） */
 export function 画像の大きさ(b: Uint8Array): { 幅: number; 高さ: number; 拡張子: "png" | "jpeg" } | null {
   if (b.length > 24 && b[0] === 0x89 && b[1] === 0x50 && b[2] === 0x4e && b[3] === 0x47) {
@@ -1977,6 +2013,106 @@ export function 写真を貼る(
   let out = 本文;
   for (const c of 変えたち) out = out.slice(0, c.始め) + c.字 + out.slice(c.終わり);
   return { ok: true, 本文: out, 追加, 結果 };
+}
+
+/**
+ * 記載例の図を Word の図形（箱・矢印・字）で描く。記入する のあと（写真を貼る と同じ所）に呼ぶ。
+ * 部品はそれぞれ、図を置く段落の位置に浮かせる（wp:anchor、文の流れに入らない）ので、マスの高さは変わらない。
+ * 型の行で図のぶんの空の行を空けておく。Word では一つずつ動かせる（まとめて動かすときは Word でグループ化する）。
+ * 字の中の {品目の並び} は控えの品目から、{型.…} などは値たちから差し込む。
+ */
+export function 図を描く(
+  元の本文: string,
+  本文: string,
+  様: 様式,
+  値たち: 値,
+  中身: 申請の中身 | undefined,
+  対応?: 段落の対応,
+): { ok: true; 本文: string; 結果: 欄の結果[] } | { ok: false; 理由: string } {
+  const 元の箱 = [...元の本文.matchAll(箱の形)];
+  const 元の段 = [...元の本文.matchAll(段落の形)];
+  const 段たち = [...本文.matchAll(段落の形)];
+  const 今の番号 = (元: number): number => (対応 ? (対応[元] ?? -1) : 元);
+  if (!対応 && 元の段.length !== 段たち.length) return { ok: false, 理由: `記入の前後で段落の数が変わりました（${元の段.length} → ${段たち.length}）。図を描きません` };
+  if (対応 && 対応.length !== 元の段.length) return { ok: false, 理由: "段落の対応が様式と合いません。図を描きません" };
+  const 印 = 中身の印(様, 中身);
+  const v: Record<string, string> = { 品目の並び: 品目を文に(様, 中身) };
+  for (const [k, x] of Object.entries(値たち)) v[k] = 全角に((x ?? "").trim());
+  const 差す = (t: string) => t.replace(/\{([^{}]+)\}/g, (_m, k: string) => v[k] ?? "");
+  type 変え = { 始め: number; 終わり: number; 字: string };
+  const 変えたち: 変え[] = [];
+  const 結果: 欄の結果[] = [];
+  let n = 0;
+  for (const 図 of 様.図の場所 ?? []) {
+    if (図.条件 && !印[図.条件]) {
+      結果.push({ id: `図.${図.段落}`, 見出し: 図.見出し, 状態: "空", 説明: [`控えの選びに当てはまらないので描きません（${図.条件}のときだけ）`] });
+      continue;
+    }
+    const 箱 = 元の箱[図.確かめ.箱];
+    if (!箱 || 箱[1] !== 図.確かめ.字) return { ok: false, 理由: `${図.見出し}：見出しの字が様式と違います（${図.確かめ.箱}番目の箱）。図を描きません` };
+    const p = 段たち[今の番号(図.段落)];
+    if (!p) return { ok: false, 理由: `${図.見出し}：図を置く段落（${図.段落}番目）がありません。図を描きません` };
+    const runs: string[] = [];
+    const 空いた: string[] = [];
+    for (const 部 of 図.部品) {
+      n++;
+      const 字 = 部.種類 === "矢印" ? "" : 差す(部.字).trim();
+      if (部.種類 !== "矢印" && !字) {
+        空いた.push(部.字);
+        continue;
+      }
+      runs.push(図形のrun(部, 字, n));
+    }
+    const 閉じ = p.index! + p[0].length - "</w:p>".length;
+    const 足す = runs.join("");
+    if (p[0].endsWith("/>")) 変えたち.push({ 始め: p.index!, 終わり: p.index! + p[0].length, 字: `${p[0].slice(0, -2)}>${足す}</w:p>` });
+    else 変えたち.push({ 始め: 閉じ, 終わり: 閉じ, 字: 足す });
+    結果.push({
+      id: `図.${図.段落}`,
+      見出し: 図.見出し,
+      状態: 空いた.length ? "要確認" : "書いた",
+      説明: [
+        `Word の図形（箱 ${図.部品.filter((b) => b.種類 === "箱").length}、矢印 ${図.部品.filter((b) => b.種類 === "矢印").length}、字 ${図.部品.filter((b) => b.種類 === "字").length}）で描きました。Word で開いて、字が枠からはみ出していれば枠を広げてください${図.注 ? `。${図.注}` : ""}`,
+        ...(空いた.length ? [`字が空のままの部品があります（${空いた.join("、")}）。描いていません`] : []),
+      ],
+    });
+  }
+  変えたち.sort((a, b) => b.始め - a.始め);
+  let out = 本文;
+  for (const c of 変えたち) out = out.slice(0, c.始め) + c.字 + out.slice(c.終わり);
+  return { ok: true, 本文: out, 結果 };
+}
+
+/** 図の部品一つを、段落に浮かせる run（wp:anchor ＋ wps の図形）にする。twips → EMU は ×635 */
+function 図形のrun(部: 図の部品, 字: string, n: number): string {
+  const E = (t: number) => Math.round(t * 635);
+  const cx = E(部.幅);
+  const cy = 部.種類 === "矢印" ? 0 : E(部.高さ);
+  const id = 9500 + n;
+  const 名 = `図${n}`;
+  const 線 = `<a:ln w="9525"><a:solidFill><a:srgbClr val="000000"/></a:solidFill>`;
+  let 中: string;
+  if (部.種類 === "矢印") {
+    中 =
+      `<wps:cNvCnPr/><wps:spPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="${cx}" cy="0"/></a:xfrm><a:prstGeom prst="straightConnector1"><a:avLst/></a:prstGeom><a:noFill/>${線}<a:tailEnd type="triangle"/></a:ln></wps:spPr><wps:bodyPr/>`;
+  } else {
+    const 大きさ = Math.round((部.大きさ ?? (部.種類 === "箱" ? 10 : 9)) * 2);
+    const 寄せ = 部.種類 === "箱" ? "center" : 部.寄せ === "左" ? "left" : "center";
+    const 上下 = 部.種類 === "箱" ? "ctr" : 部.寄せ === "下" ? "b" : "t";
+    const rPr = `<w:rPr><w:rFonts w:hint="eastAsia"/>${部.種類 === "字" && 部.下線 ? `<w:u w:val="single"/>` : ""}<w:sz w:val="${大きさ}"/><w:szCs w:val="${大きさ}"/></w:rPr>`;
+    const 枠 = 部.種類 === "箱" ? `${線}</a:ln>` : `<a:ln><a:noFill/></a:ln>`;
+    中 =
+      `<wps:cNvSpPr/><wps:spPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="${cx}" cy="${cy}"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom><a:noFill/>${枠}</wps:spPr>` +
+      `<wps:txbx><w:txbxContent><w:p><w:pPr><w:spacing w:before="0" w:after="0" w:line="240" w:lineRule="auto"/><w:jc w:val="${寄せ}"/></w:pPr><w:r>${rPr}<w:t xml:space="preserve">${esc(字)}</w:t></w:r></w:p></w:txbxContent></wps:txbx>` +
+      `<wps:bodyPr rot="0" vert="horz" wrap="square" lIns="36000" tIns="0" rIns="36000" bIns="0" anchor="${上下}" anchorCtr="0" upright="1"><a:noAutofit/></wps:bodyPr>`;
+  }
+  return (
+    `<w:r><w:drawing><wp:anchor distT="0" distB="0" distL="0" distR="0" simplePos="0" relativeHeight="${251700000 + n}" behindDoc="0" locked="0" layoutInCell="1" allowOverlap="1">` +
+    `<wp:simplePos x="0" y="0"/><wp:positionH relativeFrom="column"><wp:posOffset>${E(部.x)}</wp:posOffset></wp:positionH><wp:positionV relativeFrom="paragraph"><wp:posOffset>${E(部.y)}</wp:posOffset></wp:positionV>` +
+    `<wp:extent cx="${cx}" cy="${cy}"/><wp:effectExtent l="0" t="0" r="0" b="0"/><wp:wrapNone/><wp:docPr id="${id}" name="${名}"/><wp:cNvGraphicFramePr/>` +
+    `<a:graphic xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main"><a:graphicData uri="http://schemas.microsoft.com/office/word/2010/wordprocessingShape">` +
+    `<wps:wsp xmlns:wps="http://schemas.microsoft.com/office/word/2010/wordprocessingShape">${中}</wps:wsp></a:graphicData></a:graphic></wp:anchor></w:drawing></w:r>`
+  );
 }
 
 /** 住所が郵便番号だけで、番地までの本体が無いときの知らせ（誓約書などの住所が空になる。2026-11-06 みゆき「誓約書の住所が出ていない」の切り分け用） */
