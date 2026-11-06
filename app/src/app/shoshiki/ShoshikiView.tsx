@@ -848,6 +848,13 @@ export default function ShoshikiView({
         x.id === id ? { ...x, 水銀使用製品: !x.水銀使用製品 } : x,
       ),
     }));
+  const 自動車等破砕物を切り替える = (id: string) =>
+    set中身((c) => ({
+      ...c,
+      品目: c.品目.map((x): 品目の選び =>
+        x.id === id ? { ...x, 自動車等破砕物: !x.自動車等破砕物 } : x,
+      ),
+    }));
   const 含みを選ぶ = (id: string, k: "石綿" | "水銀含有ばいじん等", v: 含み) =>
     set中身((c) => ({
       ...c,
@@ -1109,7 +1116,8 @@ export default function ShoshikiView({
                               様 &&
                               (区分がある(様, h.id, "石綿") ||
                                 区分がある(様, h.id, "水銀使用製品") ||
-                                区分がある(様, h.id, "水銀含有ばいじん等")) && (
+                                区分がある(様, h.id, "水銀含有ばいじん等") ||
+                                区分がある(様, h.id, "自動車等破砕物")) && (
                                 <span className={s.soe}>
                                   {(["石綿", "水銀含有ばいじん等"] as const)
                                     .filter((k) => 区分がある(様, h.id, k))
@@ -1156,6 +1164,19 @@ export default function ShoshikiView({
                                         }
                                       />
                                       水銀使用製品産業廃棄物を含む
+                                    </label>
+                                  )}
+                                  {区分がある(様, h.id, "自動車等破砕物") && (
+                                    <label className={s.check1}>
+                                      <input
+                                        type="checkbox"
+                                        data-testid={`自動車等破砕物-${h.id}`}
+                                        checked={!!x.自動車等破砕物}
+                                        onChange={() =>
+                                          自動車等破砕物を切り替える(h.id)
+                                        }
+                                      />
+                                      自動車等破砕物（シュレッダーダスト）を含む
                                     </label>
                                   )}
                                 </span>
