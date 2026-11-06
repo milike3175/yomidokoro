@@ -56,7 +56,8 @@ const 鍵の形: { 名前: string; re: RegExp }[] = [
 
 const APP = path.resolve(import.meta.dirname, "..");
 const ROOT = path.resolve(APP, "..");
-const TECHO = path.join(ROOT, "手帳");
+// 手帳の置き場。試しのときだけ TECHO_ROOT で差し替える（data.ts・取込と同じ）
+const TECHO = process.env.TECHO_ROOT ? path.resolve(process.env.TECHO_ROOT) : path.join(ROOT, "手帳");
 const NFC = (s: string) => s.normalize("NFC");
 
 const mode = process.argv.includes("--claude-hook") ? "claude" : process.argv.includes("--pre-push") ? "pre-push" : "手";
@@ -203,9 +204,11 @@ for (const f of ファイルたち(TECHO, /\.ya?ml$/)) {
       for (const w of この語) 見張る語.add(w);
     }
   }
-  // 手元だけの欄（担当者の名前・案件・メモ）は丸ごと見張る。見本の元の照合外し（この語）には入れない
-  for (const v of Object.values((d.手元だけ ?? {}) as Record<string, unknown>)) {
-    if (typeof v === "string" && v.trim().length >= 2) 見張る語.add(NFC(v.trim()).replace(/\s+/g, ""));
+  // 手元だけの欄（担当者の名前・案件・メモ）を見張る。見本の元の照合外し（この語）には入れない。
+  // 担当者の名前は短く地名とも重なる（〇〇・△△）ので、画面に出る形「担当者〇〇」（空白を詰めた形）で見張る。案件・メモは丸ごと（札の字「手元だけ：」は画面の部品に元からあるので見張らない）
+  for (const [k, v] of Object.entries((d.手元だけ ?? {}) as Record<string, unknown>)) {
+    if (typeof v !== "string" || v.trim().length < 2) continue;
+    見張る語.add(NFC(k === "担当者" ? `担当者 ${v.trim()}` : v.trim()).replace(/\s+/g, ""));
   }
 }
 // 見本の電話の記録（app/data/見本/<許認可>/<県>/電話/*.yaml）の ID と、その元の手帳ファイル

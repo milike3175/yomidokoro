@@ -14,7 +14,8 @@ import { 公開する様式を読む, 本体の拡張子 } from "../src/lib/koka
 
 const APP = path.resolve(import.meta.dirname, "..");
 const OUT = path.join(APP, "out");
-const TECHO = path.join(APP, "..", "手帳");
+// 手帳の置き場。試しのときだけ TECHO_ROOT で差し替える（data.ts・取込と同じ）
+const TECHO = process.env.TECHO_ROOT ? path.resolve(process.env.TECHO_ROOT) : path.join(APP, "..", "手帳");
 
 function ファイルたち(dir: string, ext: RegExp): string[] {
   if (!fs.existsSync(dir)) return [];
@@ -51,9 +52,11 @@ for (const f of ファイルたち(TECHO, /\.ya?ml$/)) {
       if (typeof t === "string" && t.length >= 8) 足す(t.slice(0, 20));
     }
   }
-  // 手元だけの欄（担当者の名前・案件・メモ）は丸ごと見張る。見本の元であっても外さない（公開するものには絶対に出さない）
-  for (const v of Object.values((d.手元だけ ?? {}) as Record<string, unknown>)) {
-    if (typeof v === "string" && v.trim().length >= 2) 見張る語.add(v.trim());
+  // 手元だけの欄（担当者の名前・案件・メモ）を見張る。見本の元であっても外さない（公開するものには絶対に出さない）。
+  // 担当者の名前は短く地名とも重なる（〇〇・△△）ので、画面に出る形「担当者 〇〇」で見張る。案件・メモは丸ごと（札の字「手元だけ：」は画面の部品（JS）に元からあるので見張らない）
+  for (const [k, v] of Object.entries((d.手元だけ ?? {}) as Record<string, unknown>)) {
+    if (typeof v !== "string" || v.trim().length < 2) continue;
+    見張る語.add(k === "担当者" ? `担当者 ${v.trim()}` : v.trim());
   }
 }
 // 公開してよいデータ（app/data の YAML。手引きの要約・引用、観点、品目など）に元から出てくる文は見張らない。
