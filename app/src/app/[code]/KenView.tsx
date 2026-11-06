@@ -201,10 +201,46 @@ export default function KenView({
   );
   const 未分類 = 全カード.filter((c) => c.観点 === "未分類");
 
-  const 群順: string[] = [];
-  for (const k of 観点一覧) if (!群順.includes(k.群)) 群順.push(k.群);
-  const 群id = (群: string) => `g${群順.indexOf(群) + 1}`;
-  const 群の記録数 = (群: string) => 観点一覧.filter((k) => k.群 === 群).reduce((s, k) => s + 観点の記録(k.id).length, 0);
+  const 全群順: string[] = [];
+  for (const k of 観点一覧) if (!全群順.includes(k.群)) 全群順.push(k.群);
+  const 群id = (群: string) => `g${全群順.indexOf(群) + 1}`;
+
+  // 観点を探す（2026-11-06 みゆき「目当てのところまでスクロールするのが大変。確認したいところを見つけやすくしたい」）。
+  // 字を打つと、その字を含む観点だけ残す。「記録のある観点だけ」で、まだ記録の無い観点を隠す。何も隠さない初期状態は変えない
+  const [探す, set探す] = useState("");
+  const [記録だけ, set記録だけ] = useState(false);
+  const 探す語 = 探す.trim();
+  const 観点が合う = (k: 観点) =>
+    (!探す語 || [k.番号, k.表示名, k.id, k.手引きで探すもの, k.電話で聞く文].some((t) => t.includes(探す語))) && (!記録だけ || 観点の記録(k.id).length > 0);
+  const 見せる観点 = 観点一覧.filter(観点が合う);
+  const 絞っている = !!探す語 || 記録だけ;
+  const 群順 = 全群順.filter((g) => 見せる観点.some((k) => k.群 === g));
+  const 群の記録数 = (群: string) => 見せる観点.filter((k) => k.群 === 群).reduce((s, k) => s + 観点の記録(k.id).length, 0);
+
+  // 今どの節を見ているか（目次の印）。画面の上から 120px の線をいちばん最後に越えた節
+  const [今の節, set今の節] = useState("");
+  useEffect(() => {
+    let 待ち = 0;
+    const 測る = () => {
+      待ち = 0;
+      const 節たち = Array.from(document.querySelectorAll<HTMLElement>("section.checklist, section.hosei, section.group"));
+      let 今 = "";
+      for (const s of 節たち) if (s.getBoundingClientRect().top <= 120) 今 = s.id;
+      set今の節(今 || (節たち[0]?.id ?? ""));
+    };
+    const onScroll = () => {
+      if (!待ち) 待ち = window.requestAnimationFrame(測る);
+    };
+    測る();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", onScroll);
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", onScroll);
+      if (待ち) window.cancelAnimationFrame(待ち);
+    };
+  }, [群順.length, 政令市.length]);
+  const 今か = (id: string) => (今の節 === id ? "now" : undefined);
 
   return (
     <>
@@ -284,15 +320,19 @@ export default function KenView({
       )}
 
       <nav className="toc-mobile" aria-label="目次">
-        <a href="#checklist">電話で聞くこと</a>
-        <a href="#hosei">補正になったこと</a>
+        <a href="#checklist" className={今か("checklist")}>
+          電話で聞くこと
+        </a>
+        <a href="#hosei" className={今か("hosei")}>
+          補正になったこと
+        </a>
         {群順.map((g) => (
-          <a key={g} href={`#${群id(g)}`}>
+          <a key={g} href={`#${群id(g)}`} className={今か(群id(g))}>
             {g}
           </a>
         ))}
         {政令市.map((s) => (
-          <a key={s.コード} href={`#c${s.コード}`}>
+          <a key={s.コード} href={`#c${s.コード}`} className={今か(`c${s.コード}`)}>
             {s.名前}（政令市）
           </a>
         ))}
@@ -338,22 +378,45 @@ export default function KenView({
                 : "品目で答えが変わる観点で、当てはまる記録を目立たせます。"}
             </div>
           </div>
+          <div className="panel find">
+            <label className="panel-title" htmlFor="kanten-find">
+              観点を探す
+            </label>
+            <input
+              id="kanten-find"
+              className="select"
+              type="search"
+              value={探す}
+              placeholder="例：部数、予約、写真"
+              onChange={(e) => set探す(e.target.value)}
+              data-testid="観点を探す"
+            />
+            <label className="check">
+              <input type="checkbox" checked={記録だけ} onChange={(e) => set記録だけ(e.target.checked)} data-testid="記録のある観点だけ" />
+              記録のある観点だけ
+            </label>
+            <div className="hint">
+              {絞っている
+                ? `${見せる観点.length}観点を出しています（全部で${観点一覧.length}）。消すと全部にもどります`
+                : "観点の名前や、手引きで探す言葉で絞れます。"}
+            </div>
+          </div>
           <nav className="panel toc" aria-label="目次">
             <div className="panel-title">目次</div>
             <ol>
               <li>
-                <a href="#checklist">
+                <a href="#checklist" className={今か("checklist")}>
                   電話で聞くこと<span className="num">{聞く数}</span>
                 </a>
               </li>
               <li>
-                <a href="#hosei">
+                <a href="#hosei" className={今か("hosei")}>
                   補正になったこと<span className="num">{補正.filter(当てはまる).length}</span>
                 </a>
               </li>
               {群順.map((g) => (
                 <li key={g}>
-                  <a href={`#${群id(g)}`}>
+                  <a href={`#${群id(g)}`} className={今か(群id(g))}>
                     {g}
                     <span className="num">{群の記録数(g)}</span>
                   </a>
@@ -361,7 +424,7 @@ export default function KenView({
               ))}
               {政令市.map((s) => (
                 <li key={s.コード}>
-                  <a href={`#c${s.コード}`}>
+                  <a href={`#c${s.コード}`} className={今か(`c${s.コード}`)}>
                     {s.名前}（政令市）の窓口
                     <span className="num">{s.カード.length}</span>
                   </a>
@@ -388,7 +451,7 @@ export default function KenView({
               </div>
             )}
             {聞く数 === 0 && <p className="empty-all">聞くことは残っていません。</p>}
-            {群順.map((g) => {
+            {全群順.map((g) => {
               const items = チェック.filter((x) => x.k.群 === g);
               if (items.length === 0) return null;
               return (
@@ -505,10 +568,17 @@ export default function KenView({
             <span>電話の答えと手引きを Claude が見比べた印です。補足と揺れは、観点の下の「見比べ」に理由が出ます</span>
           </div>
 
+          {絞っている && 見せる観点.length === 0 && (
+            <p className="empty-all" data-testid="観点なし">
+              {探す語 ? `「${探す語}」を含む観点はありません。` : ""}
+              {記録だけ ? "記録のある観点はまだありません。" : ""}
+              探す字を消すか、「記録のある観点だけ」を外すと全部にもどります。
+            </p>
+          )}
           {群順.map((g) => (
             <section key={g} id={群id(g)} className="group">
               <h2>{g}</h2>
-              {観点一覧
+              {見せる観点
                 .filter((k) => k.群 === g)
                 .map((k) => {
                   const cs = 観点の記録(k.id);
@@ -598,7 +668,7 @@ export default function KenView({
             );
           })}
 
-          {観点候補.length > 0 && (
+          {観点候補.length > 0 && !絞っている && (
             <section className="group" id="kouho">
               <h2>手引きにある、この県だけの決まり（観点候補）</h2>
               <p className="lead">観点の一覧には無いものの、手引きに書かれていた独自のルールです。よく使うものは観点に足します。</p>
@@ -632,7 +702,7 @@ export default function KenView({
             </section>
           )}
 
-          {未分類.length > 0 && (
+          {未分類.length > 0 && !絞っている && (
             <section className="group" id="mibunrui">
               <h2>観点に無い話（未分類）</h2>
               <p className="lead">観点の一覧に当てはまらなかった記録です。よく出るものは観点に足します。</p>
@@ -661,7 +731,7 @@ export default function KenView({
           {品目 ? `・${品目}` : ""}　印刷した日 {表示日(今日の文字(今日))}　{状態の説明[手引きの状態]}
         </p>
         <p className="kp-meta">ページは PDF の何枚目か。申請の前に、必ず手引きと窓口で確かめてください。道具は判断しません。</p>
-        {群順.map((g) => {
+        {全群順.map((g) => {
           const ks = 印刷の観点.filter((x) => x.k.群 === g && (x.cs.length > 0 || x.聞く));
           if (ks.length === 0) return null;
           return (

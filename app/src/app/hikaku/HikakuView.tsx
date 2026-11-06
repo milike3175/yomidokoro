@@ -12,6 +12,8 @@ import { 手続き一覧, 既定の手続き, 品目で見る, 手続きが合�
 export type 行 = {
   コード: string;
   名前: string;
+  /** 地方（北海道・東北・…）。上の帯から飛ぶのに使う。政令市は親の県の地方 */
+  地方: string;
   /** その許可権者の記録が載っている県ページ（政令市は親の県のページ） */
   県ページ: string;
   /** 県ページの中の飛び先。空なら観点の番号へ飛ぶ */
@@ -127,6 +129,16 @@ export default function HikakuView({ 行たち, 観点一覧, 品目一覧, 付�
   const 右の見出し = 手帳あり ? "電話・補正など" : "電話（作者の記録）・受理実績";
 
   const 当てはまる数 = (xs: 見え方[]) => xs.filter((x) => !x.薄く).length;
+
+  // 記録のある府県だけ（2026-11-06 みゆき「47 行が全部開いていて目当てまでスクロールするのが大変」）。
+  // この観点の記録（手引き・記載なし・電話など）が一つも無い行を隠す。初期状態は全部出す
+  const [記録だけ, set記録だけ] = useState(false);
+  const 記録がある = (x: (typeof 中身)[number]) => x.手引き.length > 0 || !!x.記載なし || x.右.length > 0;
+  const 出す行 = 記録だけ ? 中身.filter(記録がある) : 中身;
+  // 地方の帯：出している行の地方ごとに、最初の行へ飛ぶ札
+  const 地方順: string[] = [];
+  for (const x of 出す行) if (!地方順.includes(x.r.地方)) 地方順.push(x.r.地方);
+  const 地方の先頭 = (地方: string) => 出す行.find((x) => x.r.地方 === 地方)?.r.コード ?? "";
   // 段の下に出す見立て：電話の側（主）の、揺れと補足だけ。両方の記録が選んだ手続き・品目に当てはまる組に限る
   const 見立て = (xs: 見え方[]) => xs.flatMap((x) => x.見立て).sort(見立ての順);
   const 判定あり = 行たち.some((r) => r.カード.some((c) => (c.判定 ?? []).length > 0));
@@ -275,8 +287,21 @@ export default function HikakuView({ 行たち, 観点一覧, 品目一覧, 付�
         </div>
       )}
 
+      <div className="hk-regions" data-testid="地方の帯">
+        {地方順.map((地方) => (
+          <a key={地方} href={`#row-${地方の先頭(地方)}`}>
+            {地方}
+          </a>
+        ))}
+        <label className="check">
+          <input type="checkbox" checked={記録だけ} onChange={(e) => set記録だけ(e.target.checked)} data-testid="記録のある府県だけ" />
+          記録のある府県だけ（{中身.filter(記録がある).length}）
+        </label>
+      </div>
+
       <div className="hk-rows">
-        {中身.map(({ r, 手引き, 記載なし, 右 }) => {
+        {出す行.length === 0 && <p className="hk-empty">この観点の記録がある府県はまだありません。「記録のある府県だけ」を外すと全部にもどります。</p>}
+        {出す行.map(({ r, 手引き, 記載なし, 右 }) => {
           const 飛び先 = `${r.県ページ}?${new URLSearchParams({ 手続き, ...(品目 ? { 品目 } : {}) }).toString()}#${r.錨 || k.番号}`;
           const 政令市 = r.コード.length === 5;
           const 段の見立て = 見立て(右);

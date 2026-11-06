@@ -469,6 +469,10 @@ a.tile:hover {
   top: 16px;
   display: grid;
   gap: 14px;
+  /* 画面より背が高いときも目次が付いてくるように、左の列の中でスクロールする */
+  max-height: calc(100vh - 32px);
+  overflow-y: auto;
+  scrollbar-width: thin;
 }
 .panel {
   background: var(--paper);
@@ -542,8 +546,28 @@ a.tile:hover {
   color: var(--faint);
   font-size: 12px;
 }
+/* 今見ている節（スクロールに合わせて印を付ける） */
+.toc a.now {
+  background: var(--paper-2);
+  font-weight: 700;
+  box-shadow: inset 3px 0 0 var(--ai);
+}
 .toc-mobile {
   display: none;
+}
+/* 観点を探す欄と、記録のあるものだけの切替 */
+.find input[type="search"] {
+  margin-bottom: 6px;
+}
+.check {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  cursor: pointer;
+}
+.check input {
+  margin: 0;
 }
 
 /* チェックリスト */
@@ -842,6 +866,15 @@ a.tile:hover {
     border-radius: 999px;
     padding: 3px 12px;
   }
+  .toc-mobile a.now {
+    background: var(--ink);
+    color: var(--bg);
+    border-color: var(--ink);
+  }
+  .side {
+    max-height: none;
+    overflow: visible;
+  }
 }
 
 @media (max-width: 600px) {
@@ -980,6 +1013,35 @@ a.tile:hover {
 .hk-summary {
   margin-top: 10px;
 }
+/* 地方の帯：画面の上に貼り付く。押すとその地方の最初の府県へ飛ぶ。右端に「記録のある府県だけ」 */
+.hk-regions {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  background: var(--bg);
+  padding: 8px 0;
+  margin-top: 12px;
+  border-bottom: 1px solid var(--line);
+}
+.hk-regions a {
+  font-size: 12.5px;
+  text-decoration: none;
+  color: var(--ink);
+  border: 1px solid var(--line);
+  background: var(--paper);
+  border-radius: 999px;
+  padding: 3px 12px;
+}
+.hk-regions a:hover {
+  background: var(--paper-2);
+}
+.hk-regions .check {
+  margin-left: auto;
+}
 .hk-rows {
   margin-top: 14px;
 }
@@ -989,6 +1051,7 @@ a.tile:hover {
   border-radius: 12px;
   padding: 12px 16px 14px;
   margin: 10px 0;
+  scroll-margin-top: 56px;
 }
 /* 政令市の行：親の県のすぐ下に、字下げと二重線で別の許可権者だと分かるように */
 .hk-row.shi {
