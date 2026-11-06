@@ -146,6 +146,10 @@ export type 様式 = {
   セルの書く場所?: セルの書く場所[];
   /** セルの方式：品目の並べ方 */
   品目のセル?: 品目のセルの形;
+  /** セルの方式：書き方の型の文を、縦に並んだセルに分けて書く（奈良の概要の全体計画・車両毎の用途・環境保全） */
+  セルの文?: セルの文[];
+  /** セルの方式：品目の表・車両の表・容器の表（行ごとのセル） */
+  セルの表?: セルの表[];
   /** 段落の方式：本文の段落（w:p）の数 */
   段落の数?: number;
   /** 段落の方式：どこに何を書くか */
@@ -775,6 +779,12 @@ export function 様式が使う口(様: 様式, 型: 書き方の型): Set<strin
   for (const p of 様.写真の場所 ?? []) r.add(p.鍵.split(".")[0]);
   // 図の部品の字（{型.駐車場} などを差し込む県があれば、その口も画面に出す）
   for (const 図 of 様.図の場所 ?? []) for (const 部 of 図.部品) if (部.種類 !== "矢印") 字たち.push(部.字);
+  // セルの方式（奈良）：セルの字、表の組（車両・容器）、品目の表の項目
+  for (const w of 様.セルの書く場所 ?? []) 字たち.push(w.字);
+  for (const t of 様.セルの表 ?? []) {
+    if (t.種類 === "組" && t.組) r.add(t.組);
+    if (t.種類 === "品目表") 字たち.push(...Object.keys(t.列).filter((k) => k !== "名前" && k !== "単位").map((k) => `{品目.1.${k}}`));
+  }
   const 項目たち = new Set<string>();
   for (const t of 字たち) {
     for (const m of t.matchAll(/\{型\.([^.{}]+)/g)) r.add(m[1]);
@@ -1581,7 +1591,7 @@ export async function docxに書く(
   写真たち?: Record<string, 写真>,
 ): Promise<{ ok: true; バイト: Uint8Array; 結果: 欄の結果[] } | { ok: false; 理由: string }> {
   const zip = await JSZip.loadAsync(バイト);
-  if (様.方式 === "セル") return セルの様式に書く(zip, 様, 値たち, 中身);
+  if (様.方式 === "セル") return セルの様式に書く(zip, 様, 値たち, 中身, 型 ?? undefined);
   const entry = zip.file(様.本文);
   if (!entry) return { ok: false, 理由: `${様.本文} が見つかりません` };
   const 元 = await entry.async("uint8array");
@@ -2524,8 +2534,54 @@ export type セルの書く場所 = {
   注?: string;
 };
 
+/** 書き方の型の文を、縦に並んだセルに分けて書く。行たちを セルたち に上から順に分ける（行が多ければ一つのセルに何行か） */
+export type セルの文 = {
+  /** 書き方の型の欄の id（全体計画 など） */
+  id: string;
+  見出し: string;
+  シート: string;
+  セルたち: string[];
+  /** 各セルの元の形（まるごと）。見本の字が入っているセル（奈良の「（記載例）…」）も、ここに書けば置き換える */
+  元たち: string[];
+  /** 各セルに入れる行の数（上から順に埋める。最後のセルには残り全部）。省略すると均等に分ける */
+  各セルの行数?: number[];
+  注?: string;
+};
+
+/**
+ * 行ごとのセルに書く表（奈良の概要の品目の表・運搬車両一覧・運搬容器等）。
+ * 品目表：控えの品目を一行ずつ（名前は 品目のセル.表の名前の形）、ほかの列は聞き取り（型.品目ごとの運搬.<品目>.<項目>）。
+ * 組：くり返しの差し込み口（車両・容器）の組を一行ずつ（型.<組>.<n>.<項目>）
+ */
+export type セルの表 = {
+  見出し: string;
+  シート: string;
+  種類: "品目表" | "組";
+  /** 種類が 組 のとき、差し込み口の id（車両・容器） */
+  組?: string;
+  /** 最初の行番号と最後の行番号 */
+  行: [number, number];
+  /** 項目 → 列の字（品目表の項目：名前・運搬量・単位・性状・排出元・積替保管場所・運搬先） */
+  列: Record<string, string>;
+  /** 数として書く列（運搬量・最大積載量） */
+  数の列?: string[];
+  /** 書く行ごとに決まった字を入れる列（奈良の車両の備考「新規」） */
+  固定?: Record<string, string>;
+  /** 書かない行に見本の字が残っていれば空にする（奈良の概要は 3 行に記載例の値が入っている） */
+  見本を消す?: boolean;
+  /** 積替保管「無」のとき、この列は様式の字（「なし」）のまま残す */
+  積替保管なしの列?: string;
+  注?: string;
+};
+
 /** 品目の並び（奈良の申請書記載例 p1：「1、廃プラスチック　2、紙くず」） */
-export type 品目のセルの形 = { 札: string; 区切り: string; 要確認?: string[] };
+export type 品目のセルの形 = {
+  札: string;
+  区切り: string;
+  要確認?: string[];
+  /** 概要の表の品目名の形（奈良：「汚泥（水銀含有ばいじん等を除く）」「廃プラスチック類（石綿含有産業廃棄物を含む）」）。{表の名前}・{区分} を差す */
+  表の名前の形?: { 含む: string; 除く: string; 水銀使用製品: string };
+};
 
 function 品目の札たち(様: 様式, 中身0: 申請の中身 | undefined): { 並び: string; 数: string; 含む: Record<string, string>; 要確認: string[] } {
   const 形 = 様.品目のセル;
@@ -2551,6 +2607,7 @@ export function セルに記入する(
   様: 様式,
   値たち: 値,
   中身0?: 申請の中身,
+  型?: 書き方の型,
 ): { ok: true; シートたち: Record<string, string>; 結果: 欄の結果[] } | { ok: false; 理由: string } {
   値たち = 事務所を補う(値たち);
   const v: Record<string, string> = {};
@@ -2583,6 +2640,142 @@ export function セルに記入する(
     const 説明 = [...(w.注 ? [w.注] : []), ...(品目の字 && w.字.includes("{品目.並び}") ? 品.要確認 : [])];
     結果.push({ id: w.見出し, 見出し: w.見出し, 状態: 説明.length ? "要確認" : "書いた", 説明 });
   }
+
+  // セルの字の形（元の開きタグの属性を残し、t だけ付け替える）
+  const 字のセル = (元: string, セル: string, 字: string, 数?: boolean): string => {
+    const 頭 = (/^<c\b[^>]*?(?=\/?>)/.exec(元)?.[0] ?? `<c r="${セル}"`).replace(/\s+t="[^"]*"/, "");
+    if (!字) return `${頭}/>`;
+    return 数 && /^-?\d+(\.\d+)?$/.test(字) ? `${頭}><v>${字}</v></c>` : `${頭} t="inlineStr"><is><t xml:space="preserve">${esc(字)}</t></is></c>`;
+  };
+  const セルを探す = (xml: string, セル: string): string | null => {
+    const m = new RegExp(`<c r="${セル}"[^>]*?(?:/>|>[\\s\\S]*?</c>)`).exec(xml);
+    return m ? m[0] : null;
+  };
+  const 中身あり = (元: string) => !元.endsWith("/>");
+
+  // ---- 書き方の型の文を、縦に並んだセルに分けて書く（奈良の概要） ----
+  if (型 && 様.セルの文?.length) {
+    const 組んだ = 型を組む(型, 様, 値たち, 中身0);
+    for (const b of 様.セルの文) {
+      const r = 組んだ.find((x) => x.id === b.id);
+      const xml = out[b.シート];
+      if (xml === undefined) return { ok: false, 理由: `${b.見出し}：シート「${b.シート}」が見つかりません。書きません` };
+      if (b.セルたち.length !== b.元たち.length) return { ok: false, 理由: `${b.見出し}：セルたちと元たちの数が合いません。対応表を直してください` };
+      for (const 元 of b.元たち) if (xml.split(元).length !== 2) return { ok: false, 理由: `${b.見出し}：セルの元の形が様式と違います。別の版の様式かもしれないので書きません` };
+      const 行たち = (r?.行たち ?? []).slice();
+      while (行たち.length && !行たち[行たち.length - 1].trim()) 行たち.pop();
+      if (!r || 行たち.length === 0) {
+        結果.push({ id: `型.${b.id}`, 見出し: b.見出し, 状態: "空", 説明: [] });
+        continue;
+      }
+      // 行をセルに分ける：各セルの行数があれば上から順にその数ずつ（最後のセルに残り全部）。無ければ一つのセルに ceil(行/セル) 行ずつ
+      const 一つに = Math.ceil(行たち.length / b.セルたち.length);
+      let x = xml;
+      let 位置 = 0;
+      b.セルたち.forEach((セル, i) => {
+        const 最後 = i === b.セルたち.length - 1;
+        const 数 = 最後 ? 行たち.length - 位置 : (b.各セルの行数?.[i] ?? 一つに);
+        const 字 = 行たち.slice(位置, 位置 + 数).join("\n");
+        位置 += 数;
+        x = x.replace(b.元たち[i], 字のセル(b.元たち[i], セル, 字));
+      });
+      out[b.シート] = x;
+      const 説明 = [...(b.注 ? [b.注] : []), ...r.要確認, ...(r.あふれ.length ? [`入りきらなかった行：${r.あふれ.join("／")}`] : [])];
+      結果.push({ id: `型.${b.id}`, 見出し: b.見出し, 状態: 説明.length ? "要確認" : "書いた", 説明 });
+    }
+  }
+
+  // ---- 行ごとのセルに書く表（品目の表・車両・容器） ----
+  const 半角の数 = (t: string) => t.replace(/[０-９．]/g, (c) => String.fromCharCode(c.charCodeAt(0) - 0xfee0)).replace(/，/g, "");
+  for (const 表 of 様.セルの表 ?? []) {
+    const xml = out[表.シート];
+    if (xml === undefined) return { ok: false, 理由: `${表.見出し}：シート「${表.シート}」が見つかりません。書きません` };
+    // 行の値を作る
+    type 行の値 = Record<string, string>;
+    const 行たち: 行の値[] = [];
+    const 要確認: string[] = [];
+    if (表.種類 === "品目表") {
+      const 中身 = 中身を整える(中身0, 様);
+      const 形 = 様.品目のセル?.表の名前の形;
+      const 品 = new Map(品目たち.map((h) => [h.id, h]));
+      for (const x of 中身.品目) {
+        const h = 品.get(x.id);
+        if (!h) continue;
+        const 名 = h.表の名前 ?? h.名前;
+        const 差す = (t: string, 区分: string) => t.replace("{表の名前}", 名).replace("{区分}", 区分);
+        const 名たち: string[] = [];
+        if (形) {
+          const 石 = x.石綿 === "両方" || x.石綿 === "だけ";
+          const 水 = x.水銀含有ばいじん等 === "両方" || x.水銀含有ばいじん等 === "だけ";
+          if (石) 名たち.push(差す(形.含む, "石綿含有産業廃棄物"));
+          if (水) 名たち.push(差す(形.含む, "水銀含有ばいじん等"));
+          if (!水 && 区分がある(様, x.id, "水銀含有ばいじん等")) 名たち.push(差す(形.除く, "水銀含有ばいじん等"));
+          else if (!石 && !水) 名たち.push(名);
+          if (x.水銀使用製品) 名たち.push(差す(形.水銀使用製品, "水銀使用製品産業廃棄物"));
+        } else 名たち.push(名);
+        const 値 = (k: string) => (値たち[`型.品目ごとの運搬.${x.id}.${k}`] ?? "").trim();
+        // 運搬量「10 t/月」「20m3/月」→ 数と単位
+        const 量 = 値("運搬量");
+        const m = /^([0-9０-９.,．，]+)\s*(t|ｔ|トン|m3|m³|㎥|ｍ３|立方メートル)?/i.exec(量);
+        const 数 = m ? 半角の数(m[1]) : "";
+        const 単位 = m && m[2] ? (/^(t|ｔ|トン)$/i.test(m[2]) ? "ｔ／月" : "㎥／月") : 量 && !m ? "" : "";
+        for (const 名前 of 名たち)
+          行たち.push({ 名前, 運搬量: m ? 数 : 量, 単位: m ? 単位 : "", 性状: 値("性状"), 排出元: 値("排出元"), 積替保管場所: 値("積替保管場所"), 運搬先: 値("運搬先") });
+      }
+    } else {
+      const 組 = 表.組 ?? "";
+      for (let n = 1; n <= 30; n++) {
+        const 行: 行の値 = {};
+        let ある = false;
+        for (const 項目 of Object.keys(表.列)) {
+          const v = (値たち[くり返しの鍵(組, n, 項目)] ?? "").trim();
+          行[項目] = v;
+          if (v) ある = true;
+        }
+        if (!ある) break;
+        行たち.push(行);
+      }
+    }
+    const [始め, 終わり] = 表.行;
+    const 行数 = 終わり - 始め + 1;
+    if (行たち.length > 行数) 要確認.push(`表は${行数}行ですが${行たち.length}行あります。${行数 + 1}行目からは書いていません（別紙にしてください）`);
+    const 積替保管無 = 中身0?.積替保管 === "無";
+    let x = xml;
+    let 書いた = 0;
+    for (let i = 0; i < 行数; i++) {
+      const 行 = 行たち[i];
+      const 番 = 始め + i;
+      const 値の組: [string, string][] = [
+        ...Object.entries(表.列).map(([項目, 列]): [string, string] => [列, 行?.[項目] ?? ""]),
+        ...Object.entries(表.固定 ?? {}).map(([列, 字]): [string, string] => [列, 行 ? 字 : ""]),
+      ];
+      for (const [列, 値0] of 値の組) {
+        const セル = `${列}${番}`;
+        const 元 = セルを探す(x, セル);
+        if (!元) {
+          if (値0) return { ok: false, 理由: `${表.見出し}：セル ${セル} が様式にありません。別の版の様式かもしれないので書きません` };
+          continue;
+        }
+        const 数か = (表.数の列 ?? []).includes(列);
+        const 字 = 数か ? 半角の数(値0) : 全角に(値0);
+        if (!字) {
+          // 書かない所：積替保管「無」の列は様式の字のまま。見本の字は消す
+          if (表.積替保管なしの列 === 列 && 積替保管無) continue;
+          if (表.見本を消す && 中身あり(元)) x = x.replace(元, 字のセル(元, セル, ""));
+          continue;
+        }
+        x = x.replace(元, 字のセル(元, セル, 字, 数か));
+      }
+      if (行) 書いた++;
+    }
+    out[表.シート] = x;
+    if (書いた === 0) {
+      結果.push({ id: `表.${表.見出し}`, 見出し: 表.見出し, 状態: "空", 説明: [] });
+      continue;
+    }
+    const 説明 = [...(表.注 ? [表.注] : []), ...要確認];
+    結果.push({ id: `表.${表.見出し}`, 見出し: 表.見出し, 状態: 説明.length ? "要確認" : "書いた", 説明: [`${書いた}行書きました`, ...説明] });
+  }
   return { ok: true, シートたち: out, 結果 };
 }
 
@@ -2607,6 +2800,7 @@ async function セルの様式に書く(
   様: 様式,
   値たち: 値,
   中身?: 申請の中身,
+  型?: 書き方の型,
 ): Promise<{ ok: true; バイト: Uint8Array; 結果: 欄の結果[] } | { ok: false; 理由: string }> {
   const シートたち: Record<string, string> = {};
   const 元のバイト: Record<string, Uint8Array> = {};
@@ -2620,7 +2814,7 @@ async function セルの様式に書く(
     シートたち[鍵] = t;
     元のバイト[鍵] = b;
   }
-  const r = セルに記入する(シートたち, 様, 値たち, 中身);
+  const r = セルに記入する(シートたち, 様, 値たち, 中身, 型);
   if (!r.ok) return r;
   const 名前の並び = Object.keys(zip.files);
   for (const [鍵, パス] of Object.entries(様.シート ?? {})) {
