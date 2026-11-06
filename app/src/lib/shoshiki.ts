@@ -748,6 +748,8 @@ export function 様式が使う口(様: 様式, 型: 書き方の型): Set<strin
   for (const t of 字たち) {
     for (const m of t.matchAll(/\{型\.([^.{}]+)/g)) r.add(m[1]);
     for (const m of t.matchAll(/\{品目表\.\d+\.([^{}]+)\}/g)) 項目たち.add(m[1]);
+    // {品目.N.<項目>}（控えの品目の順そのまま。愛知の概要の表）も同じ品目ごとの口
+    for (const m of t.matchAll(/\{品目\.\d+\.([^{}]+)\}/g)) 項目たち.add(m[1]);
   }
   if (項目たち.size) for (const d of 型.差し込み口) if (d.種類 === "品目ごと" && (d.項目 ?? []).some((k) => 項目たち.has(k.id))) r.add(d.id);
   return r;
