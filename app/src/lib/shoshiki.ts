@@ -1615,6 +1615,8 @@ export type 書く場所 =
       次の行?: { 頭: string; 字: string };
       /** 見出しの後ろに並んだ空白を詰めてから書く（「氏　名　　　　　」のような見出し） */
       空白を詰める?: boolean;
+      /** 控えの選びで書くかどうか（積替保管無 など。中身の印 の鍵）。合わなければ書かない */
+      条件?: string;
     }
   | {
       見出し: string;
@@ -1751,7 +1753,16 @@ function 空の段落を詰めた形(元: string): string {
 // 写真の中身は、ほかの値と同じく、このパソコンの中だけで扱う。
 
 /** 写真を貼る場所。鍵は画面の写真の鍵（車両.1.前面 など） */
-export type 写真の場所 = { 見出し: string; 鍵: string; 段落: number; 確かめ: { 箱: number; 字: string }; 幅: number; 高さ: number };
+export type 写真の場所 = {
+  見出し: string;
+  鍵: string;
+  段落: number;
+  確かめ: { 箱: number; 字: string };
+  幅: number;
+  高さ: number;
+  /** 写真を文の流れに置かず、その段落の位置に浮かせて重ねる（枠の高さが変わらない。枠の中に元からある注意書きは写真の下に隠れる。2026-11-06 みゆき「元からある文章は隠れていい。その上に画像を載せていい」） */
+  浮かせる?: boolean;
+};
 /** 写真の面に書く字（空の段落に書く。{型.車両.1.登録番号} など）。記入のいちばん最後に書く */
 export type 写真の字 = { 見出し: string; 段落: number; 字: string };
 export type 写真 = { 名前: string; バイト: Uint8Array };
@@ -1838,21 +1849,26 @@ export function 写真を貼る(
     const ファイル名 = `yomidokoro${n}.${大きさ.拡張子}`;
     追加.push({ ファイル名, バイト: 写.バイト, 拡張子: 大きさ.拡張子, rId });
     const id = 9000 + n;
-    const 絵 =
-      `<w:r><w:drawing><wp:inline distT="0" distB="0" distL="0" distR="0"><wp:extent cx="${cx}" cy="${cy}"/><wp:docPr id="${id}" name="写真${n}"/>` +
+    const 中の絵 =
       `<a:graphic xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main"><a:graphicData uri="http://schemas.openxmlformats.org/drawingml/2006/picture">` +
       `<pic:pic xmlns:pic="http://schemas.openxmlformats.org/drawingml/2006/picture"><pic:nvPicPr><pic:cNvPr id="${id}" name="${ファイル名}"/><pic:cNvPicPr/></pic:nvPicPr>` +
       `<pic:blipFill><a:blip r:embed="${rId}"/><a:stretch><a:fillRect/></a:stretch></pic:blipFill>` +
-      `<pic:spPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="${cx}" cy="${cy}"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom></pic:spPr></pic:pic></a:graphicData></a:graphic></wp:inline></w:drawing></w:r>`;
+      `<pic:spPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="${cx}" cy="${cy}"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom></pic:spPr></pic:pic></a:graphicData></a:graphic>`;
+    // 浮かせる：段落の位置（マスの左上）に重ねる。文の流れに入らないので枠は伸びず、枠の中の注意書きは写真の下に隠れる
+    const 絵 = 場.浮かせる
+      ? `<w:r><w:drawing><wp:anchor distT="0" distB="0" distL="0" distR="0" simplePos="0" relativeHeight="${251659264 + n}" behindDoc="0" locked="0" layoutInCell="1" allowOverlap="1">` +
+        `<wp:simplePos x="0" y="0"/><wp:positionH relativeFrom="column"><wp:posOffset>0</wp:posOffset></wp:positionH><wp:positionV relativeFrom="paragraph"><wp:posOffset>0</wp:posOffset></wp:positionV>` +
+        `<wp:extent cx="${cx}" cy="${cy}"/><wp:effectExtent l="0" t="0" r="0" b="0"/><wp:wrapNone/><wp:docPr id="${id}" name="写真${n}"/><wp:cNvGraphicFramePr/>${中の絵}</wp:anchor></w:drawing></w:r>`
+      : `<w:r><w:drawing><wp:inline distT="0" distB="0" distL="0" distR="0"><wp:extent cx="${cx}" cy="${cy}"/><wp:docPr id="${id}" name="写真${n}"/>${中の絵}</wp:inline></w:drawing></w:r>`;
     const 閉じ = p.index! + p[0].length - "</w:p>".length;
     if (p[0].endsWith("/>")) {
       // <w:p .../> の形。中身のある段落にする
       変えたち.push({ 始め: p.index!, 終わり: p.index! + p[0].length, 字: `${p[0].slice(0, -2)}>${絵}</w:p>` });
     } else 変えたち.push({ 始め: 閉じ, 終わり: 閉じ, 字: 絵 });
-    // 同じセルの残りの空の段落を詰める（枠の高さを変えない）
+    // 同じセルの残りの空の段落を詰める（枠の高さを変えない）。浮かせるときは枠がそのままなので詰めない
     const セルの終わり = 本文.indexOf("</w:tc>", p.index!);
     let 詰めた = 0;
-    for (let k = 今の番号(場.段落) + 1; k < 段たち.length; k++) {
+    for (let k = 今の番号(場.段落) + 1; !場.浮かせる && k < 段たち.length; k++) {
       const q = 段たち[k];
       if (セルの終わり >= 0 && q.index! > セルの終わり) break;
       if (!空か(q)) break;
@@ -1863,7 +1879,7 @@ export function 写真を貼る(
       id: `写真.${場.鍵}`,
       見出し: 場.見出し,
       状態: "書いた",
-      説明: [`${写.名前}（${大きさ.幅}×${大きさ.高さ}）を ${Math.round(cx / 36000)}×${Math.round(cy / 36000)}mm で貼りました${詰めた ? `。枠の残りの空の行 ${詰めた}行を詰めました` : ""}。Word で開いて、写真の大きさと面の崩れを確かめてください`],
+      説明: [`${写.名前}（${大きさ.幅}×${大きさ.高さ}）を ${Math.round(cx / 36000)}×${Math.round(cy / 36000)}mm で${場.浮かせる ? "枠の上に重ねて" : ""}貼りました${詰めた ? `。枠の残りの空の行 ${詰めた}行を詰めました` : ""}${場.浮かせる ? "。枠の中の注意書きは写真の下に隠れます。写真を動かすか小さくすれば見えます" : ""}。Word で開いて、写真の大きさと面の崩れを確かめてください`],
     });
   }
   // 貼る所の無い写真（2台目以降など）
@@ -2036,7 +2052,13 @@ function 段落で記入する(本文: string, 様: 様式, 値たち: 値, 中�
   const 変えたち: 変え[] = [];
   const 結果: 欄の結果[] = [];
 
+  const 印たち = 中身の印(様, 中身0);
   for (const w of 様.書く場所 ?? []) {
+    // 条件（積替保管無 など）に合わなければ書かない
+    if ("条件" in w && w.条件 && !印たち[w.条件]) {
+      結果.push({ id: w.見出し, 見出し: w.見出し, 状態: "空", 説明: [] });
+      continue;
+    }
     if (w.種類 === "箱" || w.種類 === "後ろ") {
       if (箱の字(w.箱) !== w.元) return { ok: false, 理由: `${w.見出し}：元の字が様式と違います（${w.箱}番目の箱）。書きません` };
       const 値 = w.種類 === "後ろ" && w.半角 ? 半(w.字) : 差す(w.字);
