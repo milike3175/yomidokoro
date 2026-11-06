@@ -734,14 +734,14 @@ export default function ShoshikiView({
       </a>
       <h1>申請書に下書きする</h1>
       <p className="lead">
-        事業者さんの情報と品目を一度入れて、申請する都道府県を選ぶと、県ごとの公式の様式に書き込んだ下書きができます。書き込みはこのパソコンの中だけで行い、事業者さんの情報はどこにも送りません（Claude
+        事業者さんの情報を入れ、申請する都道府県を選び、品目を入れると、県ごとの公式の様式に書き込んだ下書きができます。県を選ぶと、その県の様式にどう書くかが、その下に出ます。書き込みはこのパソコンの中だけで行い、事業者さんの情報はどこにも送りません（Claude
         にも送りません）。 様式の書式・改行・枠はそのまま残ります。最後は必ず
         Word・Excel で開いて、行政書士が確かめてください。
       </p>
       {来た県 && (
         <p className={s.here} data-testid="来た県">
           {様式たち.find((x) => x.県コード === 来た県)?.県名}
-          のページから来ました。この県を選んでいます。ほかの県も一緒に作るときは、「3．申請する都道府県」で印を付けてください
+          のページから来ました。この県を選んでいます。ほかの県も一緒に作るときは、「2．申請する都道府県」で印を付けてください
         </p>
       )}
 
@@ -811,11 +811,91 @@ export default function ShoshikiView({
             })}
           </div>
 
+          <h2>2．申請する都道府県</h2>
+          <p className={s.note}>
+            いくつでも選べます。選んだ県の数だけ、下書きができます（今、下書きできるのは
+            {県名たち(様式たち)}です）。
+          </p>
+          <div data-testid="申請する県">
+            {地方ごと(県の組たち).map(({ 地方, 組たち }) => (
+              <div key={地方} className={s.region}>
+                <h3 className={s.h3}>{地方}</h3>
+                <ul className={`${s.list} ${s.kenList}`}>
+                  {組たち.map((組) => {
+                    const x = 組[0];
+                    return (
+                      <li
+                        key={x.県コード}
+                        data-testid={`県の様式-${x.県コード}`}
+                        className={
+                          x.県コード === 来た県 ? s.hereItem : undefined
+                        }
+                      >
+                        <label className={s.kenPick}>
+                          <input
+                            type="checkbox"
+                            data-testid={`県を選ぶ-${x.県コード}`}
+                            checked={選んだ県.has(x.県コード)}
+                            onChange={() =>
+                              set選んだ県((m) => {
+                                const n = new Set(m);
+                                if (n.has(x.県コード)) n.delete(x.県コード);
+                                else n.add(x.県コード);
+                                return n;
+                              })
+                            }
+                          />
+                          <strong>{x.県名}</strong>
+                          {組.length === 1 && <span>{x.名前}</span>}
+                        </label>
+                        {組.map((y) => {
+                          const ある = 置たち.some(
+                            (p) => p.sha256 === y.sha256,
+                          );
+                          return (
+                            <span
+                              key={y.sha256}
+                              className={s.faint}
+                              style={
+                                組.length > 1 ? { display: "block" } : undefined
+                              }
+                            >
+                              {組.length > 1 && <>{y.名前}：</>}
+                              {ある ? (
+                                "様式はこのパソコンにあります"
+                              ) : y.自動で取れない || !取れる ? (
+                                <>
+                                  <a
+                                    href={y.入口}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                  >
+                                    県のページ
+                                  </a>
+                                  から様式を保存して、下の「様式を手で置く」から置いてください
+                                  {y.自動で取れない
+                                    ? `（${y.自動で取れない}）`
+                                    : ""}
+                                </>
+                              ) : (
+                                "作成のときに県のサイトから取ってきます"
+                              )}
+                            </span>
+                          );
+                        })}
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
+            ))}
+          </div>
+
           {(様.品目 ||
             様.品目の文 ||
             様式たち.some((x) => x.品目 || x.品目の文 || x.品目のセル)) && (
             <>
-              <h2>2．申請する品目と積替保管</h2>
+              <h2>3．申請する品目と積替保管</h2>
               <p className={s.note}>
                 この様式とこの道具は、特別管理産業廃棄物を含みません（普通の産業廃棄物の収集運搬だけです）。特別管理産業廃棄物の申請は、別の様式で行政書士が作ってください。
               </p>
@@ -1331,86 +1411,6 @@ export default function ShoshikiView({
               </div>
             </details>
           )}
-
-          <h2>3．申請する都道府県</h2>
-          <p className={s.note}>
-            いくつでも選べます。選んだ県の数だけ、下書きができます（今、下書きできるのは
-            {県名たち(様式たち)}です）。
-          </p>
-          <div data-testid="申請する県">
-            {地方ごと(県の組たち).map(({ 地方, 組たち }) => (
-              <div key={地方} className={s.region}>
-                <h3 className={s.h3}>{地方}</h3>
-                <ul className={`${s.list} ${s.kenList}`}>
-                  {組たち.map((組) => {
-                    const x = 組[0];
-                    return (
-                      <li
-                        key={x.県コード}
-                        data-testid={`県の様式-${x.県コード}`}
-                        className={
-                          x.県コード === 来た県 ? s.hereItem : undefined
-                        }
-                      >
-                        <label className={s.kenPick}>
-                          <input
-                            type="checkbox"
-                            data-testid={`県を選ぶ-${x.県コード}`}
-                            checked={選んだ県.has(x.県コード)}
-                            onChange={() =>
-                              set選んだ県((m) => {
-                                const n = new Set(m);
-                                if (n.has(x.県コード)) n.delete(x.県コード);
-                                else n.add(x.県コード);
-                                return n;
-                              })
-                            }
-                          />
-                          <strong>{x.県名}</strong>
-                          {組.length === 1 && <span>{x.名前}</span>}
-                        </label>
-                        {組.map((y) => {
-                          const ある = 置たち.some(
-                            (p) => p.sha256 === y.sha256,
-                          );
-                          return (
-                            <span
-                              key={y.sha256}
-                              className={s.faint}
-                              style={
-                                組.length > 1 ? { display: "block" } : undefined
-                              }
-                            >
-                              {組.length > 1 && <>{y.名前}：</>}
-                              {ある ? (
-                                "様式はこのパソコンにあります"
-                              ) : y.自動で取れない || !取れる ? (
-                                <>
-                                  <a
-                                    href={y.入口}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                  >
-                                    県のページ
-                                  </a>
-                                  から様式を保存して、下の「様式を手で置く」から置いてください
-                                  {y.自動で取れない
-                                    ? `（${y.自動で取れない}）`
-                                    : ""}
-                                </>
-                              ) : (
-                                "作成のときに県のサイトから取ってきます"
-                              )}
-                            </span>
-                          );
-                        })}
-                      </li>
-                    );
-                  })}
-                </ul>
-              </div>
-            ))}
-          </div>
 
           {様.書かない.length > 0 && <h3 className={s.h3}>今は書かない欄</h3>}
           <ul className={s.later}>
