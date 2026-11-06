@@ -1355,6 +1355,7 @@ export function 記入する(本文: string, 様: 様式, 値たち: 値, 中身
   };
   if (伏せる(本文, 段落たち) !== 伏せる(out, 後の段落)) return { ok: false, 理由: "狙った段落のほかが変わりました。書きません" };
 
+  結果.push(...住所の要確認(値たち));
   return { ok: true, 本文: out, 結果 };
 
   function 元と同じか一字(i: number, want: string, label: string): string | null {
@@ -1920,6 +1921,15 @@ export function 写真を貼る(
   return { ok: true, 本文: out, 追加, 結果 };
 }
 
+/** 住所が郵便番号だけで、番地までの本体が無いときの知らせ（誓約書などの住所が空になる。2026-11-06 みゆき「誓約書の住所が出ていない」の切り分け用） */
+function 住所の要確認(値たち: 値): 欄の結果[] {
+  const v = (値たち["住所"] ?? "").trim();
+  if (!v) return [];
+  const 住 = 住所を割る(v);
+  if (住.本体) return [];
+  return [{ id: "住所", 見出し: "申請者の住所", 状態: "要確認", 説明: [`住所の欄に郵便番号（${住.郵便}）しか入っていません。番地までの住所を名簿に入れてください。第1面や誓約書の住所が空のままです`] }];
+}
+
 function 住所を割る(v: string): { 郵便: string; 本体: string } {
   const m = /^〒?\s*([0-9０-９]{3})[-－ー‐]?([0-9０-９]{4})\s*(.*)$/.exec(v.trim());
   if (!m) return { 郵便: "", 本体: v.trim() };
@@ -2253,6 +2263,7 @@ function 段落で記入する(本文: string, 様: 様式, 値たち: 値, 中�
   for (let i = 1; i < 変えたち.length; i++) if (変えたち[i].終わり > 変えたち[i - 1].始め) return { ok: false, 理由: "書く場所が重なっています。書きません" };
   let out = 本文;
   for (const c of 変えたち) out = out.slice(0, c.始め) + c.字 + out.slice(c.終わり);
+  結果.push(...住所の要確認(値たち));
   return { ok: true, 本文: out, 結果, 段落の対応 };
 }
 
