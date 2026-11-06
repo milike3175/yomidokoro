@@ -158,11 +158,99 @@ function 県コードを直す(c) {
 }
 
 /**
+ * 対応表（app/data/様式/*.yaml）を全部読んで、sha256 → { 県コード, 県名, 名前 } の表にする。
+ * 目録に無い県（愛知のように自動で取れない県）の様式も、手で置いたものを見分けられるように
+ */
+function 知っている様式(対応表の置き場) {
+  const 表 = new Map();
+  let 名たち = [];
+  try {
+    名たち = fs.readdirSync(対応表の置き場).filter((f) => /\.ya?ml$/i.test(f));
+  } catch {
+    return 表;
+  }
+  for (const 名 of 名たち) {
+    try {
+      const t = fs.readFileSync(path.join(対応表の置き場, 名), "utf8");
+      const sha = (t.match(/^sha256:\s*([0-9a-f]{64})\s*$/m) || [])[1];
+      if (!sha) continue;
+      const 取る = (k) => {
+        const m = t.match(new RegExp(`^${k}:\\s*"?([^"\\n#]+?)"?\\s*(#.*)?$`, "m"));
+        return m ? m[1].trim() : "";
+      };
+      表.set(sha, { 県コード: 取る("県コード") || 名.slice(0, 2), 県名: 取る("県名"), 名前: 取る("名前"), 対応表: 名 });
+    } catch {}
+  }
+  return 表;
+}
+
+/**
+ * 手で置いた様式を利用者フォルダに写して、次に開いたときも使えるようにする（2026-11-06 みゆき「アプリが覚えない」）。
+ * 対応表に無い中身は写さない（県の様式でないファイルを溜めないため）
+ * @returns {{ok:true, 県コード:string, 県名:string, 名前:string, ファイル名:string, 新しく:boolean} | {ok:false, 理由:string}}
+ */
+function 様式を覚える(userData, 対応表の置き場, ファイル名, buf) {
+  if (!Buffer.isBuffer(buf) || buf.length < 4 || buf[0] !== 0x50 || buf[1] !== 0x4b) return { ok: false, 理由: "Word・Excel の様式ではない" };
+  if (buf.length > 大きさの上限) return { ok: false, 理由: "大きすぎる" };
+  const sha = sha256(buf);
+  const m = 知っている様式(対応表の置き場).get(sha);
+  if (!m) return { ok: false, 理由: "道具の知っている様式と中身が違う" };
+  const 名 = path.basename(String(ファイル名 || "")).replace(/[\\/:*?"<>|]/g, "_") || `${sha.slice(0, 12)}.docx`;
+  const dir = 置き場(userData, m.県コード);
+  fs.mkdirSync(dir, { recursive: true });
+  // 同じ中身がもうあれば写さない
+  for (const f of fs.readdirSync(dir)) {
+    if (!/\.(docx|xlsx)$/i.test(f)) continue;
+    try {
+      if (sha256(fs.readFileSync(path.join(dir, f))) === sha) return { ok: true, ...m, ファイル名: f, 新しく: false };
+    } catch {}
+  }
+  fs.writeFileSync(path.join(dir, 名), buf);
+  return { ok: true, ...m, ファイル名: 名, 新しく: true };
+}
+
+/**
+ * ダウンロードのフォルダ（とデスクトップ）の一番上にある Word・Excel を見て、道具の知っている様式があれば覚える。
+ * 中身を読むのは指紋（sha256）を出すためだけ。合わないファイルは写さず、名前も返さない
+ * @returns {{ 見た:string[], 見つけた:{県コード,県名,名前,ファイル名,新しく}[] }}
+ */
+function 落ちた様式を探す(userData, 対応表の置き場, フォルダたち) {
+  const 知っている = 知っている様式(対応表の置き場);
+  const 見た = [];
+  const 見つけた = [];
+  const 済み = new Set(); // 同じ中身のコピーが何枚あっても一つに
+  for (const dir of フォルダたち) {
+    let 名たち;
+    try {
+      名たち = fs.readdirSync(dir);
+    } catch {
+      continue;
+    }
+    見た.push(dir);
+    for (const f of 名たち) {
+      if (!/\.(docx|xlsx)$/i.test(f) || f.startsWith("~$")) continue;
+      const p = path.join(dir, f);
+      try {
+        const st = fs.statSync(p);
+        if (!st.isFile() || st.size > 大きさの上限) continue;
+        const buf = fs.readFileSync(p);
+        const sha = sha256(buf);
+        if (!知っている.has(sha) || 済み.has(sha)) continue;
+        済み.add(sha);
+        const r = 様式を覚える(userData, 対応表の置き場, f, buf);
+        if (r.ok) 見つけた.push({ 県コード: r.県コード, 県名: r.県名, 名前: r.名前, ファイル名: r.ファイル名, 新しく: r.新しく });
+      } catch {}
+    }
+  }
+  return { 見た, 見つけた };
+}
+
+/**
  * 記入の画面へ渡す口：取ってきた様式の一覧。対応表と一致したものだけ中身（base64）を渡す。
  * 形は app/src/app/shoshiki/page.tsx の「手元の様式」と同じ { 県, ファイル名, sha256, 中身 }
  */
 function 取ってきた様式の一覧(userData, 対応表の置き場) {
-  const 知っている = new Set([...Object.values(様式の目録), ...追加の様式].map((m) => 対応表のsha(対応表の置き場, m.対応表)).filter(Boolean));
+  const 知っている = new Set(知っている様式(対応表の置き場).keys());
   const root = path.join(userData, "様式");
   if (!fs.existsSync(root)) return [];
   const 一覧 = [];
@@ -179,4 +267,4 @@ function 取ってきた様式の一覧(userData, 対応表の置き場) {
   return 一覧;
 }
 
-module.exports = { 様式を取ってくる, 取ってきた様式の一覧, 様式の目録, 追加の様式 };
+module.exports = { 様式を取ってくる, 取ってきた様式の一覧, 様式を覚える, 落ちた様式を探す, 知っている様式, 様式の目録, 追加の様式 };

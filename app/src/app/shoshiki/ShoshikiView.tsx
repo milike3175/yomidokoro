@@ -121,6 +121,32 @@ type アプリの様式の口 = {
     | { ok: false; 理由: string; 入口: string }
   >;
   取ってきた様式?: () => Promise<手元の様式[]>;
+  /** 手で置いた様式を覚える（次に開いたときも使えるように） */
+  様式を覚える?: (
+    ファイル名: string,
+    base64: string,
+  ) => Promise<
+    | {
+        ok: true;
+        県コード: string;
+        県名: string;
+        名前: string;
+        ファイル名: string;
+        新しく: boolean;
+      }
+    | { ok: false; 理由: string }
+  >;
+  /** ダウンロードのフォルダとデスクトップから、道具の知っている様式を探して覚える */
+  落ちた様式を探す?: () => Promise<{
+    見た: string[];
+    見つけた: {
+      県コード: string;
+      県名: string;
+      名前: string;
+      ファイル名: string;
+      新しく: boolean;
+    }[];
+  }>;
   下書き?: 下書きの口の型;
 };
 /** 都道府県を地方ごとにまとめる（47並ぶと長いので。2026-11-05 みゆき「地方ごとに分けてすっきりさせて」）。県コードの順 */
@@ -160,6 +186,13 @@ function 今日(): string {
   const d = new Date();
   const p = (n: number) => String(n).padStart(2, "0");
   return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+}
+
+function バイトからbase64(b: Uint8Array): string {
+  let s = "";
+  for (let i = 0; i < b.length; i += 0x8000)
+    s += String.fromCharCode(...b.subarray(i, i + 0x8000));
+  return btoa(s);
 }
 
 function base64からバイト(b64: string): Uint8Array {
@@ -336,6 +369,32 @@ export default function ShoshikiView({
     }
   }
 
+  /** アプリ：ダウンロードのフォルダとデスクトップから様式を探して置く。sha256 を渡せば、その様式が見つかったときだけ置いたものを返す */
+  async function ダウンロードから探す(
+    sha256?: string,
+  ): Promise<置いた様式 | null> {
+    const 口 = アプリの口();
+    if (!口?.落ちた様式を探す || !口.取ってきた様式) return null;
+    const r = await 口.落ちた様式を探す();
+    const 一覧 = await 口.取ってきた様式();
+    let 当たり: 置いた様式 | null = null;
+    for (const f of r.見つけた) {
+      const t = 一覧.find((y) => y.ファイル名 === f.ファイル名 && y.中身);
+      if (!t) continue;
+      const p = await 置く(t.ファイル名, base64からバイト(t.中身!), true);
+      if (p && sha256 && p.sha256 === sha256) 当たり = p;
+    }
+    if (!sha256) {
+      受け口を見せる();
+      set置きの知らせ(
+        r.見つけた.length > 0
+          ? `見つけて置きました：${r.見つけた.map((f) => `${f.県名}「${f.名前}」（${f.ファイル名}）`).join("、")}。「2．申請する都道府県」に印を付けました`
+          : `ダウンロードのフォルダとデスクトップに、道具の知っている様式はありませんでした（見たのは ${r.見た.join("、") || "なし"}）。上の「様式ファイルを保存する」で落としてから、もう一度押してください`,
+      );
+    }
+    return 当たり;
+  }
+
   /** アプリ：県のサイトから様式を取ってきて置く */
   async function 県から取る(x: 様式) {
     const 口 = アプリの口();
@@ -448,10 +507,13 @@ export default function ShoshikiView({
   ): Promise<{ 置: 置いた様式 } | { 置: null; 理由: string }> {
     const ある = 置たち.find((p) => p.sha256 === x.sha256);
     if (ある) return { 置: ある };
+    // ダウンロードのフォルダに落ちていれば、それを使う（愛知のように道具が取ってこられない県のため）
+    const 落ちていた = await ダウンロードから探す(x.sha256);
+    if (落ちていた) return { 置: 落ちていた };
     if (x.自動で取れない)
       return {
         置: null,
-        理由: `${x.自動で取れない}。県のページ（${x.入口}）から様式を保存して、下の「様式を手で置く」から置いてください`,
+        理由: `${x.自動で取れない}。下の「様式を手で置く」の「様式ファイルを保存する」で様式を落としてから、もう一度「作成」を押してください（ダウンロードのフォルダから見つけます）`,
       };
     const 口 = アプリの口();
     if (!口?.様式を取ってくる || !口.取ってきた様式)
@@ -548,13 +610,24 @@ export default function ShoshikiView({
       );
       return;
     }
-    const x = await 置く(名, new Uint8Array(await f.arrayBuffer()));
+    const バイト = new Uint8Array(await f.arrayBuffer());
+    const x = await 置く(名, バイト);
     if (!x) return;
-    if (x.様)
+    if (x.様) {
+      let 覚えた = "";
+      const 口 = アプリの口();
+      if (口?.様式を覚える) {
+        try {
+          const r = await 口.様式を覚える(名, バイトからbase64(バイト));
+          if (r.ok) 覚えた = "。アプリが覚えたので、次に開いたときも使えます";
+        } catch {
+          /* 覚えられなくても置けてはいる */
+        }
+      }
       set置きの知らせ(
-        `${x.様.県名}「${x.様.名前}」を置きました（${名}）。「2．申請する都道府県」の${x.様.県名}に印を付けました。「4．作成する」でこの様式に書きます`,
+        `${x.様.県名}「${x.様.名前}」を置きました（${名}）。「2．申請する都道府県」の${x.様.県名}に印を付けました。「4．作成する」でこの様式に書きます${覚えた}`,
       );
-    else
+    } else
       set置きの知らせ(
         `「${名}」を置きましたが、道具の知っている様式と中身が違うので、まだ下書きできません。県のページから保存し直すか、上の一覧の「様式ファイルを保存する」から保存した様式を置いてください`,
       );
@@ -940,16 +1013,54 @@ export default function ShoshikiView({
                               {組.length > 1 && <>{y.名前}：</>}
                               {ある ? (
                                 "様式はこのパソコンにあります"
+                              ) : y.自動で取れない && 取れる ? (
+                                <>
+                                  {y.自動で取れない}。
+                                  {y.ファイルの場所 ? (
+                                    <>
+                                      「
+                                      <a
+                                        href={y.ファイルの場所}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                      >
+                                        様式ファイルを保存する
+                                      </a>
+                                      」を押すと、いつものブラウザがダウンロードのフォルダに落とします。そのあと「作成」を押せば、アプリがそのフォルダから見つけます
+                                    </>
+                                  ) : (
+                                    <>
+                                      <a
+                                        href={y.入口}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                      >
+                                        県のページ
+                                      </a>
+                                      から様式を保存して、下の「様式を手で置く」から置いてください
+                                    </>
+                                  )}
+                                </>
                               ) : y.自動で取れない || !取れる ? (
                                 <>
-                                  <a
-                                    href={y.入口}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                  >
-                                    県のページ
-                                  </a>
-                                  から様式を保存して、下の「様式を手で置く」から置いてください
+                                  {y.ファイルの場所 ? (
+                                    <a
+                                      href={y.ファイルの場所}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                    >
+                                      様式ファイルを保存する
+                                    </a>
+                                  ) : (
+                                    <a
+                                      href={y.入口}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                    >
+                                      県のページ
+                                    </a>
+                                  )}
+                                  で様式を保存して、下の「様式を手で置く」から置いてください
                                   {y.自動で取れない
                                     ? `（${y.自動で取れない}）`
                                     : ""}
@@ -1683,7 +1794,7 @@ export default function ShoshikiView({
                 {x.県名}の産業廃棄物収集運搬業のページ
               </a>
               　{x.名前}（ファイル名 {x.ファイル名}）
-              {!取れる && x.ファイルの場所 && (
+              {x.ファイルの場所 && (!取れる || x.自動で取れない) && (
                 <>
                   <a
                     href={x.ファイルの場所}
@@ -1713,6 +1824,20 @@ export default function ShoshikiView({
         {取りの知らせ && <p className={s.placed}>{取りの知らせ}</p>}
 
         <h3 className={s.h3}>保存した様式をここに置く</h3>
+        {取れる && (
+          <p className={s.note}>
+            「様式ファイルを保存する」で落としたら、
+            <button
+              type="button"
+              className={s.small}
+              data-testid="ダウンロードから探す"
+              onClick={() => void ダウンロードから探す()}
+            >
+              ダウンロードのフォルダから様式を探す
+            </button>
+            を押してください。アプリがダウンロードのフォルダとデスクトップを見て、道具の知っている様式だけを覚えます（ほかのファイルは触りません）。「作成」を押したときも同じように探します
+          </p>
+        )}
         <div
           ref={置き場の枠}
           className={`${s.drop} ${重ねる ? s.dropOn : ""}`}

@@ -111,7 +111,7 @@ if (process.platform === "win32") {
   記録("hardware acceleration disabled");
 }
 
-const { 様式を取ってくる, 取ってきた様式の一覧, 様式の目録 } = require("./lib/shutoku.cjs");
+const { 様式を取ってくる, 取ってきた様式の一覧, 様式を覚える, 落ちた様式を探す, 様式の目録 } = require("./lib/shutoku.cjs");
 const 控え = require("./lib/hikae.cjs");
 const 下書き = require("./lib/shitagaki.cjs");
 
@@ -411,6 +411,34 @@ if (!app.requestSingleInstanceLock()) {
       } catch (e) {
         記録("様式を取ってくる failed", String(e && e.code ? e.code : "error"));
         return { ok: false, 理由: "取ってこられませんでした", 入口: "" };
+      }
+    });
+
+    // 手で置いた様式を覚える（利用者フォルダの 様式/<県>/ に写す）。対応表に無い中身は写さない
+    ipcMain.handle("様式を覚える", (_e, 名, base64) => {
+      try {
+        if (typeof base64 !== "string" || base64.length > 30 * 1024 * 1024) return { ok: false, 理由: "大きすぎる" };
+        return 様式を覚える(app.getPath("userData"), 対応表の置き場(), String(名 ?? ""), Buffer.from(base64, "base64"));
+      } catch (e) {
+        記録("様式を覚える failed", String(e && e.code ? e.code : "error"));
+        return { ok: false, 理由: "このパソコンの様式の置き場に写せませんでした" };
+      }
+    });
+    // ダウンロードのフォルダとデスクトップから、道具の知っている様式を探して覚える（指紋で見分ける。合わないファイルは触らない）
+    ipcMain.handle("落ちた様式を探す", () => {
+      try {
+        const フォルダたち = [];
+        for (const k of ["downloads", "desktop"]) {
+          try {
+            フォルダたち.push(app.getPath(k));
+          } catch {}
+        }
+        // 試し：YOMIDOKORO_DOWNLOADS=<フォルダ> なら、そこも見る
+        if (process.env.YOMIDOKORO_DOWNLOADS) フォルダたち.push(process.env.YOMIDOKORO_DOWNLOADS);
+        return 落ちた様式を探す(app.getPath("userData"), 対応表の置き場(), フォルダたち);
+      } catch (e) {
+        記録("落ちた様式を探す failed", String(e && e.code ? e.code : "error"));
+        return { 見た: [], 見つけた: [] };
       }
     });
 
