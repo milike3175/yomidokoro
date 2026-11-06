@@ -51,6 +51,10 @@ for (const f of ファイルたち(TECHO, /\.ya?ml$/)) {
       if (typeof t === "string" && t.length >= 8) 足す(t.slice(0, 20));
     }
   }
+  // 手元だけの欄（担当者の名前・案件・メモ）は丸ごと見張る。見本の元であっても外さない（公開するものには絶対に出さない）
+  for (const v of Object.values((d.手元だけ ?? {}) as Record<string, unknown>)) {
+    if (typeof v === "string" && v.trim().length >= 2) 見張る語.add(v.trim());
+  }
 }
 // 公開してよいデータ（app/data の YAML。手引きの要約・引用、観点、品目など）に元から出てくる文は見張らない。
 // ただし app/data/見本/ は除く（見本に手帳の別の文が紛れても素通りさせないため）。

@@ -7,6 +7,7 @@
     "dev": "TECHO=${TECHO:-1} next dev -H 127.0.0.1",
     "build": "TECHO=${TECHO:-0} next build && node scripts/build-check.ts",
     "確認": "node scripts/kakunin.ts",
+    "共有に出す": "node scripts/kyoyu.ts",
     "取込": "node scripts/torikomi.ts",
     "取得": "node scripts/tebiki/shutoku.ts",
     "読む": "node scripts/tebiki/yomu.ts",

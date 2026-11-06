@@ -765,6 +765,11 @@ function Card({
         <div className="card-top">
           <span className={`label ${c.種別}`}>{c.種別}</span>
           {c.見本 && <span className="label 見本" title="作者の実際の電話の記録から、依頼者の情報と担当者の名前を除いたもの">作者の記録</span>}
+          {c.手元だけ && (c.手元だけ.担当者 || c.手元だけ.案件) && (
+            <span className="label 見本" style={{ opacity: 0.85 }} title="自分のパソコンの中にだけある欄。公開版・共有する記録には出ません">
+              手元だけ：{[c.手元だけ.担当者 ? `担当者 ${c.手元だけ.担当者}` : "", c.手元だけ.案件 ? `案件 ${c.手元だけ.案件}` : ""].filter(Boolean).join("／")}
+            </span>
+          )}
           {古い && <span className="label 再確認">再確認</span>}
           {印たち.map((x) => (
             <span key={x.判定 + x.文} className={`label 判定 ${x.判定}${x.解消 ? " 解消" : ""}`} title={x.理由たち.join("\n")}>

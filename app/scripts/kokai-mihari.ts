@@ -203,6 +203,10 @@ for (const f of ファイルたち(TECHO, /\.ya?ml$/)) {
       for (const w of この語) 見張る語.add(w);
     }
   }
+  // 手元だけの欄（担当者の名前・案件・メモ）は丸ごと見張る。見本の元の照合外し（この語）には入れない
+  for (const v of Object.values((d.手元だけ ?? {}) as Record<string, unknown>)) {
+    if (typeof v === "string" && v.trim().length >= 2) 見張る語.add(NFC(v.trim()).replace(/\s+/g, ""));
+  }
 }
 // 見本の電話の記録（app/data/見本/<許認可>/<県>/電話/*.yaml）の ID と、その元の手帳ファイル
 const 見本の電話id = new Set<string>();
