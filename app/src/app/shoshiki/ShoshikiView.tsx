@@ -270,6 +270,9 @@ export default function ShoshikiView({
   const [選んだ控え, set選んだ控え] = useState<string>("");
   const [下書きの置き場, set下書きの置き場] = useState<string>("");
   const [取りの知らせ, set取りの知らせ] = useState<string>("");
+  // 様式を置いたとき（置けなかったとき）の知らせ。受け口のすぐ下に出す
+  const [置きの知らせ, set置きの知らせ] = useState<string>("");
+  const 置き場の枠 = useRef<HTMLDivElement>(null);
   const [取れる, set取れる] = useState(false);
   async function 一覧を読み直す(口: 控えの口の型 | null = アプリ) {
     if (!口) return;
@@ -508,10 +511,84 @@ export default function ShoshikiView({
     }
   }
 
+  /** 受け口を開いて、そこまで画面を送る（知らせを見せるため） */
+  function 受け口を見せる() {
+    set手で置くを開く(true);
+    setTimeout(
+      () =>
+        置き場の枠.current?.scrollIntoView({
+          block: "center",
+          behavior: "smooth",
+        }),
+      50,
+    );
+  }
+
+  /** 置かれたファイルを受ける。zip・古い形・様式でないものは、理由を言って置かない */
   async function ファイルを受ける(f: File | undefined) {
     if (!f) return;
-    await 置く(f.name, new Uint8Array(await f.arrayBuffer()));
+    const 名 = f.name;
+    const 形 = 名.toLowerCase().split(".").pop() ?? "";
+    受け口を見せる();
+    if (形 === "zip") {
+      set置きの知らせ(
+        `「${名}」は zip のままでは置けません。zip を展開（ダブルクリック）して、中の Word（.docx）か Excel（.xlsx）の様式を置いてください`,
+      );
+      return;
+    }
+    if (形 === "doc" || 形 === "xls") {
+      set置きの知らせ(
+        `「${名}」は古い形（.${形}）なので、道具は読めません。道具が書けるのは、上の一覧の「様式ファイルを保存する」から保存した様式（${県名たち(様式たち)}）だけです`,
+      );
+      return;
+    }
+    if (形 !== "docx" && 形 !== "xlsx") {
+      set置きの知らせ(
+        `「${名}」は Word（.docx）でも Excel（.xlsx）でもないので置けません`,
+      );
+      return;
+    }
+    const x = await 置く(名, new Uint8Array(await f.arrayBuffer()));
+    if (!x) return;
+    if (x.様)
+      set置きの知らせ(
+        `${x.様.県名}「${x.様.名前}」を置きました（${名}）。「2．申請する都道府県」の${x.様.県名}に印を付けました。「4．作成する」でこの様式に書きます`,
+      );
+    else
+      set置きの知らせ(
+        `「${名}」を置きましたが、道具の知っている様式と中身が違うので、まだ下書きできません。県のページから保存し直すか、上の一覧の「様式ファイルを保存する」から保存した様式を置いてください`,
+      );
   }
+
+  // ページのどこにファイルを落としても受ける（受け口の外に落とすと、ブラウザがファイルを開いてしまうため）
+  const 受け方 = useRef(ファイルを受ける);
+  受け方.current = ファイルを受ける;
+  useEffect(() => {
+    const ある = (e: DragEvent) => !!e.dataTransfer?.types?.includes("Files");
+    const over = (e: DragEvent) => {
+      if (!ある(e)) return;
+      e.preventDefault();
+      set重ねる(true);
+    };
+    const leave = (e: DragEvent) => {
+      if (e.relatedTarget === null) set重ねる(false);
+    };
+    const drop = (e: DragEvent) => {
+      if (!ある(e)) return;
+      e.preventDefault();
+      set重ねる(false);
+      for (const f of Array.from(e.dataTransfer?.files ?? []))
+        void 受け方.current(f);
+    };
+    document.addEventListener("dragover", over);
+    document.addEventListener("dragleave", leave);
+    document.addEventListener("drop", drop);
+    return () => {
+      document.removeEventListener("dragover", over);
+      document.removeEventListener("dragleave", leave);
+      document.removeEventListener("drop", drop);
+    };
+  }, []);
 
   // 入力のたびに、本文に書いたらどうなるかを見る（要確認の印を先に出すため）。本文が無ければ形だけ見る
   const 見込み = useMemo(() => {
@@ -1637,22 +1714,13 @@ export default function ShoshikiView({
 
         <h3 className={s.h3}>保存した様式をここに置く</h3>
         <div
+          ref={置き場の枠}
           className={`${s.drop} ${重ねる ? s.dropOn : ""}`}
-          onDragOver={(e) => {
-            e.preventDefault();
-            set重ねる(true);
-          }}
-          onDragLeave={() => set重ねる(false)}
-          onDrop={(e) => {
-            e.preventDefault();
-            set重ねる(false);
-            for (const f of Array.from(e.dataTransfer.files))
-              void ファイルを受ける(f);
-          }}
           onClick={() => 受け口.current?.click()}
+          data-testid="様式の置き場"
         >
           ダウンロードした様式（Word か
-          Excel）をここに置いてください。県ごとに何枚でも置けます。押して選ぶこともできます
+          Excel）をここに置いてください。この画面のどこに落としても受け取ります。県ごとに何枚でも置けます。押して選ぶこともできます
           <input
             ref={受け口}
             type="file"
@@ -1667,6 +1735,11 @@ export default function ShoshikiView({
             }}
           />
         </div>
+        {置きの知らせ && (
+          <p className={s.placedNote} data-testid="置きの知らせ">
+            {置きの知らせ}
+          </p>
+        )}
 
         {手帳版 && (
           <div className={s.techo}>
