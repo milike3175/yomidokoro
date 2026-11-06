@@ -144,3 +144,14 @@
 - 観点・記録の YAML：CC BY 4.0
 - 手引き・様式は各都道府県の著作物です。出典と利用規約は各県の `_出典.yaml` と画面に記載しています
 - この道具は、行政書士が自分の業務に使うために公開情報と自分のメモを整理したものです。申請の前に、必ず窓口で再確認してください
+
+## デモ動画の素材の出典
+
+- 音楽：Suno（有料プラン）で生成した曲「Softly Answered」「Gently Forward」「Little Signals」（2026-11-05 生成）。制作者から本動画への使用許諾あり
+- 効果音：Artlist（ライセンス取得済みのアカウントからダウンロード。本動画への使用許諾あり）
+  - Vadi Sound「Qwerty - Computer Keyboard Quick Typing」
+  - InspectorJ「Working From Home - Computer Mouse Single Click」
+  - DeanKR「Christmas Vibes - Twinkling Tap」
+- 手引き・様式：各都道府県の公開資料（出典 URL は `手引き/<県>/_出典.yaml`）。動画には京都府「産業廃棄物処理業許可申請の手引き」の記入例（26 ページ）と、和歌山県「様式記載例」（1 ページ）、和歌山県・愛知県・奈良県の様式に道具が書いた下書きを映している
+- 実写・ナレーション：自分で撮影・録音。申請書の記入内容・事業者名・担当者名は架空
+- 動画の制作：Remotion（React）。道具の画面は本物の画面録画
