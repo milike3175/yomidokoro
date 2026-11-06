@@ -352,23 +352,95 @@ div.preview {
 }
 
 /* 開け閉めできる組（県ごとの見込み、事業計画の欄）。たくさんの県に申請するときに畳める */
+/* 開け閉めできる組。見出しはボタンの形にして、右端に「押すと開く」「押すと閉じる」を出す */
 .fold {
   margin: 4px 0 10px;
 }
 .fold > summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 10px;
   cursor: pointer;
   font-weight: 600;
   font-size: 14px;
-  color: var(--sub);
-  padding: 6px 0;
-  list-style: revert;
+  color: var(--ink);
+  padding: 8px 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--paper-2);
+  list-style: none;
+  user-select: none;
+}
+.fold > summary::-webkit-details-marker {
+  display: none;
+}
+.fold > summary::before {
+  content: "";
+  flex: none;
+  width: 0;
+  height: 0;
+  border-left: 6px solid transparent;
+  border-right: 6px solid transparent;
+  border-top: 8px solid var(--accent);
+  transform: rotate(-90deg);
+  transition: transform 0.15s;
+}
+.fold[open] > summary::before {
+  transform: rotate(0deg);
+}
+.fold > summary::after {
+  content: "押すと開く";
+  margin-left: auto;
+  font-weight: 400;
+  font-size: 12.5px;
+  color: var(--accent);
+  white-space: nowrap;
+}
+.fold[open] > summary::after {
+  content: "押すと閉じる";
 }
 .fold > summary:hover {
-  color: var(--ink);
+  background: var(--paper);
+  border-color: var(--accent);
+}
+.fold[open] {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 0 12px 10px;
+}
+.fold[open] > summary {
+  margin: 0 -12px 8px;
+  border: none;
+  border-bottom: 1px solid var(--line);
+  border-radius: 8px 8px 0 0;
 }
 .foldHead {
   font-size: 15px !important;
-  color: var(--ink) !important;
+}
+
+/* 開け閉めできる組がいくつも並ぶときの「すべて開く」「すべて閉じる」と案内 */
+.foldBar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 12px;
+  margin: 8px 0 4px;
+  font-size: 13px;
+  color: var(--sub);
+}
+.foldBar button {
+  font: inherit;
+  font-size: 13px;
+  color: var(--accent);
+  background: none;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 3px 10px;
+  cursor: pointer;
+}
+.foldBar button:hover {
+  border-color: var(--accent);
 }
 
 /* くり返しの組の写真（車両の前面・側面、容器）。選んだらファイル名と「外す」 */
