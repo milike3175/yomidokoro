@@ -326,6 +326,8 @@ export default function ShoshikiView({
     );
   }
   useEffect(() => {
+    // 名簿やトップの「見本の会社で試す」から来たとき（/shoshiki/?見本=1）：架空の会社を入れた状態で始める
+    if (new URLSearchParams(window.location.search).get("見本")) void 見本を入れる();
     const c = new URLSearchParams(window.location.search).get("県") ?? "";
     if (様式たち.some((x) => x.県コード === c)) {
       set来た県(c);

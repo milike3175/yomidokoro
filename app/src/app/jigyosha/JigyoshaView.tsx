@@ -94,6 +94,9 @@ export default function JigyoshaView() {
           <a href="/shoshiki/" className={s.bookNewButton} data-testid="新しい事業者さんを入れる">
             新しい事業者さんを入れる
           </a>
+          <a href="/shoshiki/?見本=1" className={s.bookNewButton} data-testid="見本の会社で試す（名簿）">
+            見本の会社で試す
+          </a>
           <span>
             会社の情報を入れ、申請する都道府県を選び、品目を入れると、県の数だけ下書きができます
             {アプリ === null && "（ブラウザでは、下書きと控えのファイルがダウンロードされます）"}
