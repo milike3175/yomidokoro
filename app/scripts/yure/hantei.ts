@@ -40,7 +40,9 @@ const 全部見せる = args.includes("--全部");
 const やり直し = args.includes("--やり直し");
 const 手帳を読む = process.env.TECHO === "1";
 
-const 電話の置き場 = 手帳を読む ? path.join(ROOT, "手帳", 許認可) : path.join(DATA, "見本", 許認可);
+// 手帳の置き場は、試しのときだけ TECHO_ROOT で差し替える（torikomi.ts・data.ts と同じ。本物の手帳に試しの判定を書かないため）
+const 手帳の置き場 = process.env.TECHO_ROOT ? path.resolve(process.env.TECHO_ROOT) : path.join(ROOT, "手帳");
+const 電話の置き場 = 手帳を読む ? path.join(手帳の置き場, 許認可) : path.join(DATA, "見本", 許認可);
 const 判定の置き場 = path.join(電話の置き場, "_判定");
 const ログの置き場 = 手帳を読む ? path.join(判定の置き場, "_ログ") : path.join(APP, "logs");
 
