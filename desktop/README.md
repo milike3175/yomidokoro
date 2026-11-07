@@ -11,7 +11,7 @@
 ## 開き方
 
 ### Windows
-zip は二つある。どちらを使うかは、Windows の「設定」の「システム」の「バージョン情報」にある「システムの種類」で決める。
+Windows の zip は二つある。どちらを使うかは、Windows の「設定」の「システム」の「バージョン情報」にある「システムの種類」で決める。
 
 - 「ARM ベース プロセッサ」と書いてある（Mac の Parallels の Windows など）：`yomidokoro-0.0.6-win-arm64.zip`
 - 「x64 ベース プロセッサ」と書いてある（ふつうの Windows 機）：`yomidokoro-0.0.6-win-x64.zip`
