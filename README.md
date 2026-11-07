@@ -3,6 +3,20 @@
 
 **ところ変われば、書き方も変わる。**
 
+<details>
+<summary><b>English summary</b> (the rest of this README is in Japanese)</summary>
+
+**Yomidokoro** ("where to look") is a personal tool built by a Japanese administrative scrivener (gyoseishoshi) for her own practice. Industrial-waste transport permits must be obtained from every prefecture a truck loads or unloads in. The law is one, but each of the 47 prefectures publishes its own guidebook and application form, and the rules that bite are often not in the guidebook at all. The tool puts "what differs by prefecture" on one map, with sources, and carries that straight into a draft of each prefecture's own form.
+
+- **Guidebooks, read with sources.** Claude (Fable 5.1, Message Batches) read the guidebooks of all 47 prefectures and produced 2,563 records across 32 viewpoints, each with a page citation. A program, not Claude, checks every quoted passage against the guidebook text: 0 mismatches, 3 near-matches (1 confirmed by eye). A person checked 91 records by hand: 91 correct. This is what separates it from pasting a PDF into a chatbot.
+- **Phone answers, kept.** Hand over your call notes or meeting minutes and Claude sorts them by viewpoint, strips the clerk's name, and flags any conflict with the guidebook as "inconsistent, check again." It never decides which side is right. The scrivener does.
+- **Drafts in each prefecture's form.** Enter a client once, tick the prefectures, press "create": the tool writes each prefecture's own Word or Excel form in that prefecture's own style (five prefectures today: Wakayama, Yamagata, Nara, Aichi, Kyoto). Client details never leave the computer when forms are filled; nothing is sent to Claude or the internet. Unknown fields are left as 【要確認】 (to be confirmed) rather than invented.
+- **Grows by skill.** Asking Claude Code to "make prefecture X draftable" runs a skill that reads the prefecture's blank form and sample, writes the field mapping and the writing pattern, and hands a test draft to the scrivener to check in Word before it ships.
+
+Try it: public site https://yomidokoro.vercel.app (no login, no API calls), desktop apps for Windows and Mac under Releases, 3-minute demo video https://youtu.be/iyyidisgp8Y (Japanese). Built during Built with Claude: Japan 2026. MIT.
+
+</details>
+
 このプロジェクトは、行政書士の「県ごとに違う、手引きに載っていない決まり」を、手引きと電話で聞いた答えを出典つきで一枚の地図にし、申請書の下書きまでつなぐ、自分専用の道具です。一本目は、産業廃棄物収集運搬業の許可（特別管理産業廃棄物と積替保管を含まない収集運搬）。
 
 - 47都道府県の手引きを Claude が読み、2,563件の記録に出典のページを付けました。引用はプログラムが手引きの本文と照合し、不一致 0・近似 3（うち1件は人が目視して一致、2件は目視待ち）。人が1件ずつ手引きと照らした記録は 91件中 91件が正しい。Claude の引用を Claude に確かめさせないのが、PDF を AI に入れて要約させるのと違う所です
