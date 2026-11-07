@@ -401,8 +401,9 @@ if (!app.requestSingleInstanceLock()) {
     });
     控えの口("控えの置き場を開く", () => shell.openPath(控え.控えの置き場(app.getPath("userData"))));
     // 申請書の下書き（docx）。置き場は 書類/よみどころ_下書き/
-    控えの口("下書きを保存", (名, バイト) => 下書き.下書きを保存(app.getPath("documents"), 名, バイト));
-    控えの口("下書きの置き場を開く", () => shell.openPath(下書き.下書きの置き場(app.getPath("documents"))));
+    控えの口("下書きを保存", (名, バイト, 小分け) => 下書き.下書きを保存(app.getPath("documents"), 名, バイト, 小分け));
+    // 場所を渡せば、置き場の中のそのフォルダを開く（作成のあとに事業者さんのフォルダを開く）。置き場の外は開かない
+    控えの口("下書きの置き場を開く", (場所) => shell.openPath(下書き.置き場の中(app.getPath("documents"), 場所)));
     // 県のサイトから様式を取ってくる（目録にある県だけ。ふつうの GET を一回。依頼者の情報は送らない）
     ipcMain.handle("様式を取ってくる", async (_e, コード, sha256) => {
       try {

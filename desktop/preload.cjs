@@ -26,8 +26,8 @@ contextBridge.exposeInMainWorld("yomidokoro", {
   /** 申請書の下書き（docx）。置き場は 書類/よみどころ_下書き/ */
   下書き: {
     /** (ファイル名, Uint8Array) → { ok: true, ファイル名, 置き場 } | { ok: false, 理由 } */
-    保存: (ファイル名, バイト) => ipcRenderer.invoke("下書きを保存", ファイル名, バイト),
-    置き場を開く: () => ipcRenderer.invoke("下書きの置き場を開く"),
+    保存: (ファイル名, バイト, 小分け) => ipcRenderer.invoke("下書きを保存", ファイル名, バイト, 小分け),
+    置き場を開く: (場所) => ipcRenderer.invoke("下書きの置き場を開く", 場所),
   },
   /** 県のサイトから様式を取ってくる（県コードと、どの様式かを指す対応表の sha256。無ければ申請書）→ { ok, 名前, 対応表と一致 } | { ok: false, 理由, 入口 } */
   様式を取ってくる: (県コード, sha256) => ipcRenderer.invoke("様式を取ってくる", 県コード, sha256),

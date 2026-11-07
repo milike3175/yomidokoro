@@ -45,6 +45,7 @@ import {
   type 区分,
 } from "@/lib/shoshiki";
 import type { 公開する様式 } from "@/lib/kokai-yoshiki";
+import { 見本の値, 見本の中身, 見本の写真, 見本の組の数 } from "@/lib/mihon";
 import s from "./shoshiki.module.css";
 
 export type 手元の様式 = {
@@ -105,14 +106,17 @@ function アプリの控えの口(): 控えの口の型 | null {
 
 // デスクトップ版の下書きの口と、様式を県のサイトから取ってくる口。ブラウザで開いたときは無い
 type 下書きの口の型 = {
+  /** 小分け：置き場の下のフォルダ（事業者名_新規、県名）。古いアプリは受け取らない */
   保存: (
     ファイル名: string,
     バイト: Uint8Array,
+    小分け?: string[],
   ) => Promise<
-    | { ok: true; ファイル名: string; 置き場: string }
+    | { ok: true; ファイル名: string; 置き場: string; 親?: string }
     | { ok: false; 理由: string }
   >;
-  置き場を開く: () => Promise<unknown>;
+  /** 場所を渡すと、そのフォルダを開く（置き場の中だけ）。渡さなければ置き場 */
+  置き場を開く: (場所?: string) => Promise<unknown>;
 };
 type アプリの様式の口 = {
   様式を取ってくる?: (
@@ -718,6 +722,24 @@ export default function ShoshikiView({
     return m;
   }, [様, 値たち]);
 
+  /** 見本の会社（架空）を画面に入れる。写真はこのサイトの中から読み込む（外へは何も送らない） */
+  async function 見本を入れる() {
+    set値たち({ ...見本の値 });
+    set中身({ ...見本の中身, 品目: 見本の中身.品目.map((x) => ({ ...x })) });
+    set組の数((c) => ({ ...c, ...見本の組の数 }));
+    const 写: Record<string, 写真> = {};
+    for (const x of 見本の写真) {
+      try {
+        const r = await fetch(new URL(x.場所, location.origin), { credentials: "omit" });
+        if (r.ok) 写[x.鍵] = { 名前: x.名前, バイト: new Uint8Array(await r.arrayBuffer()) };
+      } catch {
+        // 写真が読めなくても、値と品目は入れる
+      }
+    }
+    set写真たち(写);
+    set知らせ(`見本の会社（架空の ${見本の値["氏名"]}）を入れました。申請する都道府県に印を付けて「作成」を押してください${Object.keys(写).length ? "。車両と容器の写真はデモ用のイラストです" : ""}`);
+  }
+
   async function 書いて保存() {
     if (選んだ様たち.length === 0) {
       set知らせ("申請する都道府県を選んでください");
@@ -728,6 +750,7 @@ export default function ShoshikiView({
     const 文たち: string[] = [];
     const 日 = 今日();
     let 作った = 0;
+    let 開く場所 = "";
     for (const x of 選んだ様たち) {
       const 呼び名 =
         様式たち.filter((y) => y.県コード === x.県コード).length > 1
@@ -750,14 +773,17 @@ export default function ShoshikiView({
       const 名 = `${x.県名}_${x.名前.replace(/[（(].*$/, "").slice(0, 20)}_下書き_${日}.${拡張子}`;
       const 口 = 下書きの口();
       if (口) {
-        const w = await 口.保存(名, new Uint8Array(await r.blob.arrayBuffer()));
+        // 置き場の下に 事業者名_新規／県名／ と分ける（2026-11-07 みゆき「何の申請書を作ったか分かるように」）
+        const 小分け = [`${(値たち["氏名"] ?? "").trim() || "名前なし"}_新規`, x.県名];
+        const w = await 口.保存(名, new Uint8Array(await r.blob.arrayBuffer()), 小分け);
         文たち.push(
           w.ok
             ? `${呼び名}：「${w.ファイル名}」（要確認 ${確}件）`
             : `${呼び名}：保存できませんでした（${w.理由}）`,
         );
         if (w.ok) {
-          set下書きの置き場(w.置き場);
+          開く場所 = w.親 ?? w.置き場;
+          set下書きの置き場(開く場所);
           作った++;
         }
       } else {
@@ -766,6 +792,8 @@ export default function ShoshikiView({
         作った++;
       }
     }
+    // アプリでは、作ったら事業者さんのフォルダを開く（2026-11-07 みゆき「作成したところを自動で開くように」）
+    if (開く場所) void 下書きの口()?.置き場を開く(開く場所);
     // アプリでは、作成と一緒に名簿にも入れる（会社名があるとき）
     let 名簿 = "";
     if (作った > 0 && アプリ && (値たち["氏名"] ?? "").trim()) {
@@ -921,6 +949,12 @@ export default function ShoshikiView({
           <p className={s.note}>
             半角の英数字は全角にして書きます。空けた欄は様式のままにします（触りません）。
           </p>
+          <div className={s.buttons}>
+            <button type="button" data-testid="見本の会社で試す" disabled={作成中} onClick={() => void 見本を入れる()}>
+              見本の会社で試す（架空の会社・品目・車両・容器・写真まで入ります）
+            </button>
+            <span className={s.faint}>入っている値は消えて、見本に置き換わります。県を選んで「作成」まで押せば、県ごとの書き方の違いが見られます</span>
+          </div>
           <div className={s.form}>
             {様.欄.map((f) => {
               const 見 = 見込み.get(f.id);
