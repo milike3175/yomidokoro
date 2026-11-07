@@ -41,3 +41,71 @@
     - 名前: ダウンロード
       url: https://www.pref.kyoto.jp/sanpai/documents/henkotodoke_s2.pdf
 鮮度確認日: 2026-11-02
+# 2026-11-06 ジョブズ：様式の置き場は shosiki17.html（産業廃棄物処理業 申請等様式）。本人用（kisoku_）と作成代理人用（dairi_kisoku_）がある。概要は面ごと（kisoku_6_2_1〜10）と一括（kisoku_6_2_all）
+様式の入口: https://www.pref.kyoto.jp/sanpai/shosiki17.html
+様式の取り寄せ:
+  - { url: "https://www.pref.kyoto.jp/sanpai/documents/kisoku_6.docx", 名前: 産業廃棄物収集運搬業許可申請書（様式第六号・申請者本人が作成する場合） }
+  - { url: "https://www.pref.kyoto.jp/sanpai/documents/dairi_kisoku_6.docx", 名前: 産業廃棄物収集運搬業許可申請書（様式第六号・作成代理人用） }
+  - { url: "https://www.pref.kyoto.jp/sanpai/documents/kisoku_6_2_all.docx", 名前: 事業計画の概要（様式第六号の二・一括） }
+  - { url: "https://www.pref.kyoto.jp/sanpai/documents/kyoto_1.docx", 名前: 様式第１号（申請者又は申請者の役員等の名簿） }
+  - { url: "https://www.pref.kyoto.jp/sanpai/documents/kyoto_2.docx", 名前: 様式第２号（株主等） }
+  - { url: "https://www.pref.kyoto.jp/sanpai/documents/kyoto_15_houzin.docx", 名前: 京都府様式15（法人） }
+  - { url: "https://www.pref.kyoto.jp/sanpai/documents/kyoto_16.docx", 名前: 京都府様式16 }
+  - { url: "https://www.pref.kyoto.jp/sanpai/documents/kyoto_17.docx", 名前: 京都府様式17 }
+様式:
+  - ファイル名: dairi_kisoku_6.docx
+    名前: 産業廃棄物収集運搬業許可申請書（様式第六号・作成代理人用）
+    url: https://www.pref.kyoto.jp/sanpai/documents/dairi_kisoku_6.docx
+    sha256: 0fe0c9f652270c815480b0ae431833e600d5a9dff3afdc5759085b8c24dd1bd1
+    取得日: 2026-11-06
+    サイズ: 41815
+    最終更新: Tue, 30 Jan 2024 08:00:05 GMT
+  - ファイル名: kisoku_6.docx
+    名前: 産業廃棄物収集運搬業許可申請書（様式第六号・申請者本人が作成する場合）
+    url: https://www.pref.kyoto.jp/sanpai/documents/kisoku_6.docx
+    sha256: ea5335fa54b16e76806ed2ebd88a58175d49127e27a3760e1bd1c0cf5edf01c1
+    取得日: 2026-11-06
+    サイズ: 37878
+    最終更新: Thu, 21 Jan 2021 03:00:03 GMT
+  - ファイル名: kisoku_6_2_all.docx
+    名前: 事業計画の概要（様式第六号の二・一括）
+    url: https://www.pref.kyoto.jp/sanpai/documents/kisoku_6_2_all.docx
+    sha256: 17723d05acc65e697b4b8be374a51d081f66111a410c07d3380240d4bd665d9b
+    取得日: 2026-11-06
+    サイズ: 50129
+    最終更新: Thu, 21 Jan 2021 03:00:12 GMT
+  - ファイル名: kyoto_1.docx
+    名前: 様式第１号（申請者又は申請者の役員等の名簿）
+    url: https://www.pref.kyoto.jp/sanpai/documents/kyoto_1.docx
+    sha256: 524f85831ae3f1835a8ca545b92bc61e5425cf1e982863a57d340a04228433ef
+    取得日: 2026-11-06
+    サイズ: 25903
+    最終更新: Thu, 21 Jan 2021 03:00:06 GMT
+  - ファイル名: kyoto_15_houzin.docx
+    名前: 京都府様式15（法人）
+    url: https://www.pref.kyoto.jp/sanpai/documents/kyoto_15_houzin.docx
+    sha256: 3b6be0db5d458ae6e5f60e781a5d031978b6b076d1112c449dce041b23250fc1
+    取得日: 2026-11-06
+    サイズ: 34105
+    最終更新: Tue, 20 Apr 2021 08:00:09 GMT
+  - ファイル名: kyoto_16.docx
+    名前: 京都府様式16
+    url: https://www.pref.kyoto.jp/sanpai/documents/kyoto_16.docx
+    sha256: 199604d949f7924326872da7dc1595ff81dc19ba87789d19d09e9368603e729d
+    取得日: 2026-11-06
+    サイズ: 36095
+    最終更新: Tue, 20 Apr 2021 08:00:09 GMT
+  - ファイル名: kyoto_17.docx
+    名前: 京都府様式17
+    url: https://www.pref.kyoto.jp/sanpai/documents/kyoto_17.docx
+    sha256: 4c0c39faeb7d0910b2dca6d3259c42978242015074cc3c214018406ca4bf4381
+    取得日: 2026-11-06
+    サイズ: 32974
+    最終更新: Tue, 30 Nov 2021 03:00:03 GMT
+  - ファイル名: kyoto_2.docx
+    名前: 様式第２号（株主等）
+    url: https://www.pref.kyoto.jp/sanpai/documents/kyoto_2.docx
+    sha256: 9933868f2d1cc47bcf1dbbbd2ecb13675aeb7408d018a105453fa2d8aee43123
+    取得日: 2026-11-06
+    サイズ: 26595
+    最終更新: Thu, 21 Jan 2021 03:00:06 GMT

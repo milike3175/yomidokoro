@@ -22,3 +22,4 @@ _申請/
 !手引き/*/_差分.yaml
 *.tsbuildinfo
 app/data/**/*.前
+.vercel
