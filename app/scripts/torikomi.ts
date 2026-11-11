@@ -39,8 +39,10 @@ const ROOT = path.resolve(APP, "..");
 const DATA = path.join(APP, "data");
 const 許認可 = "産廃収集運搬";
 // 手帳の置き場。試しのときだけ TECHO_ROOT で差し替える（data.ts と同じ。本物の手帳に試しのファイルを置かないため）
-const 手帳 = path.join(process.env.TECHO_ROOT ? path.resolve(process.env.TECHO_ROOT) : path.join(ROOT, "手帳"), 許認可);
-const 取込済 = path.join(ROOT, "手帳", "_取込済.txt");
+const 手帳の根 = process.env.TECHO_ROOT ? path.resolve(process.env.TECHO_ROOT) : path.join(ROOT, "手帳");
+const 手帳 = path.join(手帳の根, 許認可);
+// 取込済みの控えも手帳の置き場に置く（試しの取込が、本物の手帳の控えに書かないように）
+const 取込済 = path.join(手帳の根, "_取込済.txt");
 const 録音の置き場 = path.join(os.homedir(), "Documents", "superwhisper", "recordings");
 
 const 整えるモデル = "claude-opus-5-5";
@@ -534,11 +536,23 @@ async function main() {
     const 日付 = /^\d{4}-\d{2}(-\d{2})?$/.test(r.日付) ? r.日付 : (録音日 ?? 今日の文字);
     const 課名 = (r.窓口.split(/\s+/).pop() || "不明").replace(/[\\/:*?"<>|\s]/g, "");
     const dir = path.join(県dir, "電話");
-    const 同じ日 = fs.existsSync(dir) ? fs.readdirSync(dir).filter((n) => NFC(n).startsWith(日付)).length : 0;
+    // 記録の番号は、いまある記録の id と重ならない一番小さい数にする。
+    // ファイルの数で振ると、途中のファイルを消したあとに同じ id ができ、判定が記録を取り違える
+    const 使われている = new Set<string>();
+    for (const n of fs.existsSync(dir) ? fs.readdirSync(dir).filter((n) => n.endsWith(".yaml")) : []) {
+      try {
+        const id = parse(fs.readFileSync(path.join(dir, n), "utf8"))?.id;
+        if (typeof id === "string") 使われている.add(id);
+      } catch {
+        // 読めないファイルは番号の勘定に入れない
+      }
+    }
+    let 番 = 1;
+    while (使われている.has(`${県!.コード}-電話-${日付}-${番}`)) 番++;
     保存先 = path.join(dir, `${日付}_${課名}.yaml`);
     for (let n = 2; fs.existsSync(保存先); n++) 保存先 = path.join(dir, `${日付}_${課名}_${n}.yaml`);
     記録 = {
-      id: `${県!.コード}-電話-${日付}-${同じ日 + 1}`,
+      id: `${県!.コード}-電話-${日付}-${番}`,
       許可権者: { コード: 県!.コード, 名前: 県!.名前 },
       許認可,
       確認日: 日付,
